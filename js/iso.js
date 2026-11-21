@@ -133,14 +133,26 @@
         if (r < 70) {
           const wall = ['#d8cdb0', '#c9b79a', '#bfc7b8', '#d3b9a0'][h % 4], roof = era >= 4 ? '#8d8f93' : ['#a8573f', '#8a4a36', '#6d6a60'][(h >>> 3) % 3];
           g.prism(tx + 0.2, ty + 0.2, 0.6, 0.6, 0, 8, wall); g.prism(tx + 0.12, ty + 0.12, 0.76, 0.76, 8, 11.5, roof);
+          g.prism(tx + 0.62, ty + 0.3, 0.1, 0.1, 11, 14.5, '#7b6a5d');   // 煙突
+          g.prism(tx + 0.4, ty + 0.78, 0.18, 0.05, 0, 5, '#6b4f33'); g.prism(tx + 0.25, ty + 0.78, 0.1, 0.05, 3, 6, '#9fc4d6'); g.prism(tx + 0.65, ty + 0.78, 0.1, 0.05, 3, 6, '#9fc4d6');   // ドアと窓
         }
         return;
       }
       const dens = forest ? 420 : 55;
       if (r < dens) {
-        const hh = 9 + (h >>> 4) % 6, ox = ((h >>> 8) % 5) / 10, oy = ((h >>> 11) % 5) / 10, gr = ['#4f7a45', '#5a8650', '#456f3f', '#668f4f'][h % 4];
-        g.prism(tx + 0.42 + ox / 4, ty + 0.42 + oy / 4, 0.12, 0.12, 0, 5, '#6b4f33');
-        g.prism(tx + 0.14 + ox / 2, ty + 0.14 + oy / 2, 0.56, 0.56, 4, hh - 3, shade(gr, 0.9)); g.prism(tx + 0.24 + ox / 2, ty + 0.24 + oy / 2, 0.38, 0.38, hh - 3, hh + 1, gr); g.prism(tx + 0.33 + ox / 2, ty + 0.33 + oy / 2, 0.2, 0.2, hh + 1, hh + 4.5, shade(gr, 1.2));   // 3段（松のように先が細い）
+        const hh = 9 + (h >>> 4) % 6, ox = ((h >>> 8) % 5) / 10, oy = ((h >>> 11) % 5) / 10, kind = (h >>> 14) % 3;
+        if (kind === 0) {   // 針葉樹：細い3段（濃い緑）
+          const gr = ['#3f6b45', '#355f3d', '#47724a'][h % 3], cx = tx + 0.5 + ox / 4 - 0.1, cy = ty + 0.5 + oy / 4 - 0.1;
+          g.prism(cx - 0.06, cy - 0.06, 0.12, 0.12, 0, 4, '#5d4630');
+          g.prism(cx - 0.3, cy - 0.3, 0.6, 0.6, 3, hh - 2, shade(gr, 0.9)); g.prism(cx - 0.21, cy - 0.21, 0.42, 0.42, hh - 2, hh + 3, gr); g.prism(cx - 0.11, cy - 0.11, 0.22, 0.22, hh + 3, hh + 8, shade(gr, 1.15));
+        } else if (kind === 1) {   // 低木（丸っこい小さな茂み）
+          const gr = ['#5f8f4d', '#6d9a52', '#527f46'][h % 3];
+          g.prism(tx + 0.2 + ox / 2, ty + 0.25 + oy / 2, 0.5, 0.42, 0, 4.5, gr); g.prism(tx + 0.3 + ox / 2, ty + 0.33 + oy / 2, 0.3, 0.26, 4.5, 6.5, shade(gr, 1.15));
+        } else {   // 広葉樹：太い幹と3段の丸い樹冠
+          const gr = ['#4f7a45', '#5a8650', '#456f3f', '#668f4f'][h % 4];
+          g.prism(tx + 0.42 + ox / 4, ty + 0.42 + oy / 4, 0.12, 0.12, 0, 5, '#6b4f33');
+          g.prism(tx + 0.14 + ox / 2, ty + 0.14 + oy / 2, 0.56, 0.56, 4, hh - 3, shade(gr, 0.9)); g.prism(tx + 0.24 + ox / 2, ty + 0.24 + oy / 2, 0.38, 0.38, hh - 3, hh + 1, gr); g.prism(tx + 0.33 + ox / 2, ty + 0.33 + oy / 2, 0.2, 0.2, hh + 1, hh + 4.5, shade(gr, 1.2));
+        }
       } else if (r > 985) g.prism(tx + 0.3, ty + 0.3, 0.35, 0.3, 0, 3.2, '#8c8c86');   // 岩
     }
     function drawTerrain(s, era) {
@@ -273,6 +285,35 @@
     }
 
     // ---- 1フレームの描画 ----
+    // 車：格子の道路を行き来する。道路でないタイル（港・海）に出たら隠す。船：海をゆっくり横切る。灯台：海岸の東端の空き地
+    const CARCOL = ['#c9503a', '#3f6fa0', '#d9c34a', '#e8e4d8', '#4f8a5a', '#2f2f33', '#a05a9a'];
+    function drawAmbient(s, era) {
+      const M = GAME_DATA.map, T = I.t;
+      for (let i = 0; i < 14; i++) {
+        const alongX = i % 2 === 0, line = M.block * (1 + (i >> 1) % 3) - 1, dir = (i % 4 < 2) ? 1 : -1, sp = 1.6 + (i % 5) * 0.45, len = alongX ? M.w : M.h;
+        const pos = (((i * 7.3 + T * sp * dir) % len) + len) % len, tx = alongX ? Math.floor(pos) : line, ty = alongX ? line : Math.floor(pos);
+        if (E.terrainAt(s, tx, ty) !== 'road') continue;
+        const lane = 0.27 * dir, c = CARCOL[i % CARCOL.length], big = i % 5 === 4;   // 5台に1台はトラック
+        const L = big ? 0.62 : 0.46, Wd = 0.24;
+        if (alongX) { const x = pos - L / 2, y = line + 0.5 + lane - Wd / 2; g.prism(x, y, L, Wd, 0.5, big ? 5 : 3, c); if (!big) g.prism(x + L * 0.25, y + 0.03, L * 0.5, Wd - 0.06, 3, 5, '#cfd8dc'); else g.prism(x + (dir > 0 ? L - 0.16 : 0), y, 0.16, Wd, 0.5, 6.5, '#d9d6c8'); }
+        else { const y = pos - L / 2, x = line + 0.5 + lane - Wd / 2; g.prism(x, y, Wd, L, 0.5, big ? 5 : 3, c); if (!big) g.prism(x + 0.03, y + L * 0.25, Wd - 0.06, L * 0.5, 3, 5, '#cfd8dc'); else g.prism(x, y + (dir > 0 ? L - 0.16 : 0), Wd, 0.16, 0.5, 6.5, '#d9d6c8'); }
+      }
+      for (let k = 0; k < 4; k++) {   // 船
+        const dir = k % 2 ? 1 : -1, pos = (((k * 19 + T * 0.45 * dir) % M.w) + M.w) % M.w, tx = Math.floor(pos), ty = Math.min(M.h - 2, E.coastY(tx) + 6 + k * 2.5);
+        if (E.terrainAt(s, tx, ty) !== 'sea' || E.terrainAt(s, Math.floor(pos + 1.5), ty) !== 'sea' || E.terrainAt(s, Math.floor(pos - 1.5), ty) !== 'sea') continue;
+        const hull = ['#3f5a70', '#7a3f35', '#41594a', '#5a5f66'][k];
+        g.prism(pos - 0.8, ty + 0.2, 1.6, 0.6, 0, 3, hull); g.prism(pos - 0.4 * dir - 0.25, ty + 0.3, 0.5, 0.4, 3, 7, '#eceae0'); g.prism(pos + 0.5 * dir - 0.08, ty + 0.4, 0.16, 0.2, 3, 5, '#d8d3c4');
+        g.line([[pos - 0.8 * dir, ty + 0.5, 0.2], [pos - 2.2 * dir, ty + 0.5, 0.2]], 'rgba(255,255,255,.55)', 1);   // 航跡
+      }
+      // 灯台（海岸の東端の道路より海側でない空き地。建物と重なるなら出さない）
+      const lx = M.w - 6, ly = E.coastY(lx) - 2;
+      if (E.terrainAt(s, lx, ly) === 'land' && !(I.ents || []).some(e => lx + 1 > e.x - 1 && lx < e.x + e.fw + 1 && ly + 1 > e.y - 1 && ly < e.y + e.fd + 1)) {
+        g.prism(lx + 0.1, ly + 0.1, 0.8, 0.8, 0, 3, '#8c8c86'); g.prism(lx + 0.22, ly + 0.22, 0.56, 0.56, 3, 14, '#efe9da'); g.prism(lx + 0.24, ly + 0.24, 0.52, 0.52, 14, 20, '#c9503a');
+        g.prism(lx + 0.22, ly + 0.22, 0.56, 0.56, 20, 26, '#efe9da'); g.prism(lx + 0.3, ly + 0.3, 0.4, 0.4, 26, 31, '#2f3238');
+        ctx.globalAlpha = 0.55 + 0.45 * Math.sin(T * 2.4); g.prism(lx + 0.36, ly + 0.36, 0.28, 0.28, 31, 34, '#ffe08a'); ctx.globalAlpha = 1;
+      }
+    }
+
     function frame(dt) {
       const s = S(); if (!s || !GAME_DATA.map) return;
       I.t += dt; I.sources = []; builds = 0;
@@ -302,6 +343,7 @@
         if (I.selected === e.key) outline(e, '#ffe08a', 2.2);
         drawEntity(e, o);
       }
+      drawAmbient(s, era);
       if (I.ghost) drawGhost(s, era);
       else if (I.cursor) { const c = I.cursor; ctx.globalAlpha = 0.6; poly([pt(c.x, c.y, 0.3), pt(c.x + 1, c.y, 0.3), pt(c.x + 1, c.y + 1, 0.3), pt(c.x, c.y + 1, 0.3)], '#ffe08a'); ctx.globalAlpha = 1; }   // 世界の座標で与え、pt が回す（正方形のまま）
       drawSmoke(dt);
