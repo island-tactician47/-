@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>製油所 - 工場地帯シミュ</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main>
+  <h2>🏭 製油所</h2>
+  <div class="card" id="site"></div>
+
+  <div id="ops">
+    <h2>運転</h2>
+    <div class="card">
+      <div class="row"><h3>蒸留の配分</h3><span class="sub" id="status"></span></div>
+      <div class="chips" id="modes"></div>
+      <div class="sub" id="yields" style="margin-top:6px"></div>
+      <div style="margin-top:10px">
+        <div class="row"><span>稼働率</span><b id="runlabel"></b></div>
+        <input type="range" min="0" max="100" step="10" id="run">
+      </div>
+      <label class="row" style="margin-top:6px"><span>原油が足りない分を市場から買う</span><input type="checkbox" id="autobuy"></label>
+      <div class="sub" id="margin" style="margin-top:6px"></div>
+    </div>
+
+    <h2>製品タンク</h2>
+    <p class="sub">精製品は出荷日にまとめて売られる。タンクは出荷日までの貯め置き場。</p>
+    <div id="tanks"></div>
+  </div>
+</main>
+
+<script src="../data/resources.js"></script>
+<script src="../data/buildings.js"></script>
+<script src="../data/leases.js"></script>
+<script src="../data/difficulty.js"></script>
+<script src="../data/loans.js"></script>
+<script src="../data/port.js"></script>
+<script src="../data/events.js"></script>
+<script src="../data/eras.js"></script>
+<script src="../data/recipes.js"></script>
+<script src="../data/research.js"></script>
+<script src="../data/segments.js"></script>
+<script src="../data/map.js"></script>
+<script src="../js/save.js"></script>
+<script src="../js/market.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const E = Engine, G = GAME_DATA;
+const PRODUCTS = ['gasoline', 'diesel', 'naphtha', 'heavy'];
+
+$('run').oninput = e => UI.act(s => { s.refinery.runRate = e.target.value / 100; });
+$('autobuy').onchange = e => UI.act(s => { s.refinery.autoBuyCrude = e.target.checked; });
+
+function btn(s, type, label) {
+  const chk = E.canBuild(s, type);
+  const b = G.buildings[type];
+  return `<button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?build=${type}'">${label || b.name}（${E.fmtMoney(E.costOf(s, type))}・${b.months}か月）</button>${chk.ok ? '' : `<div class="sub">${chk.msg}</div>`}`;
+}
+
+function render(s) {
+  const small = E.count(s, 'refinery') > 0, large = E.count(s, 'refineryLarge') > 0, done = small || large;
+  const cons = s.construction.find(c => c.type === 'refinery' || c.type === 'refineryLarge');
+  const towers = E.count(s, 'distillation'), towersCons = E.constructing(s, 'distillation');
+  const buildBtns = [!small && !E.constructing(s, 'refinery') ? btn(s, 'refinery', '小規模製油所を建てる') : '', !large && !E.constructing(s, 'refineryLarge') ? btn(s, 'refineryLarge', '大規模製油所を建てる') : ''].filter(Boolean).join('');
+  let html;
+  if (!done && !cons) {
+    html = `<h3>製油所はまだない</h3>
+      <p class="sub">原油を蒸留してガソリン・軽油・ナフサ・重油にすると付加価値が付く。<b>小規模製油所</b>は用地・ボイラー、常圧蒸留塔1基（日量1,000bbl）、製品タンク各5,000bblがセットで、建設に2年。化学期になると、日量あたりが割安で用地も効率的な<b>大規模製油所</b>（日量6,400bbl・製品タンク各30,000bbl・建設に3年）も建てられる。運転の設定は両方で共通。</p>
+      <div class="btns" style="flex-direction:column;align-items:flex-start">${buildBtns}</div>`;
+  } else {
+    html = `<div class="row"><h3>製油所 ${done ? '' : '<span class="sub">建設中</span>'}</h3><span class="sub">処理能力 日量${E.fmtNum(done ? E.refineryThroughput(s) : (cons ? G.buildings[cons.type].throughput : 1000))}bbl</span></div>
+      <div class="sub">${small ? '小規模製油所 ' : ''}${large ? '大規模製油所 ' : ''}${cons ? G.buildings[cons.type].name + '（建設中）' : ''}</div>
+      <div class="icons">${done ? '🏭🗼' : '🚧'}${'🗼'.repeat(towers)}${'🚧'.repeat(towersCons)}</div>
+      <div class="btns" style="margin-top:8px;flex-direction:column;align-items:flex-start">${btn(s, 'distillation', '蒸留塔を増設 日量+1,000bbl（小規模製油所に）')}${buildBtns}</div>`;
+  }
+  UI.html('site', html);
+  $('ops').style.display = (done || cons) ? '' : 'none';
+
+  // 運転
+  UI.html('modes', Object.entries(G.distillModes).map(([k, m]) =>
+    `<span class="chip ${s.refinery.mode === k ? 'on' : ''}" onclick="UI.act(s=>{s.refinery.mode='${k}'})">${m.name}</span>`).join(''));
+  const y = G.distillModes[s.refinery.mode].yields;
+  $('yields').textContent = '原油1bblから：' + PRODUCTS.map(k => `${G.resources[k].name}${Math.round(y[k] * 100)}%`).join('・') + '（残りはロス）';
+  if (document.activeElement !== $('run')) $('run').value = Math.round(s.refinery.runRate * 100);
+  $('runlabel').textContent = `${Math.round(s.refinery.runRate * 100)}%（日量${E.fmtNum((done ? E.refineryThroughput(s) : (cons ? G.buildings[cons.type].throughput : 1000)) * s.refinery.runRate)}bbl）`;
+  $('autobuy').checked = s.refinery.autoBuyCrude;
+
+  const tp = E.refineryThroughput(s) * s.refinery.runRate;
+  let status = done ? '停止中' : '建設中', cls = 'sub';
+  if (tp > 0) {
+    const full = PRODUCTS.filter(k => E.capacity(s, k) - s.inventory[k] < tp * y[k]);
+    if (full.length) { status = `🔴 ${full.map(k => G.resources[k].name).join('・')}タンクが満杯`; cls = 'bad'; }
+    else if (s.inventory.crude < tp && !s.refinery.autoBuyCrude) { status = '🔴 原油不足'; cls = 'bad'; }
+    else { status = '🟢 稼働中'; cls = 'good'; }
+  }
+  UI.html('status', `<span class="${cls}">${status}</span>`);
+
+  const prodVal = PRODUCTS.reduce((a, k) => a + y[k] * Market.sellPrice(s, k), 0);
+  const opex = E.refineryOpexPerBbl(s) * E.priceIndex(s);
+  const m1 = prodVal - opex - Market.sellPrice(s, 'crude'), m2 = prodVal - opex - Market.buyPrice(s, 'crude');
+  const sg = v => `<b class="${v >= 0 ? 'good' : 'bad'}">${v >= 0 ? '+' : ''}$${v.toFixed(2)}</b>`;
+  UI.html('margin', `精製マージン（1bblあたり、いまの相場）<br>自社原油を回す：${sg(m1)}（原油で売るより）　原油を買って回す：${sg(m2)}`);
+
+  // 製品タンク（製油所付属の1基＋増設分）
+  const ship = E.daysToShipment(s);
+  UI.html('tanks', PRODUCTS.map(k => {
+    const cap = E.capacity(s, k), inv = s.inventory[k], r = cap ? inv / cap : 1;
+    const extra = E.count(s, 'tank_' + k), extraCons = E.constructing(s, 'tank_' + k);
+    // 原油を買わない設定なら、自社の産出量が実際の処理量の上限
+    const feed = s.refinery.autoBuyCrude ? tp : Math.min(tp, E.totalWellRate(s) + (s.inventory.crude > tp ? tp : 0));
+    const daily = feed * y[k];
+    const fullIn = daily > 0 ? (cap - inv) / daily : Infinity;
+    const icon = G.buildings['tank_' + k].icon;
+    return `<div class="card"><div class="row"><h3>${G.resources[k].name}</h3><span class="num sub">${E.fmtNum(inv)} / ${E.fmtNum(cap)} bbl</span></div>
+      <div class="bar ${r > 0.97 ? 'full' : ''}"><i style="width:${r * 100}%"></i></div>
+      <div class="icons">${done ? icon : ''}${icon.repeat(extra)}${'🚧'.repeat(extraCons)}</div>
+      ${daily > 0 ? `<div class="sub">日産${E.fmtNum(daily)}bbl　${fullIn < ship ? `<span class="bad">次の出荷（${ship}日後）までに満杯になる</span>` : `次の出荷まで${ship}日`}${s.hold[k] ? '　<span class="warn">出荷見送り中</span>' : ''}</div>` : ''}
+      <div class="btns" style="margin-top:4px">${btn(s, 'tank_' + k, 'タンク +5,000bbl')}</div></div>`;
+  }).join(''));
+}
+UI.boot({ page: 'refinery', render });
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>研究 - 工場地帯シミュ</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main>
+  <h2>🔬 研究</h2>
+  <div class="card" id="lab"></div>
+  <div class="card" id="projects"></div>
+  <p class="sub">研究は同時に1件。研究棟を増やすと基礎の進みと加速の上限が上がり、加速するほど総額は割高になる。完了すると、その研究の設備・レシピが使えるようになる（工場ページの各本部）。</p>
+</main>
+
+<script src="../data/resources.js"></script>
+<script src="../data/buildings.js"></script>
+<script src="../data/leases.js"></script>
+<script src="../data/difficulty.js"></script>
+<script src="../data/loans.js"></script>
+<script src="../data/port.js"></script>
+<script src="../data/events.js"></script>
+<script src="../data/eras.js"></script>
+<script src="../data/recipes.js"></script>
+<script src="../data/research.js"></script>
+<script src="../data/segments.js"></script>
+<script src="../data/map.js"></script>
+<script src="../js/save.js"></script>
+<script src="../js/market.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const E = Engine, G = GAME_DATA;
+
+function renderLab(s) {
+  const labs = E.labCount(s), mx = E.researchMaxAccel(s), chk = E.canBuild(s, 'researchLab'), b = G.buildings.researchLab;
+  UI.html('lab', `<div class="row"><h3>研究棟 ${labs}棟</h3><span class="sub">基礎の進み×${parseFloat(E.researchBase(s).toFixed(2))}・加速は×${mx}まで</span></div>
+    <div style="margin-top:6px"><button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?build=researchLab'">${b.icon} ${b.name}を建てる（${E.fmtMoney(E.costOf(s, 'researchLab'))}・${b.months}か月）</button>
+    <div class="sub">${b.desc}</div>${chk.ok ? '' : `<div class="sub">${chk.msg}</div>`}</div>`);
+}
+
+function renderProjects(s) {
+  const RS = G.research || {}, ids = Object.keys(RS);
+  if (!ids.length || !E.tierUnlocked(s, 5)) { UI.html('projects', '<div class="sub">重工業期になると研究を始められる</div>'); return; }
+  const a = s.research && s.research.active;
+  const rows = ids.map(id => {
+    const d = RS[id], done = E.researchDone(s, id), chk = E.canResearch(s, id);
+    const st = done ? '<b class="good">✔ 完了</b>'
+      : a && a.id === id ? `<span class="${a.paused ? 'bad' : 'good'}">${a.paused ? '⏸ 資金不足で停止中' : '🔬 進行中'}</span>`
+      : `<button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.startResearch(s,'${id}'))">始める</button>`;
+    const prog = a && a.id === id ? `<div class="bar"><i style="width:${Math.min(100, a.months / d.months * 100)}%"></i></div><div class="row sub"><span>進捗 ${parseFloat(a.months.toFixed(1))} / ${d.months}　あと約${Math.max(1, Math.ceil((d.months - a.months) / E.researchSpeed(s)))}か月</span><button class="btn ghost small" onclick="UI.modal('研究を中止', '進捗は失われ、支払い済みは戻りません。中止しますか？', [{label:'やめる'},{label:'中止する',onClick:()=>UI.act(s=>Engine.cancelResearch(s))}])">中止</button></div>` : '';
+    return `<div style="margin-top:8px"><div class="row"><span>${d.icon} ${d.name}</span>${st}</div>
+      <div class="sub">${d.desc}　標準${d.months}か月・月${E.fmtMoney(E.researchMonthly(s, id, 1))}（計${E.fmtMoney(d.cost * E.priceIndex(s))}・物価で変わる）${!done && !chk.ok && !(a && a.id === id) ? `<br>${chk.msg}` : ''}</div>${prog}</div>`;
+  }).join('');
+  const labs = E.labCount(s), mx = E.researchMaxAccel(s);
+  const accelRow = a ? `<div class="row" style="margin-top:8px"><span class="sub">加速（月 ${E.fmtMoney(E.researchMonthly(s, a.id))}）</span><div class="chips">${[1, 2, 3, 4].filter(x => x <= mx).map(x => `<span class="chip ${E.researchAccel(s) === x ? 'on' : ''}" onclick="UI.act(s=>Engine.setResearchAccel(s,${x}))">×${x}</span>`).join('')}</div></div><div class="sub">加速するほど総額は割高（×2で1.15倍、×4で1.45倍）</div>` : '';
+  UI.html('projects', `<div class="sub">同時に1件。毎月、現金が月額以上あり当座貸越が無いときだけ進む。${labs ? '' : '<br><b>研究を始めるには研究棟が必要（上の研究棟を建てる）</b>'}</div>${accelRow}${rows}`);
+}
+
+
+function render(s) { renderLab(s); renderProjects(s); }
+UI.boot({ page: 'research', render });
+</script>
+</body>
+</html>

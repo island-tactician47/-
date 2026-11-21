@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>市場 - 工場地帯シミュ</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main>
+  <h2>📈 市場と港</h2>
+  <div id="port"></div>
+  <div id="events"></div>
+  <div id="segs"></div>
+  <div class="card" id="detail"></div>
+  <div id="list"></div>
+  <div id="shipsCard"></div>
+  <p class="sub">出荷日に、在庫から港の出荷枠（原油1bbl≒固体1tが1枠）ぶんを、枠あたりの価値が高い品目から順に一括で売る。原油・原料は、製油所と加工設備が次の出荷日までに使う分を残す（原料の買い入れは出荷枠を使わない）。価格は景気の波・変動・イベントで動き、同じ品目を大量に売ると値崩れする（約1か月で半分戻る）。売却時は手数料・運賃2%、購入時は相場+4%。本部は画面の整理用の分類。</p>
+</main>
+
+<script src="../data/resources.js"></script>
+<script src="../data/buildings.js"></script>
+<script src="../data/leases.js"></script>
+<script src="../data/difficulty.js"></script>
+<script src="../data/loans.js"></script>
+<script src="../data/port.js"></script>
+<script src="../data/events.js"></script>
+<script src="../data/eras.js"></script>
+<script src="../data/recipes.js"></script>
+<script src="../data/research.js"></script>
+<script src="../data/segments.js"></script>
+<script src="../data/map.js"></script>
+<script src="../js/save.js"></script>
+<script src="../js/market.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const E = Engine, G = GAME_DATA;
+const KINDS = [['raw', '原料'], ['material', '素材'], ['product', '製品']];
+
+function toggleHold(k) { UI.act(s => { s.hold[k] = !s.hold[k]; }); }
+
+// 表示：原油、保管場所がある、在庫がある、または解放済みの原料（買い入れ用）
+// 倉庫の品目は在庫に左右されない poolCap で判定する
+function visibleItems(s) {
+  return G.productOrder.filter(k => {
+    const r = G.resources[k];
+    if (k === 'crude' || s.inventory[k] > 0) return true;
+    if (!E.tierUnlocked(s, r.tier || 1)) return false;
+    return r.storage ? E.poolCap(s, r.storage) > 0 || (r.kind === 'raw' && r.canBuy) : E.capacity(s, k) > 0 || (r.kind === 'raw' && r.canBuy);
+  });
+}
+
+function change(s, k) {
+  const hist = s.history.slice(-36).map(h => h.prices[k]).filter(v => v !== undefined);
+  return hist.length ? (Market.price(s, k) / hist[hist.length - 1] - 1) * 100 : null;
+}
+
+function renderPort(s) {
+  const port = E.port(s), next = E.nextPort(s), chk = E.canUpgradePort(s);
+  const upg = s.construction.find(c => c.type === 'port');
+  const last = s.shipments[0];
+  const head = `<span><b>⚓ ${port.name}</b> <span class="sub">次の出荷まで${E.daysToShipment(s)}日${last && last.left > 1 ? ` <b class="bad">積み残し${E.fmtNum(last.left)}</b>` : ''}</span></span>`;
+  const body = `<div class="sub">${port.interval}日ごとに最大${E.fmtNum(port.capacity)}出荷枠を一括出荷（月${E.fmtNum(port.capacity * 30 / port.interval)}枠相当。原油1bbl＝1枠）</div>
+    ${last ? `<div class="sub" style="margin-top:4px">前回：${E.fmtNum(last.used)} / ${E.fmtNum(last.cap)}枠 → ${E.fmtMoney(last.total)}${last.left > 1 ? `　<span class="bad">積み残し ${E.fmtNum(last.left)}枠</span>` : ''}</div><div class="bar ${last.used >= last.cap - 1 ? 'full' : ''}"><i style="width:${last.used / last.cap * 100}%"></i></div>` : ''}
+    ${next ? `<div class="btns" style="margin-top:6px;flex-direction:column;align-items:flex-start">
+      ${upg ? `<span class="sub">🚧 ${next.name}へ改修中</span>` : `<button class="btn sec small" ${chk.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.upgradePort(s))">${next.name}へ改修（${E.fmtMoney(E.portUpgradeCost(s))}・${next.months}か月）</button><span class="sub">${next.desc}</span>`}</div>` : ''}`;
+  UI.html('port', UI.fold('f-port', head, body, false));
+}
+
+function renderEvents(s) {
+  UI.html('events', s.activeEvents.map(ev => {
+    const d = G.events.list.find(e => e.id === ev.id);
+    return `<div class="card"><b>📰 ${d.title}</b> <span class="sub">あと${ev.monthsLeft}か月</span><div class="sub">${Object.entries(d.effects).map(([k, v]) => `${G.resources[k].name}${v > 1 ? '↑' : '↓'}`).join(' ')}</div></div>`;
+  }).join(''));
+}
+
+function render(s) {
+  renderPort(s); renderEvents(s);
+  const items = visibleItems(s), bySeg = {};
+  for (const id of E.segmentIds()) bySeg[id] = [];
+  for (const k of items) { const sg = E.segmentOfItem(k); if (bySeg[sg]) bySeg[sg].push(k); }
+  const mk = grp => E.segmentIds().filter(id => G.segments[id].group === grp && bySeg[id].length).map(id => ({ id, label: `${G.segments[id].icon} ${E.segmentName(s, id)}`, badge: String(bySeg[id].length) }));
+  const mat = mk('material'), prod = mk('product'), all = mat.concat(prod);
+  if (!all.length) { UI.html('segs', '<div class="card sub">市場に出ている品目がまだない</div>'); return; }
+  let seg = UI.tab('market', all[0].id);
+  if (!all.some(x => x.id === seg)) seg = all[0].id;
+  UI.html('segs', [['素材系', mat], ['製品系', prod]].filter(r => r[1].length).map(([lab, its]) => `<div class="sub" style="margin-top:4px">${lab}</div>${UI.chips('market', its, seg).replace('class="chips"', 'class="chips tabs"')}`).join(''));
+
+  const ks = bySeg[seg];
+  let pick = UI.tab('market-item-' + seg, ks[0]);
+  if (!ks.includes(pick)) pick = ks[0];
+
+  // 選んだ品目の詳細（チャート・出荷の見送り・原料の買い入れ）
+  const R = G.resources[pick], p = Market.sellPrice(s, pick), lot = R.lot || Math.max(1, Math.round(R.marketDepth / 24)), ch = change(s, pick);
+  UI.html('detail', `<div class="row"><h3>${R.name}</h3><span><b class="num">${E.fmtPrice(p)}</b> <span class="sub">/${R.unit}</span></span></div>
+    <canvas class="chart" id="priceChart"></canvas>
+    <div class="row sub num"><span>在庫 ${E.fmtNum(s.inventory[pick])} / ${E.fmtNum(E.capacity(s, pick))}${R.unit}　≒${E.fmtMoney(s.inventory[pick] * p)}</span><span>${ch === null ? '' : `先月比 <span class="${ch >= 0 ? 'good' : 'bad'}">${ch >= 0 ? '+' : ''}${ch.toFixed(1)}%</span>`}</span></div>
+    ${R.canSell === false ? '' : `<label class="row" style="margin-top:6px"><span>出荷を見送って貯める<br><span class="sub">相場が戻るのを待つときに</span></span><input type="checkbox" ${s.hold[pick] ? 'checked' : ''} onchange="toggleHold('${pick}')"></label>`}
+    ${R.kind === 'raw' && R.canBuy ? `<div class="btns" style="margin-top:6px"><button class="btn sec small" onclick="UI.act(s=>Engine.buy(s,'${pick}',${lot}))">${R.name}を${lot.toLocaleString()}${R.unit}買う</button></div>` : ''}`);
+  const hist = s.history.slice(-36).map(h => h.prices[pick]).filter(v => v !== undefined);
+  UI.spark($('priceChart'), hist.concat([Market.price(s, pick)]), R.color, { labels: true, fmt: v => v >= 100 ? E.fmtMoney(v) : '$' + v.toFixed(2) });
+
+  // 品目の一覧（1品目1行。タップで上の詳細を切り替える）
+  UI.html('list', KINDS.map(([kind, label]) => {
+    const rows = ks.filter(k => (G.resources[k].kind || 'material') === kind).map(k => {
+      const r = G.resources[k], c = change(s, k);
+      return `<div class="row" style="padding:7px 4px;border-bottom:1px solid var(--line);${k === pick ? 'background:#fff4e6;' : ''}" onclick="UI.setTab('market-item-${seg}','${k}')">
+        <span>${r.name}<span class="sub">　${E.fmtNum(s.inventory[k])}${r.unit}${s.hold[k] ? ' ⏸' : ''}</span></span>
+        <span class="num">${E.fmtPrice(Market.sellPrice(s, k))} <span class="sub ${c === null ? '' : c >= 0 ? 'good' : 'bad'}">${c === null ? '' : (c >= 0 ? '+' : '') + c.toFixed(0) + '%'}</span></span></div>`;
+    }).join('');
+    return rows ? `<div class="sub" style="margin-top:8px">${label}</div>${rows}` : '';
+  }).join(''));
+
+  UI.html('shipsCard', UI.fold('f-ships', '<span>出荷の記録</span>', '<table><tr><th>日付</th><th>出荷枠</th><th>売上</th><th>積み残し</th></tr>' + s.shipments.slice(0, 12).map(sh =>
+    `<tr><td>${E.year({ day: sh.day - 1 })}/${E.monthNum({ day: sh.day - 1 })}/${((sh.day - 1) % 30) + 1}</td><td>${E.fmtNum(sh.used)}</td><td>${E.fmtMoney(sh.total)}</td><td class="${sh.left > 1 ? 'bad' : ''}">${sh.left > 1 ? E.fmtNum(sh.left) : '—'}</td></tr>`).join('') + '</table>', false));
+}
+UI.boot({ page: 'market', render });
+</script>
+</body>
+</html>

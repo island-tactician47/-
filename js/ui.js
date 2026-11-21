@@ -1,0 +1,226 @@
+// 全ページ共通のUI：ヘッダー（日付・資金・速度）、下部ナビ、時間のループ、イベント通知、セーブ
+(function () {
+  const DAY_MS = 2000;            // 1倍速で1日＝2秒 → 1か月＝約1分
+  const SPEEDS = [0, 1, 2, 4];
+  const NAV = [
+    { href: 'town.html',     icon: '🗺️', label: '町' },
+    // alt：このタブの下にある別ページ（開いているときもこのタブを強調する）。採掘地・製油所は工場の石油本部から開く
+    { href: 'factory.html',  icon: '🏗️', label: '工場', alt: ['field.html', 'refinery.html'] },
+    { href: 'market.html',   icon: '📈', label: '市場' },
+    { href: 'dashboard.html', icon: '📊', label: '経営', show: s => Engine.dashboardVisible(s) },
+    { href: 'research.html', icon: '🔬', label: '研究', show: s => Engine.tierUnlocked(s, 5) },
+    { href: '../launcher.html', icon: '🏠', label: 'その他' }
+  ];
+
+  let foldState = {};
+  try { foldState = JSON.parse(localStorage.getItem('factorySim.ui.fold') || '{}') || {}; } catch (e) { foldState = {}; }
+  let state = null, renderFn = null, acc = 0, lastT = 0, dirty = true, lastSave = 0, modalOpen = false;
+  // 押している最中に再描画するとボタンが作り直されてクリックが消えるため、押下中は描画を止める
+  let noSave = false;
+  let pressing = false, releaseTimer = null;
+  document.addEventListener('pointerdown', () => { pressing = true; clearTimeout(releaseTimer); }, true);
+  const release = () => { clearTimeout(releaseTimer); releaseTimer = setTimeout(() => { pressing = false; }, 80); };
+  document.addEventListener('pointerup', release, true);
+  document.addEventListener('pointercancel', release, true);
+
+  const UI = {
+    get state() { return state; },
+    DAY_MS,
+
+    boot(opts) {
+      state = Save.load();
+      if (!state) { location.href = '../launcher.html'; return; }
+      Engine.normalize(state);
+      renderFn = opts.render;
+      if (state.speed === undefined) state.speed = 0;
+      buildChrome(opts.page);
+      offlineCatchUp();
+      lastT = performance.now();
+      setInterval(loop, 100);
+      document.addEventListener('visibilitychange', () => { if (document.hidden) UI.save(); });
+      window.addEventListener('pagehide', () => UI.save());
+      document.querySelectorAll('#nav a').forEach(a => a.addEventListener('click', () => UI.save()));
+      showPending();
+      UI.refresh();
+    },
+
+    // 中身が変わったときだけ innerHTML を差し替える
+    // ---- 共通部品：折りたたみ（開閉の状態は保存し、再描画しても保つ）と、本部のタブ ----
+    // fold(key, 見出しHTML, 中身HTML, 既定で開くか)。key は英数字とハイフンだけ
+    fold(key, summary, body, defOpen) {
+      const open = key in foldState ? foldState[key] : !!defOpen;
+      return `<details class="fold" data-o="${open ? 1 : 0}" ${open ? 'open' : ''} ontoggle="UI.toggled('${key}',this)"><summary>${summary}</summary><div class="foldbody">${body}</div></details>`;
+    },
+    // 描画したときの開閉（data-o）と同じなら、解析時に出る toggle イベントなので何もしない（既定の開閉を保存してしまわないため）。ユーザーの操作のときだけ保存する
+    toggled(key, el) { const v = el.open; if (el.dataset.o === (v ? '1' : '0')) return; el.dataset.o = v ? '1' : '0'; foldState[key] = v; try { localStorage.setItem('factorySim.ui.fold', JSON.stringify(foldState)); } catch (e) {} UI.refresh(); },
+    // 本部のタブ：page ごとに選択を保存。items = [{ id, label, badge? }]
+    tab(page, def) { try { return localStorage.getItem('factorySim.ui.tab.' + page) || def; } catch (e) { return def; } },
+    setTab(page, id) { try { localStorage.setItem('factorySim.ui.tab.' + page, id); } catch (e) {} UI.refresh(); },
+    chips(page, items, cur) {
+      return `<div class="chips">${items.map(it => `<span class="chip ${it.id === cur ? 'on' : ''}" onclick="UI.setTab('${page}','${it.id}')">${it.label}${it.badge ? ` <b class="${it.bad ? 'bad' : ''}">${it.badge}</b>` : ''}</span>`).join('')}</div>`;
+    },
+    html(el, str) { if (typeof el === 'string') el = document.getElementById(el); if (el && el._h !== str) { el.innerHTML = str; el._h = str; } },
+
+    save() { if (state && !noSave) { Save.save(state); lastSave = performance.now(); } },
+    // 取り込み（import）直後に reload するとき、メモリ上の古い state で上書きされないようにする
+    blockSave() { noSave = true; },
+    refresh() { dirty = true; },
+
+    // 操作を実行してセーブ・再描画。失敗時はトースト
+    act(fn) {
+      const r = fn(state);
+      if (r && r.ok === false && r.msg) UI.toast(r.msg);
+      UI.save(); showPending(); UI.refresh();
+      return r;
+    },
+
+    setSpeed(sp) { state.speed = sp; UI.save(); updateHeader(); },
+
+    toast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200);
+    },
+
+    modal(title, html, buttons) {
+      const m = document.getElementById('modal');
+      m.querySelector('.box').innerHTML = `<h3>${title}</h3><div>${html}</div><div class="btns" style="margin-top:12px;justify-content:flex-end"></div>`;
+      const bw = m.querySelector('.btns');
+      (buttons || [{ label: 'OK' }]).forEach(b => {
+        const el = document.createElement('button');
+        el.className = 'btn' + (b.cls ? ' ' + b.cls : ''); el.textContent = b.label;
+        el.onclick = () => { m.classList.remove('show'); modalOpen = false; if (b.onClick) b.onClick(); showPending(); UI.refresh(); };
+        bw.appendChild(el);
+      });
+      m.classList.add('show'); modalOpen = true;
+    },
+
+    // 小さな折れ線（sparkline）
+    spark(canvas, values, color, opts) {
+      opts = opts || {};
+      const dpr = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      if (!w || !h) return;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      const c = canvas.getContext('2d'); c.scale(dpr, dpr);
+      c.clearRect(0, 0, w, h);
+      if (values.length < 2) { c.fillStyle = '#7a6f62'; c.font = '11px sans-serif'; c.fillText('データ待ち', 4, h / 2); return; }
+      let min = Math.min(...values), max = Math.max(...values);
+      if (opts.zero) min = Math.min(0, min);
+      if (max - min < 1e-9) { max += 1; min -= 1; }
+      const x = i => 2 + (w - 4) * i / (values.length - 1);
+      const y = v => h - 3 - (h - 6) * (v - min) / (max - min);
+      if (opts.zero && min < 0) { c.strokeStyle = '#ccc'; c.beginPath(); c.moveTo(0, y(0)); c.lineTo(w, y(0)); c.stroke(); }
+      c.strokeStyle = color; c.lineWidth = 2; c.beginPath();
+      values.forEach((v, i) => i ? c.lineTo(x(i), y(v)) : c.moveTo(x(i), y(v)));
+      c.stroke();
+      if (opts.labels) {
+        c.fillStyle = '#7a6f62'; c.font = '10px sans-serif';
+        c.fillText(opts.fmt ? opts.fmt(max) : max.toFixed(2), 2, 10);
+        c.fillText(opts.fmt ? opts.fmt(min) : min.toFixed(2), 2, h - 2);
+      }
+    },
+
+    goal(s) {
+      if (!s.flags.refineryRunning) return (Engine.constructing(s, 'refinery') || Engine.constructing(s, 'refineryLarge')) ? '目標：製油所の完成を待つ' : '目標：製油所を建てる（用地・蒸留塔・製品タンク込み）';
+      for (let t = 3; t <= 6; t++) {
+        if (Engine.tierUnlocked(s, t) || !Engine.tierDef(t)) continue;
+        const p = Engine.tierProgress(s, t), d = Engine.tierDef(t);
+        if (p.undefinedCond) break;
+        const x = p.parts.find(q => !q.ok);
+        if (!x) return `目標：${d.name}へ（条件達成。月末に解放）`;
+        return `目標：${d.name}へ — ${x.label}${x.cur === undefined ? '' : (x.money ? ' ' + Engine.fmtMoney(x.cur) + ' / ' + Engine.fmtMoney(x.need) : ' ' + Engine.fmtNum(x.cur) + ' / ' + Engine.fmtNum(x.need))}`;
+      }
+      return '目標：精製品で稼ぎ、事業を広げる';
+    }
+  };
+
+  function buildChrome(page) {
+    const hdr = document.createElement('div'); hdr.id = 'hdr';
+    hdr.innerHTML = `<div class="row"><div class="date" id="h-date"></div><div class="money" id="h-money"></div></div>
+      <div class="speed">${SPEEDS.map(sp => `<button data-sp="${sp}">${sp === 0 ? '⏸ 停止' : '▶' + (sp > 1 ? '×' + sp : ' 1倍')}</button>`).join('')}</div>
+      <div class="goal" id="h-goal"></div>`;
+    document.body.prepend(hdr);
+    hdr.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => UI.setSpeed(+b.dataset.sp));
+    const nav = document.createElement('nav'); nav.id = 'nav';
+    const isOn = n => n.href === page + '.html' || (n.alt || []).includes(page + '.html');
+    nav.innerHTML = NAV.map(n => `<a href="${n.href}" class="${isOn(n) ? 'on' : ''}"${n.show && !n.show(state) && !isOn(n) ? ' style="display:none"' : ''}><span>${n.icon}</span>${n.label}</a>`).join('');
+    document.body.appendChild(nav);
+    const m = document.createElement('div'); m.id = 'modal'; m.innerHTML = '<div class="box"></div>';
+    document.body.appendChild(m);
+    const t = document.createElement('div'); t.id = 'toast'; document.body.appendChild(t);
+    const main = document.querySelector('main');
+    if (main) { const q = document.createElement('div'); q.id = 'queue'; main.prepend(q); }
+  }
+
+  // 全タブ共通の建設キュー
+  function renderQueue(s) {
+    const q = document.getElementById('queue');
+    if (!q) return;
+    if (!s.construction.length) { UI.html(q, ''); return; }
+    UI.html(q, `<div class="card"><div class="row"><h3>🚧 建設中 ${s.construction.length}件</h3></div>` +
+      s.construction.slice().sort((a, b) => a.daysLeft - b.daysLeft).map(c =>
+        `<div class="qrow"><div class="row"><span>${Engine.constructionLabel(c, s)}</span><span class="sub">残り${c.daysLeft >= 30 ? Math.ceil(c.daysLeft / 30) + 'か月' : c.daysLeft + '日'}</span></div>
+        <div class="bar"><i style="width:${(1 - c.daysLeft / c.totalDays) * 100}%"></i></div></div>`).join('') + '</div>');
+  }
+
+  function updateHeader() {
+    const s = state;
+    document.getElementById('h-date').textContent = Engine.dateStr(s);
+    const debt = Engine.totalDebt(s);
+    UI.html('h-money', `資金 <b class="${s.cash < 0 ? 'bad' : ''}">${Engine.fmtMoney(s.cash)}</b><br>借入 ${Engine.fmtMoney(debt)}　⚓${Engine.daysToShipment(s)}日後`);
+    document.querySelectorAll('#hdr [data-sp]').forEach(b => b.classList.toggle('on', +b.dataset.sp === s.speed));
+    document.getElementById('h-goal').textContent = UI.goal(s);
+    NAV.forEach(n => { if (!n.show) return; const a = document.querySelector(`#nav a[href="${n.href}"]`); if (a) a.style.display = (n.show(s) || a.classList.contains('on')) ? '' : 'none'; });
+  }
+
+  function showPending() {
+    if (modalOpen || !state.pendingEvents.length) return;
+    const ev = state.pendingEvents.shift();
+    let html = `<p>${ev.text}</p>`;
+    if (ev.effects) {
+      html += '<p class="sub">' + Object.entries(ev.effects).map(([k, v]) =>
+        `${GAME_DATA.resources[k].name} ${v > 1 ? '↑' : '↓'}${Math.round(Math.abs(v - 1) * 100)}%`).join('　') + `（約${ev.months}か月かけて元に戻る）</p>`;
+    }
+    UI.save();
+    UI.modal(ev.title, html);
+  }
+
+  function loop() {
+    const now = performance.now();
+    const dt = now - lastT; lastT = now;
+    if (state.speed > 0 && !modalOpen) {
+      acc += dt * state.speed;
+      const days = Math.floor(acc / DAY_MS);
+      if (days > 0) {
+        acc -= days * DAY_MS;
+        const ran = Engine.advanceDays(state, Math.min(days, 60));
+        if (ran < days || state.pendingEvents.length) { state.speed = 0; acc = 0; }
+        dirty = true;
+      }
+    }
+    if (state.pendingEvents.length && !modalOpen) showPending();
+    if (dirty && !pressing) { updateHeader(); renderQueue(state); if (renderFn) renderFn(state); dirty = false; }
+    if (now - lastSave > 3000) UI.save();
+  }
+
+  // 留守中の操業（設定ONのとき）：閉じていた時間ぶん1倍速で進め、決裁ポイントで止める
+  function offlineCatchUp() {
+    if (!state.settings.offline || !state.lastReal) return;
+    const elapsed = Date.now() - state.lastReal;
+    const days = Math.min(Math.floor(elapsed / DAY_MS), 360 * 5);
+    if (days < 15) return;
+    const before = { cash: state.cash, day: state.day };
+    const ran = Engine.advanceDays(state, days);
+    const gained = state.cash - before.cash;
+    state.pendingEvents.unshift({
+      title: '留守中の報告書',
+      text: `${Math.round(ran / 30 * 10) / 10}か月操業しました${ran < days ? '（決裁が必要な出来事で停止）' : ''}。資金は ${gained >= 0 ? '+' : ''}${Engine.fmtMoney(gained)}。`
+    });
+    UI.save();
+  }
+
+  try { if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register((location.pathname.indexOf('/pages/') >= 0 ? '../' : '') + 'sw.js'); } catch (e) {}
+
+  window.UI = UI;
+})();

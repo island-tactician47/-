@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>工場地帯シミュ</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .title { text-align: center; padding: 28px 12px 10px; }
+  .title h1 { margin: 0; font-size: 24px; }
+  .title p { color: var(--sub); margin: 6px 0 0; font-size: 13px; }
+  .menu a { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
+  .menu a span { font-size: 26px; }
+  .diff { cursor: pointer; }
+  .diff.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent) inset; }
+</style>
+</head>
+<body style="padding-bottom:20px">
+<div class="title">
+  <h1>🏭 工場地帯シミュ</h1>
+  <p>1950年、寂れた港町。祖父の油井1本から。</p>
+</div>
+<main>
+  <div id="cont"></div>
+
+  <h2>新しく始める</h2>
+  <div id="diffs"></div>
+  <button class="btn" style="width:100%" onclick="newGame()">この難易度で創業する</button>
+
+  <h2>設定</h2>
+  <div class="card">
+    <label class="row"><span>留守中の操業<br><span class="sub">ON：閉じていた時間だけ1倍速で進む（決裁が必要な出来事で停止）</span></span><input type="checkbox" id="offline"></label>
+  </div>
+  <div class="card" id="xfer">
+    <h3>セーブの引き継ぎ</h3>
+    <div class="sub">セーブはこの端末のブラウザの中にあります。端末の変更や、公開先のURLが変わるとき、バックアップにお使いください。</div>
+    <div class="btns" style="margin-top:8px">
+      <button class="btn sec small" onclick="xferSave()">📤 ファイルに保存</button>
+      <button class="btn sec small" onclick="$('xfile').click()">📥 ファイルから読み込む</button>
+      <button class="btn ghost small" onclick="xferCopy()">📋 コピー</button>
+      <button class="btn ghost small" onclick="xferPaste()">📝 貼り付けて読み込む</button>
+    </div>
+    <input type="file" id="xfile" accept=".json,.txt,application/json,text/plain" style="display:none" onchange="xferFile(this)">
+    <div class="sub" id="xmsg" style="margin-top:6px"></div>
+  </div>
+  <div class="card menu">
+    <a href="pages/debug.html"><span>🔧</span><div>デバッグパネル<div class="sub">PC用。早送り・資金操作・イベント発生・投資回収の目安</div></div></a>
+  </div>
+  <p class="sub" style="text-align:center">MVP：採掘＋精製　｜　価格はドル建て・1950年基準</p>
+</main>
+
+<script src="data/resources.js"></script>
+<script src="data/buildings.js"></script>
+<script src="data/leases.js"></script>
+<script src="data/difficulty.js"></script>
+<script src="data/loans.js"></script>
+<script src="data/port.js"></script>
+<script src="data/events.js"></script>
+<script src="data/eras.js"></script>
+<script src="data/recipes.js"></script>
+<script src="data/research.js"></script>
+<script src="data/segments.js"></script>
+<script src="data/map.js"></script>
+<script src="js/save.js"></script>
+<script src="js/market.js"></script>
+<script src="js/engine.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+let chosen = 'tight';
+const saved = Save.load();
+if (saved) Engine.normalize(saved);
+
+function renderDiffs() {
+  $('diffs').innerHTML = Object.entries(GAME_DATA.difficulties).map(([k, d]) => `
+    <div class="card diff ${k === chosen ? 'on' : ''}" onclick="chosen='${k}';renderDiffs()">
+      <div class="row"><h3>${d.name}</h3><span class="num">資金 <b>${Engine.fmtMoney(d.cash)}</b>${Object.values(d.loans).length ? '　借入 ' + Engine.fmtMoney(Object.values(d.loans).reduce((a, b) => a + b, 0)) : ''}</span></div>
+      <div class="sub">${d.desc}</div></div>`).join('');
+}
+
+function renderCont() {
+  if (!saved) {
+    $('cont').innerHTML = Save.hasOld()
+      ? '<div class="card"><b>旧バージョンのセーブがあります</b><div class="sub">ゲームの仕組みが変わったため、旧バージョンのセーブは引き継げません。新しく始めてください。</div></div>'
+      : '';
+    return;
+  }
+  $('cont').innerHTML = `<h2>続きから</h2>
+    <div class="card menu">
+      <a href="pages/factory.html"><span>🏗️</span><div><b>${Engine.dateStr(saved)}</b>（${GAME_DATA.difficulties[saved.difficulty].name}）
+        <div class="sub">資金 ${Engine.fmtMoney(saved.cash)}　借入 ${Engine.fmtMoney(Engine.totalDebt(saved))}　油井 ${saved.wells.length}本</div></div></a>
+    </div>
+    <div class="card menu">
+      <a href="pages/field.html"><span>🛢️</span>採掘地</a><hr style="border:0;border-top:1px solid var(--line)">
+      <a href="pages/refinery.html"><span>🏭</span>製油所</a><hr style="border:0;border-top:1px solid var(--line)">
+      <a href="pages/factory.html"><span>🏗️</span>工場</a><hr style="border:0;border-top:1px solid var(--line)">
+      <a href="pages/market.html"><span>📈</span>市場</a><hr style="border:0;border-top:1px solid var(--line)">
+      ${Engine.tierUnlocked(saved, 5) ? '<a href="pages/research.html"><span>🔬</span>研究</a><hr style="border:0;border-top:1px solid var(--line)">' : ''}
+      ${Engine.dashboardVisible(saved) ? '<a href="pages/dashboard.html"><span>📊</span>経営</a><hr style="border:0;border-top:1px solid var(--line)">' : ''}
+      <a href="pages/finance.html"><span>💰</span>財務</a>
+    </div>`;
+  $('offline').checked = !!saved.settings.offline;
+}
+
+$('offline').onchange = e => {
+  const s = Save.load();
+  if (!s) { e.target.checked = false; alert('ゲームを始めてから設定できます'); return; }
+  s.settings.offline = e.target.checked; Save.save(s);
+};
+
+// ---- セーブの引き継ぎ（書き出し：ファイル・クリップボード。読み込み：ファイル・貼り付け）。読み込むと今のセーブは置き換わる
+function xmsg(m) { $('xmsg').textContent = m; }
+function xferSave() {
+  const txt = Save.exportText();
+  if (!txt) { xmsg('保存するセーブがありません'); return; }
+  const d = new Date(), z = n => String(n).padStart(2, '0');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([txt], { type: 'application/json' }));
+  a.download = `factorysim-save-${d.getFullYear()}${z(d.getMonth() + 1)}${z(d.getDate())}-${z(d.getHours())}${z(d.getMinutes())}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  xmsg('ファイルに保存しました（ダウンロードフォルダ）');
+}
+async function xferCopy() {
+  const txt = Save.exportText();
+  if (!txt) { xmsg('コピーするセーブがありません'); return; }
+  try { await navigator.clipboard.writeText(txt); xmsg('セーブをコピーしました。メモ等に貼り付けて保管できます'); }
+  catch (e) {
+    const ta = document.createElement('textarea'); ta.value = txt; document.body.appendChild(ta); ta.select();
+    let ok = false; try { ok = document.execCommand('copy'); } catch (e2) {} ta.remove();
+    xmsg(ok ? 'セーブをコピーしました' : 'コピーできませんでした。「ファイルに保存」をお使いください');
+  }
+}
+function xferImport(txt) {
+  txt = (txt || '').trim();
+  if (!txt) { xmsg('中身が空です'); return; }
+  let s; try { s = JSON.parse(txt); } catch (e) { xmsg('読み込めない形式です（JSONではありません）'); return; }
+  const pr = Save.problem(s);
+  if (pr) { xmsg('このセーブは使えません：' + pr); return; }
+  const info = `${Engine.dateStr(s)}（${GAME_DATA.difficulties[s.difficulty].name}）資金 ${Engine.fmtMoney(s.cash)}`;
+  if (!confirm(`このセーブを読み込みます。\n${info}\n\n今のセーブは置き換わります。よろしいですか？`)) return;
+  try { Save.importText(txt); } catch (e) { xmsg('読み込めませんでした：' + e.message); return; }
+  location.reload();
+}
+function xferFile(inp) {
+  const f = inp.files && inp.files[0]; if (!f) return;
+  const r = new FileReader(); r.onload = () => { inp.value = ''; xferImport(String(r.result)); };
+  r.onerror = () => xmsg('ファイルを読めませんでした'); r.readAsText(f);
+}
+async function xferPaste() {
+  let txt = '';
+  try { txt = await navigator.clipboard.readText(); } catch (e) { txt = prompt('保存したセーブの文字列を貼り付けてください') || ''; }
+  xferImport(txt);
+}
+
+function newGame() {
+  if (saved && !confirm('いまのセーブデータは消えます。新しく始めますか？')) return;
+  const s = Engine.newGame(chosen);
+  s.speed = 0;
+  s.pendingEvents.push({ title: '創業', text: `1950年。祖父から北浜鉱区の油井1本と原油タンクを受け継いだ。<br><br>原油はタンクに貯まり、月末に港からまとめて出荷される。油井を増やして稼ぎ、製油所を目指そう。資金が足りなければ財務タブで融資を受けられる。<br><br>上の ▶ で時間が動き出す（1か月≒1分）。` });
+  Save.save(s);
+  location.href = 'pages/factory.html';
+}
+
+renderDiffs(); renderCont();
+</script>
+</body>
+</html>

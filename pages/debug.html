@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>デバッグ - 工場地帯シミュ</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main>
+  <h2>🔧 デバッグパネル（PC用）</h2>
+  <div class="card">
+    <h3>時間</h3>
+    <div class="btns">
+      <button class="btn small" onclick="skip(30)">+1か月</button>
+      <button class="btn small" onclick="skip(180)">+6か月</button>
+      <button class="btn small" onclick="skip(360)">+1年</button>
+      <button class="btn small" onclick="skip(1800)">+5年</button>
+    </div>
+    <label class="row" style="margin-top:6px"><span>早送り中のイベントで止めない</span><input type="checkbox" id="nostop"></label>
+  </div>
+  <div class="card">
+    <h3>資金</h3>
+    <div class="btns">
+      <button class="btn sec small" onclick="cash(100000)">+$100k</button>
+      <button class="btn sec small" onclick="cash(1000000)">+$1M</button>
+      <button class="btn sec small" onclick="UI.act(s=>{s.loans={};s.overdraft=0;})">借入を消す</button>
+      <button class="btn sec small" onclick="UI.act(s=>{s.construction.forEach(c=>c.daysLeft=1)})">建設を即完了（翌日）</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>技術ティア</h3>
+    <div class="btns" id="tiers"></div>
+    <div class="sub" id="tierinfo" style="margin-top:6px"></div>
+  </div>
+  <div class="card">
+    <h3>研究開発</h3>
+    <div class="btns" id="rsch"></div>
+  </div>
+  <div class="card">
+    <h3>データ検査</h3>
+    <button class="btn ghost small" onclick="$('vres').textContent = E.validateData().join('\n') || '問題なし'">検査する</button>
+    <pre class="sub" id="vres" style="white-space:pre-wrap"></pre>
+  </div>
+  <div class="card">
+    <h3>イベントを発生させる</h3>
+    <div class="btns" id="evs"></div>
+  </div>
+  <div class="card">
+    <h3>レシピの採算表（いまの相場）</h3>
+    <div style="overflow-x:auto"><table id="recipes" style="min-width:560px"></table></div>
+    <p class="sub">利益/分＝1倍速で現実の1分（ゲームの1か月）あたりの粗利。原料は市場の買値、維持費込み。「机上」はいまの相場（いまの飽和を含む）での値、「飽和込み」は飽和のない相場に月産を売ったときの定常の値崩れを掛けた値で、ゲームの実際の回収に近い。回収年数は建設費÷年間利益（建設費は物価指数込み）。</p>
+  </div>
+  <div class="card">
+    <h3>投資回収の目安（いまの相場）</h3>
+    <table id="bal"></table>
+    <p class="sub">油井は新規井の初年度の産出で計算（以後は年8%減衰）。製油所はフル稼働・原油は買い入れ想定。値崩れは考慮しない。</p>
+  </div>
+  <div class="card">
+    <h3>セーブデータ</h3>
+    <div class="btns">
+      <button class="btn ghost small" onclick="exp()">書き出し</button>
+      <button class="btn ghost small" onclick="imp()">読み込み</button>
+    </div>
+    <textarea id="txt" style="width:100%;height:80px;margin-top:6px;font-size:11px"></textarea>
+  </div>
+</main>
+
+<script src="../data/resources.js"></script>
+<script src="../data/buildings.js"></script>
+<script src="../data/leases.js"></script>
+<script src="../data/difficulty.js"></script>
+<script src="../data/loans.js"></script>
+<script src="../data/port.js"></script>
+<script src="../data/events.js"></script>
+<script src="../data/eras.js"></script>
+<script src="../data/recipes.js"></script>
+<script src="../data/research.js"></script>
+<script src="../data/segments.js"></script>
+<script src="../data/map.js"></script>
+<script src="../js/save.js"></script>
+<script src="../js/market.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const E = Engine, G = GAME_DATA, M = v => E.fmtMoney(v);
+
+function skip(d) { UI.act(s => { E.advanceDays(s, d, $('nostop').checked); }); }
+function cash(v) { UI.act(s => { s.cash += v; }); }
+function exp() { $('txt').value = Save.exportText(); }
+function imp() {
+  try { Save.importText($('txt').value); }
+  catch (e) { UI.toast('読み込めないデータ：' + e.message); return; }
+  UI.blockSave(); location.reload();
+}
+$('tiers').innerHTML = [3, 4, 5, 6].map(t => `<button class="btn sec small" onclick="UI.act(s=>E.unlockTier(s,${t}))">${G.tiers[t].name}を解放</button>`).join('');
+$('rsch').innerHTML = `<button class="btn sec small" onclick="UI.act(s=>{s.buildings.researchLab=3})">研究棟を3棟にする</button>` + Object.keys(G.research).map(id => `<button class="btn sec small" onclick="UI.act(s=>E.forceResearch(s,'${id}'))">${G.research[id].name}を完了</button>`).join('');
+$('evs').innerHTML = G.events.list.map(e => `<button class="btn ghost small" onclick="UI.act(s=>{const d=Market.startEvent(s,'${e.id}');s.pendingEvents.push({title:d.title,text:d.text,effects:d.effects,months:d.months});})">${e.title}</button>`).join('');
+
+function render(s) {
+  const idx = E.priceIndex(s), B = G.buildings;
+  UI.html('tierinfo', `現在：${E.tierName(E.currentTier(s))}　資産額 ${M(E.netWorth(s))}　精製品の累計売上 ${M(s.stats.refinedRevenue || 0)}`);
+  const money = v => (v < 0 ? '-' : '') + '$' + Math.abs(Math.round(v)).toLocaleString();
+  const yr = v => isFinite(v) ? v.toFixed(1) + '年' : '—';
+  const recRows = [];
+  for (const type in G.plants) for (const id of G.plants[type].recipes) {
+    const ec = E.recipeEconomics(s, id, type, 1), main = Object.keys(G.recipes[id].outputs)[0], R = G.resources[main];
+    recRows.push(`<tr style="${E.recipeUnlocked(s, id) && (!B[type].tier || E.tierUnlocked(s, B[type].tier)) ? '' : 'opacity:.55'}"><td>${G.recipes[id].name}${G.recipes[id].tier && !E.tierUnlocked(s, G.recipes[id].tier) ? ' 🔒' : ''}</td><td>${B[type].name}</td><td>${ec.perDay >= 10 ? ec.perDay.toFixed(0) : ec.perDay >= 1 ? ec.perDay.toFixed(1) : parseFloat(ec.perDay.toPrecision(2))}${R.unit}</td><td>${(ec.marginBuy / ec.revenue * 100).toFixed(0)}%</td><td class="${ec.monthlyBuy >= 0 ? 'good' : 'bad'}">${money(ec.monthlyBuy)}</td><td>${yr(ec.paybackYearsBuy)}</td><td class="${ec.monthlyBuySat >= 0 ? '' : 'bad'}">${yr(ec.paybackYearsBuySat)}</td></tr>`);
+  }
+  UI.html('recipes', '<tr><th>レシピ</th><th>設備</th><th>日量</th><th>粗利率</th><th>利益/分</th><th>回収(机上)</th><th>回収(飽和込み)</th></tr>' + recRows.join(''));
+  const rows = [];
+  const crude = Market.sellPrice(s, 'crude');
+  for (const id in G.leases) {
+    const L = G.leases[id];
+    const rate = B.oilWell.initialRate * L.richness;
+    const perYear = rate * 360 * (crude - B.oilWell.opexPerBbl * idx) - B.oilWell.fixedPerMonth * 12 * idx;
+    const cost = E.costOf(s, 'oilWell', id);
+    rows.push([`油井（${L.name}）`, cost, perYear]);
+  }
+  const y = G.distillModes[s.refinery.mode].yields;
+  const prodVal = ['gasoline', 'diesel', 'naphtha', 'heavy'].reduce((a, k) => a + y[k] * Market.sellPrice(s, k), 0);
+  const m = prodVal - B.refinery.opexPerBbl * idx - Market.buyPrice(s, 'crude');
+  const tRef = m * B.refinery.throughput * 360 - B.refinery.fixedPerMonth * 12 * idx;
+  rows.push(['小規模製油所一式（買い原油）', E.costOf(s, 'refinery'), tRef]);
+  { const mL = prodVal - B.refineryLarge.opexPerBbl * idx - Market.buyPrice(s, 'crude'); rows.push(['大規模製油所一式（買い原油）', E.costOf(s, 'refineryLarge'), mL * B.refineryLarge.throughput * 360 - B.refineryLarge.fixedPerMonth * 12 * idx]); }
+  const tYear = m * B.distillation.throughput * 360 - B.distillation.fixedPerMonth * 12 * idx;
+  rows.push(['蒸留塔の増設（買い原油）', E.costOf(s, 'distillation'), tYear]);
+  $('bal').innerHTML = '<tr><th>設備</th><th>建設費</th><th>年間利益</th><th>回収年数</th></tr>' + rows.map(([n, c, p]) =>
+    `<tr><td>${n}</td><td>${M(c)}</td><td class="${p >= 0 ? 'good' : 'bad'}">${M(p)}</td><td>${p > 0 ? (c / p).toFixed(1) + '年' : '—'}</td></tr>`).join('');
+}
+UI.boot({ page: 'debug', render });
+</script>
+</body>
+</html>

@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>町 - 工場地帯シミュ</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  #townwrap { position: relative; margin: 0 -12px; }
+  #town { display: block; width: 100%; height: calc(100vh - 330px); min-height: 300px; max-height: 560px; background: #5b8fb0; touch-action: none; }
+  #viewbtns { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; }
+  #viewbtns button { width: 36px; height: 36px; border-radius: 18px; border: 0; background: rgba(43,38,32,.72); color: #f6efe2; font-size: 18px; line-height: 1; }
+  #townhint { position: absolute; left: 8px; top: 8px; background: rgba(43,38,32,.72); color: #f6efe2; font-size: 11px; padding: 3px 8px; border-radius: 10px; pointer-events: none; }
+  #sheet .card { margin-top: 8px; }
+  .tbtn { display: block; width: 100%; text-align: left; margin-top: 6px; }
+</style>
+</head>
+<body>
+<main>
+  <div id="townwrap"><canvas id="town"></canvas><div id="townhint">ドラッグで移動・ピンチで拡大・タップで選択</div><div id="viewbtns"><button type="button" title="マップを回す（左）" onclick="iso.rotate(-1)">⟲</button><button type="button" title="マップを回す（右）" onclick="iso.rotate(1)">⟳</button></div></div>
+  <div id="sheet"></div>
+</main>
+
+<script src="../data/resources.js"></script>
+<script src="../data/buildings.js"></script>
+<script src="../data/leases.js"></script>
+<script src="../data/difficulty.js"></script>
+<script src="../data/loans.js"></script>
+<script src="../data/port.js"></script>
+<script src="../data/events.js"></script>
+<script src="../data/eras.js"></script>
+<script src="../data/recipes.js"></script>
+<script src="../data/research.js"></script>
+<script src="../data/segments.js"></script>
+<script src="../data/map.js"></script>
+<script src="../data/sprites_nt.js"></script>
+<script src="../data/sprites_bl.js"></script>
+<script src="../js/save.js"></script>
+<script src="../js/market.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script src="../js/sprites.js"></script>
+<script src="../js/sprites2.js"></script>
+<script src="../js/sprites3.js"></script>
+<script src="../js/iso.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const E = Engine, G = GAME_DATA, M = E.fmtMoney;
+let iso = null;
+let sel = null;            // 選んだ建物の key
+let cursor = null;         // タップした空きタイル
+let placing = null;        // 建てる種類（場所を決める途中）。'module' のときは placingPlant の増設モジュール
+let placingPlant = null;   // 増設モジュールを置く加工設備の id
+let placingRot = 0;        // 建てる向き（0〜3。向きを選べない種類は 0 のまま）
+
+// 建設メニューのカテゴリ（建物の category → 表示）
+const CATS = [
+  { id: 'factory', label: '🏭 工場', match: c => c === 'factory' },
+  { id: 'store', label: '🛢️ 貯蔵・製油', match: c => c === 'storage' || c === 'refinery' || c === 'field' },
+  { id: 'corp', label: '🏢 全社', match: c => c === 'power' || c === 'lab' }
+];
+
+function ghostAt(type, tile) { const rot = E.cleanRot(type, placingRot), [fw, fd] = E.footprintOf(type, rot); return { type, rot, x: tile.x - Math.floor(fw / 2), y: tile.y - Math.floor(fd / 2) }; }
+// 増設モジュールの足あと（親と同じ向き。親の種類ごとに大きさが違う）
+function modFoot(p) { return p ? E.footprintOf('module', E.parentRot(UI.state, p), p.type) : [2, 2]; }
+// 建てる向きを回す（置く場所の中心は動かさない）。d＝+1/−1
+function rotatePlacing(d) {
+  if (!placing || placing === 'module' || !E.canRotate(placing)) return;
+  placingRot = (placingRot + d + 4) % 4;
+  if (cursor) iso.ghost = ghostAt(placing, cursor);
+  UI.refresh();
+}
+document.addEventListener('keydown', ev => { if (ev.ctrlKey || ev.metaKey || ev.altKey) return; if (ev.key === 'r' || ev.key === 'R') rotatePlacing(ev.shiftKey ? -1 : 1); });
+function startPlacing(type) {
+  // 敷地に重ねて建てる設備（研究棟）：すでに敷地があれば、場所を選ばずにそこへ重ねて建てる（増設のたびに建屋が1段階高層になる）
+  if (E.stackCfg(type)) E.ensureMap(UI.state);
+  if (E.stackCfg(type) && E.stackSite(UI.state, type)) { UI.act(s => { const r = E.build(s, type); if (r && r.ok) UI.toast('増築を始めた（建屋が1段階高層になる）'); return r; }); return; }
+  placing = type; sel = null; placingRot = 0;
+  const c = cursor || (iso && iso.unproject(iso.w / 2, iso.h / 2)) || { x: 15, y: 18 };
+  const [fw, fd] = E.footprintOf(type), spot = E.findSpot(UI.state, type, { x: Math.floor(c.x) - Math.floor(fw / 2), y: Math.floor(c.y) - Math.floor(fd / 2) });   // 見ている場所に一番近い空き
+  const tile = spot ? { x: spot.x + Math.floor(fw / 2), y: spot.y + Math.floor(fd / 2) } : { x: Math.floor(c.x), y: Math.floor(c.y) };
+  cursor = tile; iso.ghost = ghostAt(type, tile); iso.cursor = null; iso.selected = null; if (spot && iso) iso.center(spot.x + fw / 2, spot.y + fd / 2);
+  UI.refresh();
+}
+function startModule(plantId) {
+  const s = UI.state, p = s.plants.find(q => q.id === plantId); if (!p) return;
+  placing = 'module'; placingPlant = plantId; sel = null; iso.selected = null;
+  const spot = E.findModuleSpot(s, p), [mw, md] = modFoot(p);
+  if (spot) { cursor = { x: spot.x + Math.floor(mw / 2), y: spot.y + Math.floor(md / 2) }; iso.ghost = { type: 'module', plantId, x: spot.x, y: spot.y }; iso.center(spot.x + mw / 2, spot.y + md / 2); }
+  else { cursor = null; iso.ghost = { type: 'module', plantId, x: -9, y: -9 }; }
+  UI.refresh();
+}
+function cancelPlacing() { placing = null; placingPlant = null; placingRot = 0; iso.ghost = null; UI.refresh(); }
+function confirmPlacing() {
+  const gh = iso.ghost; if (!gh || !placing) return;
+  if (placing === 'module') {
+    const r = UI.act(s => E.buildModule(s, placingPlant, { x: gh.x, y: gh.y }));
+    if (r && r.ok) { placing = null; placingPlant = null; iso.ghost = null; cursor = null; iso.cursor = null; UI.toast('増設モジュールの建設を開始'); }
+    return;
+  }
+  const type = placing, r = UI.act(s => E.build(s, type, null, { x: gh.x, y: gh.y, rot: placingRot }));
+  if (r && r.ok) { placing = null; placingRot = 0; iso.ghost = null; cursor = null; iso.cursor = null; UI.toast(`${G.buildings[type].name}の建設を開始`); }
+}
+
+function onTap(info) {
+  const s = UI.state;
+  if (placing === 'module') { const t = info.tile, [mw, md] = modFoot(s.plants.find(q => q.id === placingPlant)); cursor = t; iso.ghost = { type: 'module', plantId: placingPlant, x: t.x - Math.floor(mw / 2), y: t.y - Math.floor(md / 2) }; UI.refresh(); return; }
+  if (placing) {
+    cursor = info.tile; iso.ghost = ghostAt(placing, info.tile); UI.refresh(); return;
+  }
+  if (info.ent && info.ent.type !== '_port') { sel = info.ent.key; cursor = null; iso.selected = sel; iso.cursor = null; UI.refresh(); return; }
+  sel = null; iso.selected = null;
+  const t = E.terrainAt(s, info.tile.x, info.tile.y);
+  if (t === 'land') { cursor = info.tile; iso.cursor = info.tile; }
+  else { cursor = null; iso.cursor = null; if (t === 'sea') UI.toast('海です。建てる場所を選んだあとの画面で「埋め立てる」ができます'); else if (t === 'road') UI.toast('道路です'); else if (t === 'port') UI.toast('港の用地です'); }
+  UI.refresh();
+}
+
+function statusOf(s, e) {
+  if (e.building) return `<b class="warn">建設中</b> 残り${e.daysLeft >= 30 ? Math.ceil(e.daysLeft / 30) + 'か月' : e.daysLeft + '日'}`;
+  const p = e.plant;
+  if (p) { const r = p.last && p.last.reason; return r === 'ok' ? '<b class="good">稼働中</b>' : r === 'input' ? '<b class="bad">原料不足</b>' : r === 'full' ? '<b class="bad">置き場が満杯</b>' : r === 'cash' ? '<b class="bad">資金不足</b>' : '<span class="sub">停止中</span>'; }
+  if (e.type === 'refinery' || e.type === 'refineryLarge') return E.refineryOnline(s) ? '<b class="good">稼働中</b>' : '<span class="sub">停止中</span>';
+  if (e.type === 'powerPlant') return s.power && s.power.gen > 0 ? `<b class="good">発電 ${E.fmtNum(s.power.gen)}MWh/日</b>` : '<span class="sub">発電していない</span>';
+  return '';
+}
+
+function renderSheet(s) {
+  const out = [];
+  if (placing === 'module') {
+    const p = s.plants.find(q => q.id === placingPlant), gh = iso.ghost;
+    if (!p) { placing = null; iso.ghost = null; }
+    else {
+      const b = G.buildings[p.type], MC = E.moduleCfg(), chk = gh ? E.canPlaceModule(s, p, gh.x, gh.y) : { ok: false, msg: 'マップをタップして場所を決める' }, cb = E.canBuildModule(s, p);
+      const add = E.plantCap(E.plantDef(p), G.recipes[p.recipe]) * MC.gain;
+      out.push(`<div class="card"><div class="row"><h3>🧱 ${b.name}の増設モジュール</h3><span class="sub">${cb.cost ? M(cb.cost) : M(E.moduleCost(s, p))}</span></div>
+        <div class="sub">設備に隣接して置く（緑なら置ける）。日量が +${E.fmtNum(add)}${G.resources[Object.keys(G.recipes[p.recipe].outputs)[0]].unit}/日（現在 ${E.fmtNum(E.plantCapOf(p))}）。維持費も増える</div>
+        <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">置ける</b>' : `<b class="bad">${chk.msg}</b>`}${cb.ok ? '' : `　<b class="bad">${cb.msg}</b>`}</div>
+        <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">建設する</button> <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
+      UI.html('sheet', out.join('')); return;
+    }
+  }
+  if (placing) {
+    const b = G.buildings[placing], gh = iso.ghost, chk = gh ? E.canPlace(s, placing, gh.x, gh.y, null, E.cleanRot(placing, placingRot)) : { ok: false, msg: 'マップをタップして場所を決める' };
+    const cb = E.canBuild(s, placing), full = !E.findSpot(s, placing), rc = E.canReclaim(s);
+    out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}を建てる</h3><span class="sub">${M(E.costOf(s, placing))}・${b.months}か月</span></div>
+      <div class="sub">マップをタップして場所を決める（緑なら置ける）。足あと ${E.footprintOf(placing, E.cleanRot(placing, placingRot)).join('×')}${E.canRotate(placing) ? '（向きを回せる）' : ''}</div>
+      <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">置ける</b>' : `<b class="bad">${chk.msg}</b>`}${cb.ok ? '' : `　<b class="bad">${cb.msg}</b>`}</div>
+      ${full ? `<div class="sub bad" style="margin-top:4px">置ける場所がありません。海を埋め立てて用地を広げます（${rc.ok ? M(rc.cost) + '/行' : rc.msg}）。</div>` : ''}
+      <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">建設する</button> ${E.canRotate(placing) ? '<button class="btn small" onclick="rotatePlacing(-1)">⟲</button> <button class="btn small" onclick="rotatePlacing(1)">⟳</button> ' : ''}<button class="btn small" ${rc.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.reclaim(s))">🏗️ 埋め立てる（${M(E.reclaimCost(s))}）</button> <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
+  } else if (sel) {
+    let e = (iso.ents || []).find(q => q.key === sel);
+    if (e && e.type === 'module') e = (iso.ents || []).find(q => q.key === e.parent) || e;   // モジュールを選ぶと本体を見せる
+    if (e && e.type !== 'module') {
+      const b = G.buildings[e.type], p = e.plant, rec = p && G.recipes[p.recipe];
+      out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}</h3><span>${statusOf(s, e)}</span></div>
+        ${rec ? `<div class="sub">生産：${rec.name}（稼働率 ${Math.round(p.runRate * 100)}%）　日量 ${E.fmtNum(E.plantCapOf(p))}</div>` : ''}
+        ${p && !e.building && E.hasModule(p.type) ? (() => { const n = E.moduleCount(s, p), MC = E.moduleCfg(), cb = E.canBuildModule(s, p); return `<div class="row" style="margin-top:6px"><span class="sub">🧱 増設モジュール ${n}/${MC.max}（1個で日量+${Math.round(MC.gain * 100)}%・${M(E.moduleCost(s, p))}）</span><button class="btn small" ${n >= MC.max || !cb.ok ? 'disabled' : ''} onclick="startModule(${p.id})">置く</button></div>`; })() : ''}
+        <div class="sub">${b.desc || ''}</div>
+        <div style="margin-top:6px">${p ? '<a href="factory.html">工場の設定へ</a>　' : e.type === 'refinery' || e.type === 'refineryLarge' || e.type === 'distillation' ? '<a href="refinery.html">製油所へ</a>　' : ''}<button class="btn small" onclick="sel=null;iso.selected=null;UI.refresh()">閉じる</button></div></div>`);
+    }
+  } else if (cursor) {
+    const cat = UI.tab('town-cat', 'factory');
+    const items = CATS.find(c => c.id === cat) || CATS[0];
+    const types = Object.keys(G.buildings).filter(t => !E.offMap(t) && items.match(G.buildings[t].category) && (!G.buildings[t].tier || E.tierUnlocked(s, G.buildings[t].tier)));
+    out.push(`<div class="card"><div class="row"><h3>ここに建てる</h3><span class="sub">タイル ${cursor.x},${cursor.y}</span></div>
+      ${UI.chips('town-cat', CATS.map(c => ({ id: c.id, label: c.label })), items.id)}
+      ${types.map(t => { const b = G.buildings[t], chk = E.canBuild(s, t), cant = !chk.ok && !/資金不足/.test(chk.msg || ''); return `<button class="btn tbtn" ${cant ? 'disabled' : ''} onclick="startPlacing('${t}')">${b.icon || ''} ${b.name}　${M(E.costOf(s, t))}・${b.months}か月${cant ? `<div class="sub">${chk.msg}</div>` : (!chk.ok ? `<div class="sub warn">${chk.msg}</div>` : '')}</button>`; }).join('') || '<div class="sub">解放済みの設備はまだない</div>'}</div>`);
+  } else {
+    const n = (iso.ents || []).length;
+    out.push(`<div class="card sub">建物をタップすると詳しく、空き地をタップするとそこに建てられます。${n ? `（建物 ${n}）` : ''}　油井は<a href="field.html">採掘地</a>で建てます。</div>`);
+  }
+  UI.html('sheet', out.join(''));
+}
+
+function render(s) {
+  if (!iso) {
+    for (const k in (G.spritesNT || {})) { const m = G.spritesNT[k]; Sprites.H[k] = Math.max(8, Math.round((m.ay - (m.fw + m.fd) * 8) / 1.4)); }   // PNGの絵の当たり判定の高さ：足あとの奥の頂点Aから絵の上端まで（描画の高さ倍率 HS=1.4 を割り戻す）
+    for (const k in (G.spritesBL || {})) { const m = G.spritesBL[k]; Sprites.H[k] = Math.max(8, Math.round(Math.max(...m.r.map(r => r.ay - (r.fw + r.fd) * 8)) / 1.4)); }   // Blender の絵：向きのうち一番高いもの
+    iso = Iso.create($('town'), { getState: () => UI.state, onTap, onChanged: () => UI.save() });
+    iso.start();
+    const qp = new URLSearchParams(location.search);   // 確認用：?era=2&zoom=0.6&cx=15&cy=15（時代・拡大・中心を固定）
+    if (qp.get('era') || qp.get('zoom')) iso.buildAll = true;   // 確認用：構築の枠を使わず、最初のフレームで全部描く
+    if (qp.get('era')) iso.eraOverride = Math.max(1, Math.min(6, Math.round(+qp.get('era')) || 1));
+    if (qp.get('zoom')) { iso.cam.z = +qp.get('zoom'); iso.center(+(qp.get('cx') || 15), +(qp.get('cy') || 15)); }
+    if (qp.get('view')) { iso.resize && iso.resize(); iso.setView(+qp.get('view') || 0); }   // 確認用：?view=0〜3（視点の向き）
+    const b = qp.get('build');
+    if (b && G.buildings[b] && !E.offMap(b)) startPlacing(b);
+    const mp = +(new URLSearchParams(location.search).get('module')) || 0;
+    if (mp) startModule(mp);
+    if (b || mp) try { history.replaceState(null, '', location.pathname); } catch (e) {}   // 再読み込みで場所選びが再開しないように
+  }
+  renderSheet(s);
+}
+UI.boot({ page: 'town', render });
+</script>
+</body>
+</html>

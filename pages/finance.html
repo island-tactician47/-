@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>財務 - 工場地帯シミュ</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main>
+  <h2>💰 財務</h2>
+  <div class="card">
+    <div class="row"><h3>借入残高</h3><b class="num" id="debt"></b></div>
+    <div class="sub" id="debtinfo"></div>
+  </div>
+  <h2>融資枠</h2>
+  <div id="loans"></div>
+
+  <div class="card">
+    <h3>今月（途中経過）</h3>
+    <table id="cur"></table>
+  </div>
+
+  <div class="card">
+    <div class="row"><h3>月次利益</h3><span class="sub">直近36か月</span></div>
+    <canvas class="chart" id="profit"></canvas>
+    <div class="row"><h3>資金</h3></div>
+    <canvas class="spark" id="cash"></canvas>
+  </div>
+
+  <div class="card">
+    <h3>年次の損益</h3>
+    <p class="sub">決算書・有価証券報告書・キャッシュフロー計算書は仕様が固まってから追加予定</p>
+    <table id="yearly"></table>
+  </div>
+</main>
+
+<script src="../data/resources.js"></script>
+<script src="../data/buildings.js"></script>
+<script src="../data/leases.js"></script>
+<script src="../data/difficulty.js"></script>
+<script src="../data/loans.js"></script>
+<script src="../data/port.js"></script>
+<script src="../data/events.js"></script>
+<script src="../data/eras.js"></script>
+<script src="../data/recipes.js"></script>
+<script src="../data/research.js"></script>
+<script src="../data/segments.js"></script>
+<script src="../data/map.js"></script>
+<script src="../js/save.js"></script>
+<script src="../js/market.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const E = Engine, G = GAME_DATA, M = v => E.fmtMoney(v);
+
+function borrow(id, f) { UI.act(s => E.borrow(s, id, E.loanLimit(s, id) * f)); }
+function repay(id, a) { UI.act(s => E.repayLoan(s, id, a)); }
+
+function render(s) {
+  $('debt').textContent = M(E.totalDebt(s));
+  let pay = 0;
+  for (const id in s.loans) pay += s.loans[id].monthly + s.loans[id].principal * G.loans[id].rate / 12;
+  UI.html('debtinfo', `毎月の返済（元金＋利息）約${M(pay)}${s.overdraft > 0 ? `<br><span class="bad">当座貸越 ${M(s.overdraft)}（年利${G.overdraftRate * 100}%・資金がプラスになると自動返済）</span>` : ''}<br>直近12か月の売上 ${M(E.revenue12(s))}`);
+  UI.html('loans', Object.entries(G.loans).map(([id, L]) => {
+    const loan = s.loans[id], av = E.loanAvailable(s, id), lim = E.loanLimit(s, id);
+    let body;
+    if (loan) {
+      const left = Math.ceil(loan.principal / loan.monthly);
+      body = `<div class="row"><span>残高 <b class="num">${M(loan.principal)}</b></span><span class="sub">月々 元金${M(loan.monthly)}＋利息 ・あと約${left}か月</span></div>
+        <div class="btns" style="margin-top:6px"><button class="btn small" onclick="repay('${id}',50000)">$50k繰上返済</button><button class="btn small" onclick="repay('${id}',Infinity)">返せるだけ返す</button></div>`;
+    } else if (av.ok) {
+      body = `<div class="btns" style="margin-top:6px"><button class="btn sec small" onclick="borrow('${id}',0.25)">${M(lim * 0.25)}借りる</button><button class="btn sec small" onclick="borrow('${id}',0.5)">${M(lim * 0.5)}</button><button class="btn sec small" onclick="borrow('${id}',1)">枠いっぱい ${M(lim)}</button></div>`;
+    } else body = `<div class="sub">🔒 ${av.msg.startsWith('条件') ? '条件をまだ満たしていない' : av.msg}</div>`;
+    return `<div class="card"><div class="row"><h3>${L.name}</h3><span class="sub">年利${(L.rate * 100).toFixed(1)}%・${L.years}年</span></div>
+      <div class="sub">枠 ${M(lim)}　条件：${L.condText}</div>${body}</div>`;
+  }).join(''));
+
+  const m = s.month;
+  const rev = Object.values(m.revenue).reduce((a, b) => a + b, 0);
+  const rows = Object.entries(m.revenue).map(([k, v]) => `<tr><td>　売上：${G.resources[k].name}（${E.fmtNum(m.sold[k] || 0)}${G.resources[k].unit}）</td><td>${M(v)}</td></tr>`).join('');
+  const cost = m.purchase + m.opex + m.fixed + m.interest + (m.research || 0);
+  UI.html('cur', `<tr><th>項目</th><th>金額</th></tr>${rows}
+    <tr><td><b>売上合計</b></td><td><b>${M(rev)}</b></td></tr>
+    <tr><td>　原料の購入</td><td>${M(-m.purchase)}</td></tr>
+    <tr><td>　操業費（採掘・精製）</td><td>${M(-m.opex)}</td></tr>
+    <tr><td>　設備の維持費</td><td>${M(-m.fixed)}</td></tr>
+    <tr><td>　利息</td><td>${M(-m.interest)}</td></tr>
+    ${m.research ? `<tr><td>　研究費</td><td>${M(-m.research)}</td></tr>` : ''}
+    <tr><td><b>営業利益</b></td><td class="${rev - cost >= 0 ? 'good' : 'bad'}"><b>${M(rev - cost)}</b></td></tr>
+    <tr><td class="sub">設備投資</td><td class="sub">${M(-m.construction)}</td></tr>
+    <tr><td class="sub">借入</td><td class="sub">${M(m.borrowed)}</td></tr>
+    <tr><td class="sub">元金の返済</td><td class="sub">${M(-m.principal)}</td></tr>`);
+
+  const h = s.history.slice(-36);
+  UI.spark($('profit'), h.map(x => x.profit), '#2e7d4f', { zero: true, labels: true, fmt: M });
+  UI.spark($('cash'), h.map(x => x.cash), '#2f6f8f', { labels: true, fmt: M });
+
+  const years = {};
+  for (const x of s.history) {
+    const y = years[x.y] || (years[x.y] = { rev: 0, cost: 0, capex: 0, n: 0 });
+    y.rev += x.revenue; y.cost += x.cost; y.capex += x.capex; y.n++;
+  }
+  UI.html('yearly', '<tr><th>年</th><th>売上</th><th>利益</th><th>投資</th></tr>' + Object.entries(years).reverse().slice(0, 15).map(([y, v]) =>
+    `<tr><td>${y}${v.n < 12 ? '<span class="sub">*</span>' : ''}</td><td>${M(v.rev)}</td><td class="${v.rev - v.cost >= 0 ? 'good' : 'bad'}">${M(v.rev - v.cost)}</td><td>${M(v.capex)}</td></tr>`).join(''));
+}
+UI.boot({ page: 'finance', render });
+</script>
+</body>
+</html>

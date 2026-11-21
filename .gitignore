@@ -1,0 +1,7 @@
+# 公開するのは、ゲーム本体（launcher.html・pages・js・data・css・assets・manifest.json・sw.js）だけ
+tools/
+docs/
+recipe_tree*.png
+*.md
+.claude/
+*.log

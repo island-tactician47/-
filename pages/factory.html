@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>工場 - 工場地帯シミュ</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main>
+  <h2>🏗️ 工場</h2>
+  <div id="tier"></div>
+  <div id="segs"></div>
+  <div id="seghead"></div>
+  <div id="oilbase"></div>
+  <div id="build"></div>
+  <div id="plants"></div>
+  <div id="hq"></div>
+  <p class="sub">加工設備は1基ごとにレシピを選ぶ（専用工場は固定）。原料は在庫から使い、自動購入をONにすると足りない分を市場の買値で補う（市場の買値は相場+4%）。作ったものは出荷日にまとめて売られる。倉庫は同じ種類の品目で共用する。本部は画面の整理用の分類（現金や意思決定は全社で1つ）。</p>
+</main>
+
+<script src="../data/resources.js"></script>
+<script src="../data/buildings.js"></script>
+<script src="../data/leases.js"></script>
+<script src="../data/difficulty.js"></script>
+<script src="../data/loans.js"></script>
+<script src="../data/port.js"></script>
+<script src="../data/events.js"></script>
+<script src="../data/eras.js"></script>
+<script src="../data/recipes.js"></script>
+<script src="../data/research.js"></script>
+<script src="../data/segments.js"></script>
+<script src="../data/map.js"></script>
+<script src="../js/save.js"></script>
+<script src="../js/market.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const E = Engine, G = GAME_DATA;
+const RATES = [0, 25, 50, 75, 100];
+const REASON = {
+  ok:    ['🟢 稼働中', 'good'],
+  input: ['🔴 原料不足', 'bad'],
+  full:  ['🔴 置き場が満杯', 'bad'],
+  cash:  ['🔴 資金不足', 'bad'],
+  off:   ['⏸ 停止中', 'sub'],
+  none:  ['—', 'sub']
+};
+const HQ = 'hq';   // 倉庫・電力のタブ
+let builtFor = null;
+
+// 日量が小さい品目（自動車・衣料など）は小数で表示する
+const qty = v => v >= 10 ? E.fmtNum(v) : v >= 1 ? String(parseFloat(v.toFixed(2))) : v > 0 ? String(parseFloat(v.toPrecision(2))) : '0';   // 船のように日量が0.003でも「0」にならないよう有効数字2桁
+const num = (v, n) => (isFinite(v) ? v : 0).toFixed(n === undefined ? 2 : n);
+const sg = v => `<b class="${v >= 0 ? 'good' : 'bad'}">${v >= 0 ? '+' : '-'}$${Math.abs(v).toFixed(2)}</b>`;
+const itemList = o => Object.entries(o).map(([k, v]) => `${G.resources[k].name}×${parseFloat(v.toFixed(2))}`).join('＋');
+const BAD = new Set(['input', 'full', 'cash']);
+
+// 建設ボタン（説明は小さく下に）
+function buildBtn(s, type) {
+  const b = G.buildings[type], chk = E.canBuild(s, type);
+  return `<div style="margin-top:6px"><button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?build=${type}'">${b.icon || ''} ${b.name}（${E.fmtMoney(E.costOf(s, type))}・${b.months}か月）→マップで置く</button>
+    <div class="sub">${b.desc || ''}</div>${chk.ok ? '' : `<div class="sub">${chk.msg}</div>`}</div>`;
+}
+
+function renderTier(s) {
+  const cur = E.currentTier(s), d = E.tierDef(cur);
+  let next = null;
+  for (let t = cur + 1; t <= 6; t++) if (E.tierDef(t)) { next = t; break; }
+  let body = '';
+  if (!next) body = '<div class="sub">すべてのティアを解放した</div>';
+  else {
+    const nd = E.tierDef(next), p = E.tierProgress(s, next);
+    body += `<div class="sub">次：${nd.icon} ${nd.name} — ${nd.text || ''}</div>`;
+    if (p.undefinedCond) body += '<div class="sub">解放条件は未定（今後のバージョンで決まる）</div>';
+    else body += p.parts.map(x => x.cur === undefined
+      ? `<div class="sub ${x.ok ? 'good' : ''}">${x.ok ? '✔' : '・'} ${x.label}</div>`
+      : `<div class="row sub"><span>${x.ok ? '✔' : '・'} ${x.label}</span><span class="num">${x.money ? E.fmtMoney(x.cur) + ' / ' + E.fmtMoney(x.need) : E.fmtNum(x.cur) + ' / ' + E.fmtNum(x.need)}</span></div>
+         <div class="bar"><i style="width:${Math.max(0, Math.min(100, x.cur / x.need * 100))}%"></i></div>`).join('');
+  }
+  const head = `<span><b>${d.icon} ${d.name}</b> <span class="sub">技術ティア ${cur}</span></span>`;
+  UI.html('tier', UI.fold('f-tier', head, body, !!next && cur < 4));
+}
+
+// 本部ごとの集計：設備数・止まっている数
+function segInfo(s) {
+  const info = {};
+  for (const id of E.segmentIds()) info[id] = { n: 0, bad: 0, types: [] };
+  for (const type in G.plants) { const sg = E.segmentOfBuilding(type); if (info[sg]) info[sg].types.push(type); }
+  for (const p of s.plants) {
+    const sg = E.segmentOfBuilding(p.type); if (!info[sg]) continue;
+    info[sg].n++; if (p.last && BAD.has(p.last.reason)) info[sg].bad++;
+  }
+  return info;
+}
+// その本部に、まだ見せる意味があるか（設備がある、または1種でも建てられる）
+function segVisible(s, id, info) {
+  return id === 'oil' || info[id].n > 0 || info[id].types.some(t => !E.buildLockReason(s, t) || (G.buildings[t].tier && E.tierUnlocked(s, G.buildings[t].tier)));
+}
+
+function renderSegs(s, info) {
+  const mk = grp => E.segmentIds().filter(id => G.segments[id].group === grp && segVisible(s, id, info)).map(id => ({
+    id, label: `${G.segments[id].icon} ${E.segmentName(s, id)}`, badge: info[id].bad ? '⚠' + info[id].bad : (info[id].n ? String(info[id].n) : ''), bad: info[id].bad > 0 }));
+  const mat = mk('material'), prod = mk('product');
+  const hq = [{ id: HQ, label: '🏢 倉庫・電力' }];
+  const all = mat.concat(prod, hq);
+  const firstWith = all.find(x => info[x.id] && info[x.id].n > 0);
+  let cur = UI.tab('factory', (firstWith || all[0]).id);
+  if (!all.some(x => x.id === cur)) cur = all[0].id;
+  const rows = [['素材系', mat], ['製品系', prod], ['全社', hq]].filter(r => r[1].length)
+    .map(([lab, items]) => `<div class="sub" style="margin-top:4px">${lab}</div>${UI.chips('factory', items, cur).replace('class="chips"', 'class="chips tabs"')}`).join('');
+  UI.html('segs', rows);
+  return cur;
+}
+
+function renderSegHead(s, seg, info) {
+  if (seg === HQ) { UI.html('seghead', ''); return; }
+  const n = info[seg].n, bad = info[seg].bad;
+  UI.html('seghead', `<h2>${G.segments[seg].icon} ${E.segmentName(s, seg)}</h2><div class="sub">設備 ${n}基${bad ? `　<b class="bad">止まっている ${bad}基</b>` : n ? '　<span class="good">すべて稼働</span>' : ''}</div>`);
+}
+
+// 石油本部の採掘・精製の要約（詳しくは採掘地・製油所のページ）
+function renderOilBase(s, seg) {
+  if (seg !== 'oil') { UI.html('oilbase', ''); return; }
+  const wells = s.wells.length, rate = E.totalWellRate(s), crude = s.inventory.crude, ccap = E.capacity(s, 'crude');
+  const online = E.refineryOnline(s), building = E.constructing(s, 'refinery') + E.constructing(s, 'refineryLarge') > 0;
+  const refText = online ? `処理 日量${E.fmtNum(E.refineryThroughput(s) * s.refinery.runRate)}bbl（稼働率${Math.round(s.refinery.runRate * 100)}%・${G.distillModes[s.refinery.mode].name}）` : building ? '建設中' : '未建設';
+  UI.html('oilbase', `<div class="card"><div class="row"><b>⛏️ 採掘</b><a class="btn small" href="field.html">採掘地へ</a></div>
+    <div class="sub">油井 ${wells}本・日産 ${E.fmtNum(rate)}bbl　原油在庫 ${E.fmtNum(crude)} / ${E.fmtNum(ccap)}bbl</div>
+    <div class="row" style="margin-top:8px"><b>🏭 精製</b><a class="btn small" href="refinery.html">製油所へ</a></div>
+    <div class="sub">製油所：${refText}</div></div>`);
+}
+
+function renderBuild(s, seg, info) {
+  if (seg === HQ) { UI.html('build', ''); return; }
+  const types = info[seg].types;
+  const open = types.filter(t => !G.buildings[t].tier || E.tierUnlocked(s, G.buildings[t].tier));   // 研究待ちの設備は、ティアが開いていれば押せない状態で理由つきで出す
+  const locked = types.filter(t => !open.includes(t));
+  const cons = s.construction.filter(c => types.includes(c.type));
+  const body = open.map(t => buildBtn(s, t)).join('') || '<div class="sub">解放済みの設備はまだない</div>';
+  const lockedLine = locked.length ? `<div class="sub" style="margin-top:8px">解放前：${locked.map(t => `${G.buildings[t].name}（${E.tierName(G.buildings[t].tier)}）`).join('・')}</div>` : '';
+  const head = `<span>設備を建てる <span class="sub">${open.length}種</span>${cons.length ? ` <span class="sub">🚧 建設中${cons.length}</span>` : ''}</span>`;
+  UI.html('build', UI.fold('f-build-' + seg, head, body + lockedLine, info[seg].n === 0));
+}
+
+// 設備カードの枠は plant の並びが変わったときだけ作り直し、中身は領域ごとに更新する（開閉は UI.fold が保つ）
+function renderPlants(s, seg, info) {
+  if (seg === HQ) { $('plants').innerHTML = ''; builtFor = null; return; }
+  const mine = s.plants.filter(p => E.segmentOfBuilding(p.type) === seg);
+  const key = seg + ':' + mine.map(p => p.id + ':' + p.type).join('|');
+  if (builtFor !== key) {
+    builtFor = key;
+    $('plants').innerHTML = mine.length ? '<h2>稼働中の設備</h2>' + mine.map(p => UI.fold('f-pl-' + p.id,
+      `<span id="pl-h-${p.id}"></span><span id="pl-s-${p.id}"></span>`,
+      `<div id="pl-c-${p.id}"></div><div id="pl-n-${p.id}"></div>`, false)).join('') : '';
+  }
+  for (const p of mine) {
+    const def = E.plantDef(p), b = G.buildings[p.type], rec = G.recipes[p.recipe];
+    if (!def || !b || !rec) continue;
+    const [lab, cls] = REASON[(p.last && p.last.reason) || 'none'] || REASON.none;
+    const ec = E.recipeEconomics(s, p.recipe, p.type, p.runRate, p.modules || 0), main = Object.keys(rec.outputs)[0], unit = G.resources[main].unit;
+    UI.html('pl-h-' + p.id, `<b>${b.icon || '🏭'} ${b.name} #${p.id}</b><div class="sub">${rec.name}・日量${qty(ec.perDay)}${unit}・月 ${sg(ec.monthlyBuy)}</div>`);
+    UI.html('pl-s-' + p.id, `<span class="${cls}" style="white-space:nowrap">${lab}</span>`);
+    const chips = def.recipes.length > 1
+      ? `<div class="chips" style="margin-top:6px">${def.recipes.map(id => E.recipeUnlocked(s, id)
+          ? `<span class="chip ${p.recipe === id ? 'on' : ''}" onclick="UI.act(s=>Engine.setPlantRecipe(s,${p.id},'${id}'))">${G.recipes[id].name}</span>`
+          : `<span class="chip" style="opacity:.45" onclick="UI.toast('${E.recipeLockReason(s, id)}')">🔒 ${G.recipes[id].name}</span>`).join('')}</div>`
+      : `<div class="sub" style="margin-top:6px">専用：${rec.name}</div>`;
+    const rate = Math.round(p.runRate * 100);
+    UI.html('pl-c-' + p.id, `${chips}
+      <div class="row" style="margin-top:6px"><span class="sub">稼働率</span><div class="chips">${RATES.map(r => `<span class="chip ${rate === r ? 'on' : ''}" onclick="UI.act(s=>Engine.setPlantRate(s,${p.id},${r / 100}))">${r}%</span>`).join('')}</div></div>
+      <label class="row" style="margin-top:6px"><span>原料が足りない分を市場から買う</span><input type="checkbox" ${p.autoBuy ? 'checked' : ''} onchange="UI.act(s=>Engine.setPlantAutoBuy(s,${p.id},this.checked))"></label>`);
+    UI.html('pl-n-' + p.id, `<div class="sub" style="margin-top:6px">${itemList(rec.inputs)} → ${itemList(rec.outputs)}（${unit}あたり）</div>
+      <div class="sub">いまの相場：売値$${num(ec.revenue)} − 原料$${num(ec.inputCostBuy)}（買う）− 操業$${num(ec.opex)} ＝ ${sg(ec.marginBuy)}　自社在庫を使うと ${sg(ec.marginOwn)}</div>
+      <div class="sub">能力${qty(E.plantCapOf(p))}${unit}/日${p.modules ? `（増設モジュール${p.modules}個込み）` : ''}　${isFinite(ec.paybackYearsBuy) ? `回収目安${num(ec.paybackYearsBuy, 1)}年` : '回収できない'}</div>
+      ${ec.unbuyable.length ? `<div class="sub warn">${ec.unbuyable.map(k => G.resources[k].name).join('・')}は市場で買えない（自社で作るしかない）</div>` : ''}
+      ${E.moduleCfg().max && E.hasModule(p.type) ? `<div class="row" style="margin-top:4px"><span class="sub">🧱 増設モジュール ${E.moduleCount(s, p)}/${E.moduleCfg().max}（日量+${Math.round(E.moduleCfg().gain * 100)}%/個・${E.fmtMoney(E.moduleCost(s, p))}）</span><button class="btn small" ${E.canBuildModule(s, p).ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?module=${p.id}'">マップで置く</button></div>` : ''}
+      ${p.last && p.last.t > 0 ? `<div class="sub">昨日の生産 ${qty(p.last.t)}${unit}</div>` : ''}`);
+  }
+}
+
+function renderPools(s) {
+  const SC = G.storageClasses || {};
+  const rows = Object.keys(SC).filter(c => E.poolCap(s, c) > 0 || E.poolUsed(s, c) > 0).map(c => {
+    const cap = E.poolCap(s, c), used = E.poolUsed(s, c), r = cap ? used / cap : 1;
+    const items = Object.keys(G.resources).filter(k => G.resources[k].storage === c && s.inventory[k] > 0.001)
+      .map(k => `${G.resources[k].name} ${qty(s.inventory[k])}${G.resources[k].unit}`).join('　');
+    return `<div style="margin-top:6px"><div class="row"><b>${SC[c].name}</b><span class="num sub">${E.fmtNum(used)} / ${E.fmtNum(cap)} 枠</span></div>
+      <div class="bar ${r > 0.97 ? 'full' : ''}"><i style="width:${Math.min(100, r * 100)}%"></i></div>
+      <div class="sub">${items || '空'}</div></div>`;
+  });
+  return rows.join('');
+}
+
+// 電力：需要（加工設備のレシピの電力分）と自家発電の状況、燃料の選択
+function powerBody(s) {
+  const PW = G.power, n = E.count(s, 'powerPlant'), idx = E.priceIndex(s);
+  let demand = 0;
+  for (const p of s.plants) { const rec = G.recipes[p.recipe]; if (rec && p.last) demand += p.last.t * (rec.opexPerUnit || 0) * (rec.energyShare || 0) / PW.gridPrice; }
+  const pw = s.power || { fuel: 'heavy', autoBuy: false, gen: 0 }, cap = E.powerCapacity(s);
+  const fuels = Object.keys(PW.fuels).map(k => {
+    const r = G.resources[k], ok = E.tierUnlocked(s, r.tier || 1), pe = E.powerEconomics(s, k);
+    return ok ? `<span class="chip ${pw.fuel === k ? 'on' : ''}" onclick="UI.act(s=>Engine.setPowerFuel(s,'${k}'))">${r.name}（発電1MWhあたり燃料$${pe.fuelCost.toFixed(2)}）</span>`
+              : `<span class="chip" style="opacity:.45" onclick="UI.toast('${E.tierName(r.tier)}になると使える')">🔒 ${r.name}</span>`;
+  }).join('');
+  const pe = E.powerEconomics(s, pw.fuel);
+  return `<div class="sub">加工設備の電力需要 ${E.fmtNum(demand)}MWh/日（直近の稼働から）（送電単価 $${(PW.gridPrice * idx).toFixed(1)}/MWh。操業費に含まれている）</div>
+    ${n ? `<div class="row" style="margin-top:6px"><span>自家発電所 ${n}棟（日量${E.fmtNum(cap)}MWh）</span><b class="${pw.gen > 0 ? 'good' : 'sub'}">発電 ${E.fmtNum(pw.gen)}MWh/日</b></div>
+      <div class="sub">発電した分の送電料金が払い戻される（今日の削減 ${E.fmtMoney(pw.gen * PW.gridPrice * idx)}/日）。燃料は在庫から燃やす（出荷から確保）</div>
+      <div class="chips" style="margin-top:6px">${fuels}</div>
+      <label class="row" style="margin-top:6px"><span>燃料が足りない分を市場から買う</span><input type="checkbox" ${pw.autoBuy ? 'checked' : ''} onchange="UI.act(s=>Engine.setPowerAutoBuy(s,this.checked))"></label>`
+      : '<div class="sub" style="margin-top:6px">自家発電所はまだない</div>'}
+    <div class="sub" style="margin-top:6px">発電所1棟の採算（満稼働・${G.resources[pw.fuel].name}・市場の買値）：1MWhあたり削減 $${pe.saving.toFixed(2)}、月 ${E.fmtMoney(pe.monthly)}、${isFinite(pe.paybackYears) ? '回収約' + pe.paybackYears.toFixed(1) + '年' : '回収できない'}。需要が日量100MWhに満たないと、その分だけ回収は遅くなる</div>`;
+}
+
+function renderHq(s, seg) {
+  if (seg !== HQ) { UI.html('hq', ''); return; }
+  const types = Object.keys(G.buildings).filter(t => G.buildings[t].category === 'storage' || G.buildings[t].category === 'power');
+  const open = types.filter(t => !G.buildings[t].tier || E.tierUnlocked(s, G.buildings[t].tier));
+  const pools = renderPools(s);
+  UI.html('hq', UI.fold('f-hq-build', '<span>倉庫・発電所を建てる</span>', open.map(t => buildBtn(s, t)).join('') || '<div class="sub">解放済みの設備はまだない</div>', false)
+    + UI.fold('f-hq-power', '<span>⚡ 電力 <span class="sub">' + (E.count(s, 'powerPlant') ? `自家発電 ${E.fmtNum(s.power ? s.power.gen : 0)}MWh/日` : '買電のみ') + '</span></span>', powerBody(s), E.count(s, 'powerPlant') > 0)
+    + UI.fold('f-hq-pools', '<span>倉庫の使用状況</span>', pools || '<div class="sub">倉庫はまだない</div>', true)
+    + '<div class="sub" style="margin-top:8px">研究と研究棟は下の「研究」タブ（重工業期から）</div>');
+}
+
+function render(s) {
+  renderTier(s);
+  const info = segInfo(s), seg = renderSegs(s, info);
+  renderSegHead(s, seg, info); renderOilBase(s, seg); renderBuild(s, seg, info); renderPlants(s, seg, info); renderHq(s, seg);
+}
+UI.boot({ page: 'factory', render });
+</script>
+</body>
+</html>

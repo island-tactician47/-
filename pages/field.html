@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>採掘地 - 工場地帯シミュ</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>.pic{display:block;height:84px;margin:4px auto;image-rendering:auto}</style>
+</head>
+<body>
+<main>
+  <h2>🛢️ 採掘地</h2>
+  <div id="ftabs"></div>
+  <div id="oilview">
+  <div class="card">
+    <div class="row"><h3>産出と原油タンク</h3><span class="sub" id="wellcount"></span></div>
+    <div class="grid2 num">
+      <div>日量 <b id="rate"></b> bbl</div>
+      <div>原油在庫 <b id="crude"></b></div>
+    </div>
+    <div class="bar" id="crudebar"><i></i></div>
+    <div class="icons" id="tankicons"></div>
+    <div class="sub" id="crudeinfo"></div>
+    <div class="btns" style="margin-top:8px">
+      <button class="btn sec small" id="b-tank" onclick="UI.act(s=>Engine.build(s,'crudeTank'))"></button>
+      <a class="btn sec small" href="town.html?build=crudeTank" onclick="UI.save()">町の地図で場所を選ぶ</a>
+    </div>
+  </div>
+
+  <h2>鉱区</h2>
+  <div id="leases"></div>
+  </div>
+  <div id="mineview" style="display:none"></div>
+
+  <h2>出来事</h2>
+  <div class="card log" id="log"></div>
+</main>
+
+<script src="../data/resources.js"></script>
+<script src="../data/buildings.js"></script>
+<script src="../data/leases.js"></script>
+<script src="../data/difficulty.js"></script>
+<script src="../data/loans.js"></script>
+<script src="../data/port.js"></script>
+<script src="../data/events.js"></script>
+<script src="../data/eras.js"></script>
+<script src="../data/recipes.js"></script>
+<script src="../data/research.js"></script>
+<script src="../data/segments.js"></script>
+<script src="../data/map.js"></script>
+<script src="../js/save.js"></script>
+<script src="../js/market.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const E = Engine, G = GAME_DATA;
+
+const ORES = ['coal', 'ironore', 'copperore', 'limestone'];
+function renderMines(s) {
+  const lock = E.buildLockReason(s, 'mine');
+  const out = [`<div class="card"><div class="sub">鉱区を買って鉱山を建てると、鉱石が貯鉱場に入り、工場がまず使います（買う量が減る）。鉱石は売れません。貯鉱場は鉱石ごとに建てます。鉱山は年${Math.round(G.buildings.mine.declinePerYear * 100)}%ずつ減ります。<b>貯鉱場が無い・満杯だと鉱山は止まります（休止もできます）。</b>${lock ? `<br><span class="bad">${lock}</span>` : ''}</div></div>`];
+  for (const res of ORES) {
+    const R = G.resources[res], o = G.buildings.mine.ores[res], rate = E.mineRateOf(s, res);
+    const stock = s.inventory[res] || 0, yc = E.yardCap(s, res), yn = E.yardCount(s, res), yb = E.yardBuilding(s, res), room = E.oreRoom(s, res), full = rate > 0 && room < rate;
+    const ychk = E.canBuildYard(s, res), YC = G.buildings.mine.yard;
+    const sites = Object.keys(G.mineSites).filter(id => G.mineSites[id].res === res);
+    const IMG = { coal: 'coal', ironore: 'iron', copperore: 'copper', limestone: 'limestone' }[res];
+    const cards = sites.map(id => {
+      const S = G.mineSites[id], st = E.mineSiteState(s, id), n = E.minesOnSite(s, id), nb = E.buildingOnSite(s, id);
+      const rich = st.revealed ? `豊かさ <b>${S.richness.toFixed(2)}</b>` : `推定 ${S.estimate[0]}〜${S.estimate[1]}`;
+      let body;
+      if (st.owned) {
+        const chk = E.canBuildMine(s, id);
+        const paused = !!E.mineSiteState(s, id).paused;
+        body = `<img class="pic" src="../assets/bl/mine_${IMG}_r0.png" alt="">
+          <div class="icons">${'⛏️'.repeat(n)}${'🚧'.repeat(nb)}<span class="ghost">${'◻️'.repeat(Math.max(0, S.slots - n - nb))}</span></div>
+          <div class="sub">鉱山 ${n}/${S.slots}${paused ? '　<b class="bad">休止中</b>' : ''}　日量 ${E.fmtNum(E.mineRateOn(s, id))}t${st.revealed ? `　新規は日量約${E.fmtNum(o.rate * S.richness)}t` : ''}</div>
+          <div class="btns" style="margin-top:6px">${n > 0 ? `<button class="btn sec small" onclick="UI.act(s=>Engine.toggleMineSite(s,'${id}'))">${paused ? '▶ 再開する' : '⏸ 休止する'}</button> ` : ''}<button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.buildMine(s,'${id}'))">鉱山を建てる（${E.fmtMoney(E.mineCost(s, id))}・${G.buildings.mine.months}か月）</button></div>`;
+      } else {
+        const lc = Math.round(S.cost * E.priceIndex(s)), ok = !lock && s.cash >= lc;
+        body = `<div class="sub">${S.desc}　枠 ${S.slots}か所</div>
+          <div class="btns" style="margin-top:6px"><button class="btn sec small" ${ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.buyMineSite(s,'${id}'))">採掘権を買う（${E.fmtMoney(lc)}）</button></div>`;
+      }
+      return `<div class="card"><div class="row"><h3>${S.name}${st.owned ? '' : ' <span class="sub">未取得</span>'}</h3><span class="sub">${rich}</span></div>${body}</div>`;
+    }).join('');
+    out.push(`<h2>${R.name}</h2><div class="card"><div class="grid2 num"><div>日量 <b>${E.fmtNum(rate)}</b> t</div><div>在庫 <b>${E.fmtNum(stock)}</b> / ${E.fmtNum(yc)}</div></div>
+      <img class="pic" src="../assets/bl/yard_${IMG}_r0.png" alt="">
+      <div class="icons">${'🗄️'.repeat(yn)}${'🚧'.repeat(yb)}<span class="ghost">${'◻️'.repeat(Math.max(0, YC.max - yn - yb))}</span></div>
+      <div class="sub">貯鉱場 ${yn}棟（1棟 ${E.fmtNum(YC.cap[res])}t）　｜　操業費 ${E.fmtMoney(o.opexPerUnit * E.priceIndex(s))}/t<br>${yn + yb === 0 ? '<span class="bad">貯鉱場が無いと、鉱山は掘れない</span>' : full ? '<span class="bad">貯鉱場が満杯のため、鉱山は止まっている（在庫を使うと再開。買った鉱石も在庫に入る）</span>' : `あと ${E.fmtNum(room)}t まで入る`}</div>
+      <div class="btns" style="margin-top:6px"><button class="btn sec small" ${ychk.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.buildYard(s,'${res}'))">貯鉱場を建てる（${E.fmtMoney(E.yardCost(s))}・${YC.months}か月）</button></div></div>${cards}`);
+  }
+  UI.html('mineview', out.join(''));
+}
+
+function render(s) {
+  const tab = UI.tab('field-tab', 'oil');
+  UI.html('ftabs', UI.chips('field-tab', [{ id: 'oil', label: '🛢️ 石油' }, { id: 'mine', label: '⛏️ 鉱山' }], tab));
+  $('oilview').style.display = tab === 'oil' ? '' : 'none';
+  $('mineview').style.display = tab === 'mine' ? '' : 'none';
+  if (tab === 'mine') renderMines(s);
+  const rate = E.totalWellRate(s);
+  $('wellcount').textContent = `油井 ${s.wells.length}本`;
+  $('rate').textContent = E.fmtNum(rate);
+  const cap = E.capacity(s, 'crude');
+  $('crude').textContent = `${E.fmtNum(s.inventory.crude)} / ${E.fmtNum(cap)}`;
+  const ratio = cap ? s.inventory.crude / cap : 1;
+  $('crudebar').firstElementChild.style.width = (ratio * 100) + '%';
+  $('crudebar').classList.toggle('full', ratio > 0.97);
+  const net = rate - E.refineryThroughput(s) * s.refinery.runRate;
+  const daysToFull = net > 0 ? (cap - s.inventory.crude) / net : Infinity;
+  const ship = E.daysToShipment(s);
+  UI.html('tankicons', '⚫'.repeat(E.count(s, 'crudeTank')) + '🚧'.repeat(E.constructing(s, 'crudeTank')));
+  UI.html('crudeinfo', ratio > 0.97
+    ? '<span class="bad">満杯で油井が止まっている！タンクを増やすか港を改修する</span>'
+    : `次の出荷まで${ship}日　｜　${daysToFull === Infinity ? '満杯にはならない' : `あと約${Math.floor(daysToFull)}日で満杯${daysToFull < ship ? '<span class="bad">（出荷日に間に合わない）</span>' : ''}`}`);
+  const tk = E.canBuild(s, 'crudeTank');
+  $('b-tank').textContent = `原油タンク +10,000bbl（${E.fmtMoney(E.costOf(s, 'crudeTank'))}・2か月）`;
+  $('b-tank').disabled = !tk.ok;
+
+  // 鉱区
+  const html = [];
+  for (const id in G.leases) {
+    const L = G.leases[id], st = s.leases[id];
+    const n = E.wellsOnLease(s, id), nb = E.buildingOnLease(s, id);
+    const rich = st.revealed ? `豊かさ <b>${L.richness.toFixed(2)}</b>` : `推定 ${L.estimate[0]}〜${L.estimate[1]}`;
+    const wellCost = E.costOf(s, 'oilWell', id);
+    const newRate = G.buildings.oilWell.initialRate * L.richness;
+    let body;
+    if (st.owned) {
+      const icons = '🛢️'.repeat(n) + '🚧'.repeat(nb) + `<span class="ghost">${'◻️'.repeat(Math.max(0, L.slots - n - nb))}</span>`;
+      const leaseRate = s.wells.filter(w => w.lease === id).reduce((a, w) => a + E.wellRate(s, w), 0);
+      const chk = E.canBuild(s, 'oilWell', id);
+      body = `<img class="pic" src="../assets/bl/oilWell_r0.png" alt="">
+        <div class="icons">${icons}</div>
+        <div class="sub">油井 ${n}/${L.slots}本　日量 ${E.fmtNum(leaseRate)}bbl${st.revealed ? `　新規井は日量約${Math.round(newRate)}bbl` : ''}</div>
+        <div class="btns" style="margin-top:6px"><button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.build(s,'oilWell','${id}'))">油井を掘る（${E.fmtMoney(wellCost)}・2か月）</button></div>`;
+    } else {
+      const lc = Math.round(L.cost * E.priceIndex(s));
+      body = `<div class="sub">${L.desc}　枠 ${L.slots}本　掘削費 ×${L.wellCostMul}</div>
+        <div class="btns" style="margin-top:6px"><button class="btn sec small" ${s.cash >= lc ? '' : 'disabled'} onclick="UI.act(s=>Engine.buyLease(s,'${id}'))">採掘権を買う（${E.fmtMoney(lc)}）</button></div>`;
+    }
+    html.push(`<div class="card"><div class="row"><h3>${L.name}${st.owned ? '' : ' <span class="sub">未取得</span>'}</h3><span class="sub">${rich}</span></div>${body}</div>`);
+  }
+  UI.html('leases', html.join(''));
+
+  UI.html('log', s.log.slice(0, 30).map(l => `<div><span class="sub">${E.year({ day: l.day })}/${E.monthNum({ day: l.day })}</span> ${l.text}</div>`).join(''));
+}
+UI.boot({ page: 'field', render });
+</script>
+</body>
+</html>

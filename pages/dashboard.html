@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>経営 - 工場地帯シミュ</title>
+<link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+<main>
+  <h2>📊 経営ダッシュボード</h2>
+  <div class="card" id="summary"></div>
+  <div class="card">
+    <div class="row"><h3>売上と利益</h3><span class="sub">直近36か月</span></div>
+    <div class="sub">月次の売上</div><canvas class="chart" id="revChart"></canvas>
+    <div class="sub">月次の利益（研究費・利息込み）</div><canvas class="chart" id="profChart"></canvas>
+  </div>
+  <div id="deals"></div>
+  <h2>本部別</h2>
+  <div id="segs"></div>
+  <div id="invest"></div>
+  <p class="sub">本部は画面の整理用の分類（現金や意思決定は全社で1つ）。利益率は「いまの相場で、原料を市場で買って1基を動かしたとき」の粗利率（値崩れは含めない）で、月の粗利と回収年数は月産を売ったときの値崩れを含む机上の値です。本部ごとの実績損益は今後足します。実績の損益は上のグラフと<a href="finance.html">財務ページ</a>。</p>
+</main>
+
+<script src="../data/resources.js"></script>
+<script src="../data/buildings.js"></script>
+<script src="../data/leases.js"></script>
+<script src="../data/difficulty.js"></script>
+<script src="../data/loans.js"></script>
+<script src="../data/port.js"></script>
+<script src="../data/events.js"></script>
+<script src="../data/eras.js"></script>
+<script src="../data/recipes.js"></script>
+<script src="../data/research.js"></script>
+<script src="../data/segments.js"></script>
+<script src="../data/map.js"></script>
+<script src="../js/save.js"></script>
+<script src="../js/market.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const E = Engine, G = GAME_DATA, M = E.fmtMoney;
+const pct = v => (isFinite(v) ? (v * 100).toFixed(0) : '–') + '%';
+const yrs = v => isFinite(v) ? v.toFixed(1) + '年' : '回収できない';
+const REASON = { ok: ['稼働中', 'good'], input: ['原料不足', 'bad'], full: ['置き場が満杯', 'bad'], cash: ['資金不足', 'bad'], off: ['停止中', 'sub'], none: ['—', 'sub'] };
+const BAD = new Set(['input', 'full', 'cash']);
+
+function last12(s) { const h = s.history.slice(-12); return { rev: h.reduce((a, x) => a + x.revenue, 0), profit: h.reduce((a, x) => a + x.profit, 0), n: h.length }; }
+
+function renderSummary(s) {
+  const t = last12(s);
+  const room = E.spendable(s) - Math.max(0, s.cash);
+  UI.html('summary', `<div class="row"><h3>${E.dateStr(s)}</h3><span class="sub">${E.tierName(E.currentTier(s))}</span></div>
+    <table>
+      <tr><td>資産額（現金−借入＋設備評価）</td><td><b>${M(E.netWorth(s))}</b></td></tr>
+      <tr><td>現金 / 借入</td><td>${M(s.cash)} / ${M(E.totalDebt(s))}${s.overdraft > 0 ? `<div class="sub bad">うち当座貸越 ${M(s.overdraft)}</div>` : ''}</td></tr>
+      <tr><td>運転資金枠（原料の購入にだけ使える上乗せ）</td><td>${M(room)}</td></tr>
+      <tr><td>設備の評価額（再調達額）</td><td>${M(E.assetValue(s))}</td></tr>
+      <tr><td>物流（港：全社の出荷）</td><td>${E.port(s).name}${s.shipments[0] && s.shipments[0].left > 1 ? `<div class="sub bad">積み残し ${E.fmtNum(s.shipments[0].left)}枠</div>` : `<div class="sub">次の出荷まで${E.daysToShipment(s)}日</div>`}</td></tr>
+      <tr><td>直近${t.n}か月の売上</td><td>${M(t.rev)}</td></tr>
+      <tr><td>直近${t.n}か月の利益（利益率${t.rev > 0 ? pct(t.profit / t.rev) : '–'}）</td><td class="${t.profit >= 0 ? 'good' : 'bad'}">${M(t.profit)}</td></tr>
+    </table>`);
+}
+
+// 原料不足の理由を在庫から推定する（生産後の在庫なので、1日分の必要量に対する割合がいちばん小さい入力だけを挙げる）
+function shortInputs(s, p) {
+  if (p.last && p.last.short && G.resources[p.last.short]) return [G.resources[p.last.short].name];   // エンジンが記録した律速の入力
+  const def = E.plantDef(p), rec = G.recipes[p.recipe]; if (!def || !rec) return [];
+  const cap = E.plantCapOf(p) * p.runRate;
+  const ks = Object.keys(rec.inputs).filter(k => s.inventory[k] < rec.inputs[k] * cap - 1e-9);
+  ks.sort((a, b) => s.inventory[a] / rec.inputs[a] - s.inventory[b] / rec.inputs[b]);
+  return ks.slice(0, 1).map(k => G.resources[k].name);
+}
+
+// 本部ごとの集計
+function collect(s) {
+  const idx = E.priceIndex(s), out = {};
+  for (const id of E.segmentIds()) out[id] = { id, types: [], plants: [], recipes: [], assetValue: 0, monthly: 0, bad: 0, byType: {} };
+  for (const type in G.plants) { const o = out[E.segmentOfBuilding(type)]; if (o) o.types.push(type); }
+  for (const type in G.plants) {
+    const o = out[E.segmentOfBuilding(type)]; if (!o) continue;
+    if (E.buildLockReason(s, type) && !s.plants.some(p => p.type === type)) continue;
+    for (const id of G.plants[type].recipes) {
+      if (!E.recipeUnlocked(s, id)) continue;
+      const ec = E.recipeEconomics(s, id, type, 1);
+      if (!ec || !(ec.revenue > 0)) continue;
+      o.recipes.push({ id, type, ec, margin: ec.marginBuy / ec.revenue, running: s.plants.filter(p => p.type === type && p.recipe === id).length });
+    }
+  }
+  // 石油本部の採掘・精製（油井・製油所・蒸留塔・原油タンクと製品タンク）の評価額
+  for (const type in s.buildings) { const o = out[E.segmentOfBuilding(type)], b = G.buildings[type]; if (o && b && !G.plants[type]) { o.baseValue = (o.baseValue || 0) + b.cost * s.buildings[type] * idx; o.assetValue += b.cost * s.buildings[type] * idx; } }
+  for (const k in s.oreYards || {}) { const o = out[E.segmentOfItem(k)]; if (o) { const w = s.oreYards[k] * G.buildings.mine.yard.cost * idx; o.baseValue = (o.baseValue || 0) + w; o.assetValue += w; } }
+  for (const m of s.mines || []) { const o = out[E.segmentOfItem(G.mineSites[m.site].res)]; if (o) { const w = E.mineCost(s, m.site) / E.priceIndex(s) * idx; o.baseValue = (o.baseValue || 0) + w; o.assetValue += w; } }
+  if (out.oil) { const w = s.wells.length * G.buildings.oilWell.cost * idx; out.oil.baseValue = (out.oil.baseValue || 0) + w; out.oil.assetValue += w; }
+  for (const p of s.plants) {
+    const o = out[E.segmentOfBuilding(p.type)], b = G.buildings[p.type], ec = E.recipeEconomics(s, p.recipe, p.type, p.runRate, p.modules || 0);
+    if (!o || !b || !ec) continue;
+    o.plants.push(p);
+    if (p.last && BAD.has(p.last.reason)) o.bad++;
+    const cv = b.cost * idx * (1 + (p.modules || 0) * E.moduleCfg().costMul);
+    o.assetValue += cv; o.monthly += ec.monthlyBuySat;
+    const bt = o.byType[p.type] || (o.byType[p.type] = { n: 0, cap: 0, monthly: 0 });
+    bt.n++; bt.cap += cv; bt.monthly += ec.monthlyBuySat;
+  }
+  return out;
+}
+
+function plantRow(s, p) {
+  const def = E.plantDef(p), rec = G.recipes[p.recipe], b = G.buildings[p.type];
+  if (!def || !rec || !b) return `<tr><td>${p.type} #${p.id}</td><td class="sub">—</td><td></td></tr>`;
+  const r = (p.last && p.last.reason) || 'none', [lab, cls] = REASON[r] || REASON.none;
+  const cap = E.plantCapOf(p), util = cap > 0 && p.last ? p.last.t / cap : 0;
+  let why = '';
+  if (r === 'input') why = `不足：${shortInputs(s, p).join('・') || '—'}${p.autoBuy ? '' : '（自動購入OFF）'}`;
+  else if (r === 'full') why = `${G.resources[Object.keys(rec.outputs)[0]].name}の置き場が満杯`;
+  else if (r === 'cash') why = '原料を買う資金が足りない';
+  return `<tr><td>${b.icon || ''} ${b.name} #${p.id}<div class="sub">${rec.name}</div></td><td class="${cls}">${lab}<div class="sub">${why}</div></td>
+    <td class="num">${pct(util)}<div class="bar"><i style="width:${Math.min(100, util * 100)}%"></i></div></td></tr>`;
+}
+
+// 石油本部の採掘・精製（要約。詳しくは採掘地・製油所のページ）
+function oilBase(s) {
+  const online = E.refineryOnline(s), building = E.constructing(s, 'refinery') + E.constructing(s, 'refineryLarge') > 0;
+  const ref = online ? `処理 日量${E.fmtNum(E.refineryThroughput(s) * s.refinery.runRate)}bbl（稼働率${Math.round(s.refinery.runRate * 100)}%・${G.distillModes[s.refinery.mode].name}）` : building ? '建設中' : '未建設';
+  return `<table><tr><td>⛏️ 採掘</td><td>油井 ${s.wells.length}本・日産 ${E.fmtNum(E.totalWellRate(s))}bbl<div class="sub">原油在庫 ${E.fmtNum(s.inventory.crude)} / ${E.fmtNum(E.capacity(s, 'crude'))}bbl　<a href="field.html">採掘地へ</a></div></td></tr>
+    <tr><td>🏭 精製</td><td>製油所：${ref}<div class="sub"><a href="refinery.html">製油所へ</a></div></td></tr></table>`;
+}
+
+// 本部の実績損益（履歴の直近12か月）。社内売上・社内仕入は、他の本部の素材を自社の在庫から使った分を市場の中値で振り替えたもの
+function plTable(s, id, pl) {
+  const o = pl[id]; if (!o) return '';
+  const row = (lab, v, neg) => v ? `<tr><td>${lab}</td><td class="num">${M(neg ? -v : v)}</td></tr>` : '';
+  return `<div class="sub" style="margin-top:8px">実績（直近${pl.months}か月）</div>
+    <table>${row('売上（市場）', o.rev)}${row('社内売上', o.tout)}${row('社内仕入', o.tin, true)}${row('原料の購入', o.purchase, true)}${row('操業費', o.opex, true)}${row('維持費', o.fixed, true)}${row('研究費', o.research, true)}${row('違約金', o.penalty, true)}
+    <tr><td><b>利益（利息を除く）</b></td><td class="num ${o.profit >= 0 ? 'good' : 'bad'}"><b>${M(o.profit)}</b></td></tr></table>`;
+}
+
+function segBody(s, o, pl) {
+  // 設備：止まっているものを先に。正常なものは1行にまとめる
+  const bad = o.plants.filter(p => p.last && BAD.has(p.last.reason)), okp = o.plants.filter(p => !(p.last && BAD.has(p.last.reason)));
+  let plants = '<div class="sub">設備はまだない</div>';
+  if (o.plants.length) {
+    const okSummary = okp.length ? UI.fold('f-ok-' + o.id, `<span class="sub">稼働・停止中（問題なし） ${okp.length}基</span>`, `<table><tr><th>設備</th><th>状態</th><th>昨日の稼働</th></tr>${okp.map(p => plantRow(s, p)).join('')}</table>`, false) : '';
+    plants = (bad.length ? `<div class="sub bad">止まっている設備</div><table><tr><th>設備</th><th>状態</th><th>昨日の稼働</th></tr>${bad.map(p => plantRow(s, p)).join('')}</table>` : '') + okSummary;
+  }
+  // 利益率（本部の中の製品・素材ごと）
+  const rows = o.recipes.slice().sort((a, b) => b.margin - a.margin);
+  const rank = rows.length ? `<div class="sub" style="margin-top:8px">利益率（粗利率の高い順。*は買えない原料を使う参考値）</div>
+    <table><tr><th>品目</th><th>粗利率</th><th>月の粗利/基</th><th>回収</th><th>稼働</th></tr>${rows.map(r => `<tr>
+      <td>${G.recipes[r.id].name}${r.ec.unbuyable.length ? '<span class="sub">*</span>' : ''}</td><td class="${r.margin >= 0.2 ? 'good' : r.margin >= 0 ? '' : 'bad'}">${pct(r.margin)}</td>
+      <td>${M(r.ec.monthlyBuySat)}</td><td>${yrs(r.ec.paybackYearsBuySat)}</td><td>${r.running ? r.running + '基' : '<span class="sub">–</span>'}</td></tr>`).join('')}</table>` : '';
+  // 投資の回収
+  const types = Object.keys(o.byType), plantCap = types.reduce((a, type) => a + o.byType[type].cap, 0);
+  const inv = types.length ? `<div class="sub" style="margin-top:8px">投資の回収（参考値：再調達額・原料は市場で買う前提・止まっている設備も稼働扱い）</div>
+    <table><tr><th>設備</th><th>評価額</th><th>月の粗利</th><th>回収</th></tr>${types.map(type => { const x = o.byType[type]; return `<tr><td>${G.buildings[type].icon || ''} ${G.buildings[type].name} ×${x.n}</td><td>${M(x.cap)}</td><td class="${x.monthly >= 0 ? 'good' : 'bad'}">${M(x.monthly)}</td><td>${yrs(x.monthly > 0 ? x.cap / (x.monthly * 12) : Infinity)}</td></tr>`; }).join('')}
+    <tr><td><b>加工設備の合計</b></td><td><b>${M(plantCap)}</b></td><td><b>${M(o.monthly)}</b></td><td><b>${yrs(o.monthly > 0 ? plantCap / (o.monthly * 12) : Infinity)}</b></td></tr>
+    ${o.baseValue ? `<tr><td class="sub">採掘・精製（油井・製油所・タンク。粗利の対象外）</td><td class="sub">${M(o.baseValue)}</td><td></td><td></td></tr>` : ''}</table>` : '';
+  // 価格チャート（この本部の品目）
+  const items = G.productOrder.filter(k => E.segmentOfItem(k) === o.id && (E.tierUnlocked(s, G.resources[k].tier || 1)));
+  let pick = UI.tab('dash-' + o.id, items[0]);
+  if (!items.includes(pick)) pick = items[0];
+  let chart = '';
+  if (pick) {
+    const R = G.resources[pick], cur = Market.price(s, pick), ref = R.basePrice * E.priceIndex(s);
+    chart = `<div class="sub" style="margin-top:8px">価格</div><div class="chips">${items.map(k => `<span class="chip ${pick === k ? 'on' : ''}" onclick="UI.setTab('dash-${o.id}','${k}')">${G.resources[k].name}</span>`).join('')}</div>
+      <div class="row" style="margin-top:6px"><b>${R.name}</b><span>いま <b class="num">${cur >= 100 ? M(cur) : '$' + cur.toFixed(2)}</b>/${R.unit}　<span class="sub">基準比 <b class="${cur >= ref ? 'good' : 'bad'}">${(cur / ref * 100).toFixed(0)}%</b></span></span></div>
+      <canvas class="chart" id="pc-${o.id}"></canvas>`;
+  }
+  return plTable(s, o.id, pl) + (o.id === 'oil' ? oilBase(s) : '') + plants + rank + inv + chart;
+}
+
+function renderSegs(s) {
+  const info = collect(s), pl = E.segmentPL(s, 12);
+  const visible = E.segmentIds().filter(id => id === 'oil' || info[id].plants.length || info[id].recipes.length);
+  UI.html('segs', visible.map(id => {
+    const o = info[id], d = G.segments[id];
+    const head = `<span><b>${d.icon} ${E.segmentName(s, id)}</b>${pl[id] ? `<span class="sub">　${pl.months}か月の利益 <b class="${pl[id].profit >= 0 ? 'good' : 'bad'}">${M(pl[id].profit)}</b></span>` : ''}<div class="sub">${id === 'oil' ? `油井${s.wells.length}本・${E.refineryOnline(s) ? '製油所稼働' : '製油所なし'}・化学${o.plants.length}基` : `${o.plants.length}基`}${o.bad ? ` <b class="bad">⚠止まっている${o.bad}</b>` : ''}${o.plants.length ? `・月の粗利 ${M(o.monthly)}` : ''}・評価額 ${M(o.assetValue)}</div></span>`;
+    return UI.fold('f-seg-' + id, head, segBody(s, o, pl), o.bad > 0);
+  }).join('') + (pl.corp ? UI.fold('f-seg-corp', `<span><b>🏢 全社（倉庫・研究・電力など）</b><div class="sub">本部に属さない費用</div></span>`, plTable(s, 'corp', pl) + `<div class="sub" style="margin-top:6px">支払利息（直近${pl.months}か月 ${M(s.history.slice(-pl.months).reduce((a, h) => a + ((h.costs && h.costs.interest) || 0), 0))}）は本部に配分しない。本部の利益の合計−利息−（払い戻しを含めた）全社の費用＝経営の利益</div>`, false) : '') || '<div class="card sub">解放済みの加工がまだない</div>');
+  for (const id of visible) {
+    const c = $('pc-' + id); if (!c) continue;
+    const pick = UI.tab('dash-' + id, null), items = G.productOrder.filter(k => E.segmentOfItem(k) === id && E.tierUnlocked(s, G.resources[k].tier || 1));
+    const k = items.includes(pick) ? pick : items[0];
+    const vals = s.history.slice(-36).map(x => x.prices && x.prices[k]).filter(v => v > 0);
+    UI.spark(c, vals, '#7a4fa3', { labels: true, fmt: v => v >= 100 ? M(v) : '$' + v.toFixed(2) });
+  }
+}
+
+// 取引先（契約）：最終製品を、期間ごとのノルマだけ市場より高い値段で自動納品する。足りない月は違約金。契約は翌月から
+function dealBody(s) {
+  const items = E.contractItems().filter(k => s.contracts && s.contracts[k] || E.contractCapacity(s, k) > 0 || (G.resources[k].tier || 1) <= E.currentTier(s));
+  return items.map(k => {
+    const R = G.resources[k], cfg = E.contractCfg(k), c = s.contracts && s.contracts[k], why = E.contractLockReason(s, k);
+    const price = E.contractPrice(s, k), pstr = price >= 100 ? M(price) : '$' + price.toFixed(2);
+    const per = E.contractPeriod(k) > 1 ? E.contractPeriod(k) + 'か月' : '月';
+    let body;
+    if (c) {
+      const started = s.day > c.start;
+      body = `<div class="row"><span>${started ? `今期 <b>${E.fmtNum(c.delivered)}</b> / ${E.fmtNum(c.qty)}${R.unit}（残り${E.contractPeriod(k) - (c.months || 0)}か月）` : `<span class="sub">翌月から（${per}${E.fmtNum(c.qty)}${R.unit}）</span>`}</span>
+        <button class="btn small" onclick="UI.act(s=>Engine.${c.ending ? 'signContract' : 'cancelContract'}(s,'${k}'))">${c.ending ? '解約を取り消す' : (started ? '解約（期末）' : '取り消す')}</button></div>
+        ${c.ending ? '<div class="sub">今期末で終了（今期のノルマと違約金はそのまま）</div>' : ''}
+        ${started && c.qty - c.delivered > 0.5 ? `<div class="sub bad">期末までに${E.fmtNum(c.qty - c.delivered)}${R.unit}足りないと、違約金 最大 ${M((c.qty - c.delivered) * price * cfg.penaltyRate)}</div>` : ''}`;
+    } else if (why) body = `<div class="sub">🔒 ${why}</div>`;
+    else body = `<div class="row"><span class="sub">${per}のノルマ ${E.fmtNum(E.contractQuota(s, k))}${R.unit}（産出の${Math.round(cfg.share * 100)}%）</span><button class="btn small" onclick="UI.act(s=>Engine.signContract(s,'${k}'))">契約する</button></div>`;
+    return `<div class="card" style="margin:6px 0"><div class="row"><b>${R.name}</b><span class="sub">契約単価 <b>${pstr}</b>/${R.unit}（市場の中値+${Math.round(cfg.premium * 100)}%・手数料と値崩れなし）</span></div>${body}</div>`;
+  }).join('');
+}
+function renderDeals(s) {
+  const n = s.contracts ? Object.keys(s.contracts).length : 0;
+  UI.html('deals', UI.fold('f-deals', `<span><b>🤝 取引先（契約）</b><div class="sub">${n ? `契約中 ${n}件` : '契約すると、市場より高く自動で納品できる'}</div></span>`,
+    `<div class="sub">契約した品目は、期間ごとのノルマ（医薬品・兵器は毎月、船・航空機・ロケットは12か月）を、出荷のたびに先に納めます（出荷の見送り設定は効きません）。期間の末に納入が足りないと、不足分×契約単価×${Math.round(((E.contractCfg(E.contractItems()[0]) || {}).penaltyRate || 0.5) * 100)}%の違約金。ノルマは期間ごとに、いまの設備の産出（稼働率込み）に合わせて更新され、期間の途中で設備を減らしても、その期のノルマは変わりません。契約は翌月から始まります。</div>` + dealBody(s), n > 0));
+}
+
+function renderInvest(s) {
+  UI.html('invest', s.research && s.research.active ? `<div class="card sub">🔬 研究中：${E.researchName(s.research.active.id)}（月 ${M(E.researchMonthly(s, s.research.active.id))}）</div>` : '');
+}
+
+function render(s) {
+  renderSummary(s); renderDeals(s); renderSegs(s); renderInvest(s);
+  const h = s.history.slice(-36);
+  UI.spark($('revChart'), h.map(x => x.revenue), '#2f6f8f', { labels: true, fmt: M });
+  UI.spark($('profChart'), h.map(x => x.profit), '#2e7d4f', { zero: true, labels: true, fmt: M });
+}
+UI.boot({ page: 'dashboard', render });
+</script>
+</body>
+</html>
