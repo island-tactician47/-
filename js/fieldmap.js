@@ -24,7 +24,17 @@
       z.x = x; z.y = y; x += z.w + 1; rowH = Math.max(rowH, z.h);
     }
     layout.H = y + rowH + 2;
+    // 区画の外の飾り（木・岩）：座標のハッシュで決める。森の区画（5×5タイル単位）は密
+    bg.length = 0;
+    for (let tx = -6; tx < W + 6; tx++) for (let ty = -6; ty < layout.H + 6; ty++) {
+      if (zones.some(z => tx >= z.x - 1 && tx <= z.x + z.w && ty >= z.y - 1 && ty <= z.y + z.h)) continue;
+      const h = (Math.imul(tx, 73856093) ^ Math.imul(ty, 19349663)) >>> 0, r = h % 1000, forest = ((Math.floor(tx / 5) * 31 + Math.floor(ty / 5) * 17) % 3) === 0;
+      if (r < (forest ? 520 : 70)) bg.push({ k: 'tree', x: tx + 0.2 + (h >>> 8) % 6 / 10, y: ty + 0.2 + (h >>> 12) % 6 / 10, s: 0.8 + (h >>> 4) % 5 / 10, c: (h >>> 16) % 3 });
+      else if (r > 975) bg.push({ k: 'rock', x: tx + 0.4, y: ty + 0.4, s: 0.7 + (h >>> 5) % 6 / 10 });
+    }
+    bg.sort((a, b) => (a.x + a.y) - (b.x + b.y));
   }
+  const bg = [];
 
   const imgs = {};
   function img(name) {
@@ -48,6 +58,34 @@
 
   function diamond(x, y, w, d) { ctx.beginPath(); ctx.moveTo(sx(x, y), sy(x, y)); ctx.lineTo(sx(x + w, y), sy(x + w, y)); ctx.lineTo(sx(x + w, y + d), sy(x + w, y + d)); ctx.lineTo(sx(x, y + d), sy(x, y + d)); ctx.closePath(); }
 
+  // 採石場の段々：区画の縁の1タイルを2段の斜面にして、中を低くする。奥側（左上・右上）の壁だけが見える
+  const WALL = { coal: ['#4a4a50', '#6a6a72', '#85858d'], ironore: ['#7a6f66', '#9d8f84', '#b9aa9d'], copperore: ['#6f776c', '#8e988a', '#aab5a5'], limestone: ['#a9a595', '#c9c5b3', '#e3dfcd'] };   // 北西の壁・北東の壁・地層の線
+  const STEP = 22, STEPS = 2;
+  function pit(z) {
+    const cols = WALL[z.res] || WALL.coal; let o = { x: z.x, y: z.y, w: z.w, d: z.h }, lv = 0;
+    for (let k = 0; k < STEPS; k++) {
+      const i = 0.5, n = { x: o.x + i, y: o.y + i, w: o.w - 2 * i, d: o.d - 2 * i }, a = lv, b = lv + STEP;
+      const P = (x, y, l) => [sx(x, y), sy(x, y) + l];
+      for (const [qi, q] of [[P(o.x, o.y + o.d, a), P(o.x, o.y, a), P(n.x, n.y, b), P(n.x, n.y + n.d, b)], [P(o.x, o.y, a), P(o.x + o.w, o.y, a), P(n.x + n.w, n.y, b), P(n.x, n.y, b)]].entries()) {
+        ctx.beginPath(); q.forEach((p, j) => j ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath(); ctx.fillStyle = cols[qi]; ctx.fill();
+        ctx.strokeStyle = cols[2]; ctx.lineWidth = 1.2; ctx.beginPath(); for (const f of [0.35, 0.7]) { const p0 = [q[0][0] + (q[3][0] - q[0][0]) * f, q[0][1] + (q[3][1] - q[0][1]) * f], p1 = [q[1][0] + (q[2][0] - q[1][0]) * f, q[1][1] + (q[2][1] - q[1][1]) * f]; ctx.moveTo(p0[0], p0[1]); ctx.lineTo(p1[0], p1[1]); } ctx.stroke();
+      }
+      // 段の床（一段下がった面）。下の段ほど暗い
+      ctx.beginPath(); [[n.x, n.y], [n.x + n.w, n.y], [n.x + n.w, n.y + n.d], [n.x, n.y + n.d]].forEach((c, j) => { const p = P(c[0], c[1], b); j ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1]); }); ctx.closePath();
+      ctx.fillStyle = z.ground; ctx.fill(); ctx.fillStyle = 'rgba(0,0,0,' + (0.08 * (k + 1)) + ')'; ctx.fill();
+      o = n; lv = b;
+    }
+    return lv;
+  }
+  function tree(b) {
+    const x = sx(b.x, b.y), y = sy(b.x, b.y), s = b.s, g = ['#47703d', '#557f46', '#3d6636'][b.c];
+    ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.beginPath(); ctx.ellipse(x + 4 * s, y + 2, 11 * s, 5 * s, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = '#5d4630'; ctx.fillRect(x - 1.5 * s, y - 9 * s, 3 * s, 9 * s);
+    ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(x, y - 15 * s, 9 * s, 10 * s, 0, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.14)'; ctx.beginPath(); ctx.ellipse(x - 2.5 * s, y - 18 * s, 4.5 * s, 4.5 * s, 0, 0, 7); ctx.fill();
+  }
+  function rock(b) { const x = sx(b.x, b.y), y = sy(b.x, b.y), s = b.s; ctx.fillStyle = '#8b8a84'; ctx.beginPath(); ctx.moveTo(x - 8 * s, y); ctx.lineTo(x - 4 * s, y - 7 * s); ctx.lineTo(x + 3 * s, y - 8 * s); ctx.lineTo(x + 9 * s, y); ctx.closePath(); ctx.fill(); ctx.fillStyle = 'rgba(255,255,255,.2)'; ctx.beginPath(); ctx.moveTo(x - 4 * s, y - 7 * s); ctx.lineTo(x + 3 * s, y - 8 * s); ctx.lineTo(x, y - 3 * s); ctx.closePath(); ctx.fill(); }
+
   function draw() {
     if (!ctx || !state) return;
     const s = state;
@@ -57,27 +95,30 @@
     // 地面
     for (const z of zones) {
       const c = counts(s, z);
-      diamond(z.x, z.y, z.w, z.h); ctx.fillStyle = z.ground; ctx.globalAlpha = c.owned ? 1 : 0.45; ctx.fill(); ctx.globalAlpha = 1;
+      if (z.kind === 'mine') { diamond(z.x, z.y, z.w, z.h); ctx.fillStyle = '#7d8f66'; ctx.fill(); z.depth = pit(z); }
+      diamond(z.x, z.y, z.w, z.h); ctx.fillStyle = z.kind === 'mine' ? 'rgba(0,0,0,0)' : z.ground; ctx.globalAlpha = c.owned ? 1 : 0.45; ctx.fill(); ctx.globalAlpha = 1;
+      if (z.kind === 'mine' && !c.owned) { diamond(z.x, z.y, z.w, z.h); ctx.fillStyle = 'rgba(143,162,115,.5)'; ctx.fill(); }
       ctx.lineWidth = z === sel ? 4 : 1.5; ctx.strokeStyle = z === sel ? '#d9531e' : 'rgba(40,30,20,.55)'; ctx.setLineDash(c.owned ? [] : [8, 6]); ctx.stroke(); ctx.setLineDash([]);
       for (let i = 0; i < z.n; i++) {   // 区画の枠（空き）
         const cx = z.x + 1 + (i % z.cols) * z.cell, cy = z.y + 1 + Math.floor(i / z.cols) * z.cell;
         diamond(cx + 0.1, cy + 0.1, z.cell - 0.2, z.cell - 0.2); ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 1; ctx.stroke();
       }
     }
+    for (const b of bg) { const px = sx(b.x, b.y) * cam.z + cam.x, py = sy(b.x, b.y) * cam.z + cam.y; if (px < -40 || px > cw + 40 || py < -20 || py > ch + 60) continue; if (b.k === 'tree') tree(b); else rock(b); }
     // 建物：奥から手前（x+y 順）
     const items = [];
     for (const z of zones) {
       const c = counts(s, z), name = spriteOf(z);
       for (let i = 0; i < c.n + c.nb && i < z.n; i++) {
         const cx = z.x + 1 + (i % z.cols) * z.cell + z.cell / 2, cy = z.y + 1 + Math.floor(i / z.cols) * z.cell + z.cell / 2;
-        items.push({ name, cx, cy, building: i >= c.n, paused: c.paused && z.kind === 'mine' });
+        items.push({ name, cx, cy, dy: z.kind === 'mine' ? (z.depth || 0) : 0, building: i >= c.n, paused: c.paused && z.kind === 'mine' });
       }
     }
     items.sort((a, b) => (a.cx + a.cy) - (b.cx + b.cy));
     for (const it of items) {
       const o = img(it.name); if (!o) continue;
       ctx.globalAlpha = it.building ? 0.5 : it.paused ? 0.7 : 1;
-      ctx.drawImage(o.im, sx(it.cx, it.cy) - o.m.ax, sy(it.cx, it.cy) - o.m.ay, o.m.w, o.m.h);
+      ctx.drawImage(o.im, sx(it.cx, it.cy) - o.m.ax, sy(it.cx, it.cy) - o.m.ay + it.dy, o.m.w, o.m.h);
     }
     ctx.globalAlpha = 1;
     ctx.restore();
