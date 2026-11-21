@@ -23,10 +23,12 @@
     const r = pack(zs, x0, y0, maxW);
     hills.push({ x: x0 - 1, y: y0 - 7, w: r.w + 2, h: 6, levels: hillLevels, rock });
     roads.push({ x1: x0 - 1, y1: y0 + 1, x2: x0 + 1, y2: y0 + 1 }, { x1: x0 - 1, y1: y0 + 1, x2: x0 - 1, y2: 56 });   // 地帯への入口と、集積地への道
+    routes.push({ ids: zs.map(z => z.id), res: rock === 'oil' ? 'crude' : rock, pts: [[x0 + 1, y0 + 1], [x0 - 1, y0 + 1], [x0 - 1, 56], [42, 56], [42, 63]] });
     blocks.push({ x: x0 - 2, y: y0 - 8, w: r.w + 4, h: r.h + 9 });
   }
+  const routes = [];
   function layout() {
-    zones.length = 0; roads.length = 0; hills.length = 0; blocks.length = 0;
+    zones.length = 0; roads.length = 0; hills.length = 0; blocks.length = 0; routes.length = 0;
     const site = res => Object.keys(G.mineSites).filter(id => G.mineSites[id].res === res).map(id => ({ id, kind: 'mine', res, label: G.mineSites[id].name, n: G.mineSites[id].slots, cell: 3, cols: Math.min(3, G.mineSites[id].slots), ground: GROUND[res] }));
     const oil = Object.keys(G.leases).map(id => { const L = G.leases[id]; return { id, kind: 'oil', label: L.name, n: L.slots, cell: 2, cols: Math.min(5, Math.ceil(Math.sqrt(L.slots * 0.9))), ground: GROUND.oil }; });
     cluster(site('copperore'), 3, 10, 24, 3, 'copperore');
@@ -95,19 +97,22 @@
     return lv;
   }
   // 崖：段々に積んだ山（ジグラット）。前の2面（左下・右下）が岩肌、上面は草。下の段ほど大きい
-  const HILL = { copperore: ['#7c8577', '#9aa593', '#b8c3b0'], oil: ['#8a7b5f', '#a89878', '#c4b794'], coal: ['#55555b', '#74747c', '#8f8f98'], ironore: ['#8a6a58', '#a98772', '#c6a590'], limestone: ['#b8b4a2', '#d2cfbd', '#e8e5d4'] };
+  const HILL = { copperore: ['#56624f', '#8a9a82', '#d4e0c8'], oil: ['#6a5a3c', '#a08c62', '#e0d2a8'], coal: ['#2c2c33', '#55555e', '#a8a8b4'], ironore: ['#6a4535', '#a8745c', '#e8bfa8'], limestone: ['#9a9684', '#d6d2c0', '#fffcec'] };   // 暗い面（左下）・明るい面（右下）・地層の線
   function hill(h) {
-    const c = HILL[h.rock] || HILL.coal, H = 24;
+    const c = HILL[h.rock] || HILL.coal, H = 30;
     for (let i = 0; i < h.levels; i++) {
       const ins = i * 1.1, x = h.x + ins, y = h.y + ins, w = h.w - 2 * ins, d = h.h - 2 * ins; if (w < 1 || d < 1) break;
       const l0 = -i * H, l1 = -(i + 1) * H, P = (px, py, l) => [sx(px, py), sy(px, py) + l];
       const quad = (pts, fill) => { ctx.beginPath(); pts.forEach((q, j) => j ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath(); ctx.fillStyle = fill; ctx.fill(); };
       const q1 = [P(x, y + d, l0), P(x + w, y + d, l0), P(x + w, y + d, l1), P(x, y + d, l1)], q2 = [P(x + w, y + d, l0), P(x + w, y, l0), P(x + w, y, l1), P(x + w, y + d, l1)];
       quad(q1, c[0]); quad(q2, c[1]);
-      ctx.strokeStyle = c[2]; ctx.lineWidth = 1.2; ctx.beginPath();
-      for (const q of [q1, q2]) for (const f of [0.3, 0.62]) { ctx.moveTo(q[0][0] + (q[3][0] - q[0][0]) * f, q[0][1] + (q[3][1] - q[0][1]) * f); ctx.lineTo(q[1][0] + (q[2][0] - q[1][0]) * f, q[1][1] + (q[2][1] - q[1][1]) * f); }
-      ctx.stroke();
-      quad([P(x, y, l1), P(x + w, y, l1), P(x + w, y + d, l1), P(x, y + d, l1)], i === h.levels - 1 ? '#86a068' : '#7c9660');
+      ctx.strokeStyle = c[2]; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.6; ctx.beginPath();
+      for (const q of [q1, q2]) for (const f of [0.22, 0.45, 0.72]) { ctx.moveTo(q[0][0] + (q[3][0] - q[0][0]) * f, q[0][1] + (q[3][1] - q[0][1]) * f); ctx.lineTo(q[1][0] + (q[2][0] - q[1][0]) * f, q[1][1] + (q[2][1] - q[1][1]) * f); }
+      ctx.stroke(); ctx.globalAlpha = 1;
+      // 足元の影と、上面（草）の縁の岩
+      ctx.fillStyle = 'rgba(0,0,0,.22)'; ctx.beginPath(); ctx.moveTo(P(x, y + d, l0)[0], P(x, y + d, l0)[1]); ctx.lineTo(P(x + w, y + d, l0)[0], P(x + w, y + d, l0)[1]); ctx.lineTo(P(x + w, y + d, l0)[0], P(x + w, y + d, l0)[1] + 6); ctx.lineTo(P(x, y + d, l0)[0], P(x, y + d, l0)[1] + 6); ctx.fill();
+      quad([P(x, y, l1), P(x + w, y, l1), P(x + w, y + d, l1), P(x, y + d, l1)], i === h.levels - 1 ? '#7d9a5c' : '#6f8d55');
+      ctx.strokeStyle = c[1]; ctx.lineWidth = 2; ctx.stroke();
     }
   }
   function road(r) {   // 縦か横の道路（幅1.6タイル）。中央に破線
@@ -116,6 +121,38 @@
     diamond(rx, ry, rw, rd); ctx.fillStyle = '#6c6b67'; ctx.fill();
     ctx.strokeStyle = '#d6d3c8'; ctx.lineWidth = 1.4; ctx.setLineDash([7, 9]); ctx.beginPath();
     ctx.moveTo(sx(alongX ? x : x, alongX ? y : y), sy(alongX ? x : x, alongX ? y : y)); ctx.lineTo(sx(alongX ? x + w : x, alongX ? y : y + d), sy(alongX ? x + w : x, alongX ? y : y + d)); ctx.stroke(); ctx.setLineDash([]);
+  }
+  // トラック：道（折れ線）に沿って走る。レーンを少しずらし、行きは荷つき・帰りは空。時間は壁時計（描き直しのたびに位置が進む）
+  const TRUCKCOL = { coal: '#2e2e33', ironore: '#b4694f', copperore: '#8aa083', limestone: '#e8e4d2', crude: '#2a2a2e' };
+  function box(x, y, w, d, hgt, top, left, right) {   // 小さなアイソメの箱（世界座標のタイルで指定）
+    const P = (px, py, l) => [sx(px, py), sy(px, py) - l], f = (pts, c) => { ctx.beginPath(); pts.forEach((q, j) => j ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath(); ctx.fillStyle = c; ctx.fill(); };
+    f([P(x, y + d, 0), P(x + w, y + d, 0), P(x + w, y + d, hgt), P(x, y + d, hgt)], left); f([P(x + w, y + d, 0), P(x + w, y, 0), P(x + w, y, hgt), P(x + w, y + d, hgt)], right); f([P(x, y, hgt), P(x + w, y, hgt), P(x + w, y + d, hgt), P(x, y + d, hgt)], top);
+  }
+  function posOn(pts, dist) {   // 折れ線の dist 地点の座標と進行方向
+    let acc = 0;
+    for (let i = 0; i + 1 < pts.length; i++) { const a = pts[i], b = pts[i + 1], L = Math.abs(b[0] - a[0]) + Math.abs(b[1] - a[1]); if (dist <= acc + L || i === pts.length - 2) { const f = Math.min(1, Math.max(0, (dist - acc) / (L || 1))); return { x: a[0] + (b[0] - a[0]) * f, y: a[1] + (b[1] - a[1]) * f, dx: Math.sign(b[0] - a[0]), dy: Math.sign(b[1] - a[1]) }; } acc += L; }
+    return { x: pts[0][0], y: pts[0][1], dx: 0, dy: 1 };
+  }
+  function working(s, ids) {   // その地帯で今、産出しているか
+    let n = 0;
+    for (const id of ids) { const z = zones.find(q => q.id === id); if (!z) continue; if (z.kind === 'oil') n += s.wells.filter(w => w.lease === id).length ? 1 : 0; else if (z.kind === 'mine') { const c = counts(s, z); if (c.n && !c.paused && E.oreRoom(s, z.res) > 0) n += c.n; } }
+    return n;
+  }
+  function trucks(now) {
+    if (!state) return false; let any = false;
+    for (const r of routes) {
+      const n = Math.min(3, working(state, r.ids)); if (!n) continue; any = true;
+      let L = 0; for (let i = 0; i + 1 < r.pts.length; i++) L += Math.abs(r.pts[i + 1][0] - r.pts[i][0]) + Math.abs(r.pts[i + 1][1] - r.pts[i][1]);
+      for (let k = 0; k < n; k++) for (const dir of [1, -1]) {
+        const d = dir > 0 ? ((now / 1000) * 3 + k * L / n) % L : L - (((now / 1000) * 3 + k * L / n + L / 2) % L), p = posOn(r.pts, d);
+        const lane = dir > 0 ? 0.32 : -0.32, px = p.x + (p.dy ? lane : 0) * -1 + (p.dy ? 0 : 0), py = p.y + (p.dx ? lane : 0);
+        const alongX = !!p.dx, w = alongX ? 0.62 : 0.3, dd = alongX ? 0.3 : 0.62, col = dir > 0 ? (TRUCKCOL[r.res] || '#555') : '#7a7a74';
+        box(px - w / 2, py - dd / 2, w, dd, 6, '#d9d6c8', '#a9a69a', '#c0bdb0');   // 荷台
+        box(px - (alongX ? 0 : 0) - w / 2 + (alongX ? (p.dx > 0 ? 0.62 : -0.18) : 0), py - dd / 2 + (alongX ? 0 : (p.dy > 0 ? 0.62 : -0.18)), alongX ? 0.18 : 0.3, alongX ? 0.3 : 0.18, 8, '#c9503a', '#9c3b2a', '#b04532');   // 運転台
+        box(px - w / 2 + 0.04, py - dd / 2 + 0.04, w - 0.08, dd - 0.08, 8.5, dir > 0 ? col : '#8e8d86', col, col);   // 積み荷
+      }
+    }
+    return any;
   }
   function tree(b) {
     const x = sx(b.x, b.y), y = sy(b.x, b.y), s = b.s, g = ['#47703d', '#557f46', '#3d6636'][b.c];
@@ -164,6 +201,7 @@
       ctx.drawImage(o.im, sx(it.cx, it.cy) - o.m.ax, sy(it.cx, it.cy) - o.m.ay + it.dy, o.m.w, o.m.h);
     }
     ctx.globalAlpha = 1;
+    trucks(performance.now());
     ctx.restore();
     // 文字（画面の固定サイズ）
     ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
@@ -216,6 +254,8 @@
       canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', e => { pts.delete(e.pointerId); pd = 0; });
       canvas.addEventListener('wheel', e => { e.preventDefault(); const p = pos(e), nz = Math.max(0.18, Math.min(1.6, cam.z * (e.deltaY < 0 ? 1.1 : 0.9))); cam.x = p.x - (p.x - cam.x) * nz / cam.z; cam.y = p.y - (p.y - cam.y) * nz / cam.z; cam.z = nz; draw(); }, { passive: false });
       for (const z of zones) for (const n of [spriteOf(z)]) img(n);
+      let lastAnim = 0; const tick = now => { if (canvas.offsetParent && state && now - lastAnim > 80 && !document.hidden) { lastAnim = now; if (routes.some(r => working(state, r.ids))) draw(); } requestAnimationFrame(tick); };
+      requestAnimationFrame(tick);
     },
     // 表示中に状態が変わったときだけ描き直す
     update(s) {
