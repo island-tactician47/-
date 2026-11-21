@@ -33,6 +33,11 @@
   <div id="leases"></div>
   </div>
   <div id="mineview" style="display:none"></div>
+  <div id="mapview" style="display:none">
+    <canvas id="fmap" style="width:100%;height:55vh;min-height:320px;display:block;border-radius:10px;touch-action:none;background:#8fa273"></canvas>
+    <div class="sub" style="margin:4px 2px">ドラッグで移動・ピンチで拡大・区画をタップで選択（半透明の建物は建設中）</div>
+    <div id="mapinfo"></div>
+  </div>
 
   <h2>出来事</h2>
   <div class="card log" id="log"></div>
@@ -50,10 +55,12 @@
 <script src="../data/research.js"></script>
 <script src="../data/segments.js"></script>
 <script src="../data/map.js"></script>
+<script src="../data/sprites_bl.js"></script>
 <script src="../js/save.js"></script>
 <script src="../js/market.js"></script>
 <script src="../js/engine.js"></script>
 <script src="../js/ui.js"></script>
+<script src="../js/fieldmap.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const E = Engine, G = GAME_DATA;
@@ -95,12 +102,39 @@ function renderMines(s) {
   UI.html('mineview', out.join(''));
 }
 
+// 地図で選んだ区画の操作（カードと同じ操作）
+function renderMapInfo(s) {
+  const z = FieldMap.selected();
+  if (!z) { UI.html('mapinfo', '<div class="card"><div class="sub">区画をタップすると、ここで操作できます。</div></div>'); return; }
+  const btn = (ok, act, txt, cls) => `<button class="btn ${cls || ''} small" ${ok ? '' : 'disabled'} onclick="UI.act(s=>${act})">${txt}</button> `;
+  let body = '';
+  if (z.kind === 'oil') {
+    const L = G.leases[z.id], st = s.leases[z.id], n = E.wellsOnLease(s, z.id), nb = E.buildingOnLease(s, z.id);
+    if (st.owned) { const chk = E.canBuild(s, 'oilWell', z.id); body = `<div class="sub">油井 ${n}/${L.slots}本　日量 ${E.fmtNum(s.wells.filter(w => w.lease === z.id).reduce((a, w) => a + E.wellRate(s, w), 0))}bbl${st.revealed ? `　豊かさ ${L.richness.toFixed(2)}` : `　推定 ${L.estimate[0]}〜${L.estimate[1]}`}</div>` + btn(chk.ok, `Engine.build(s,'oilWell','${z.id}')`, `油井を掘る（${E.fmtMoney(E.costOf(s, 'oilWell', z.id))}）`); }
+    else { const lc = Math.round(L.cost * E.priceIndex(s)); body = `<div class="sub">${L.desc}　枠 ${L.slots}本</div>` + btn(s.cash >= lc, `Engine.buyLease(s,'${z.id}')`, `採掘権を買う（${E.fmtMoney(lc)}）`, 'sec'); }
+  } else if (z.kind === 'mine') {
+    const S = G.mineSites[z.id], st = E.mineSiteState(s, z.id), n = E.minesOnSite(s, z.id);
+    if (st.owned) { const chk = E.canBuildMine(s, z.id); body = `<div class="sub">${G.resources[S.res].name}の鉱山 ${n}/${S.slots}　日量 ${E.fmtNum(E.mineRateOn(s, z.id))}t${st.paused ? '　<b class="bad">休止中</b>' : ''}${st.revealed ? `　豊かさ ${S.richness.toFixed(2)}` : `　推定 ${S.estimate[0]}〜${S.estimate[1]}`}</div>` + (n ? btn(true, `Engine.toggleMineSite(s,'${z.id}')`, st.paused ? '▶ 再開する' : '⏸ 休止する', 'sec') : '') + btn(chk.ok, `Engine.buildMine(s,'${z.id}')`, `鉱山を建てる（${E.fmtMoney(E.mineCost(s, z.id))}）`); if (!chk.ok && chk.msg) body += `<div class="sub">${chk.msg}</div>`; }
+    else { const lc = Math.round(S.cost * E.priceIndex(s)), lock = E.buildLockReason(s, 'mine'); body = `<div class="sub">${S.desc}　枠 ${S.slots}か所</div>` + btn(!lock && s.cash >= lc, `Engine.buyMineSite(s,'${z.id}')`, `採掘権を買う（${E.fmtMoney(lc)}）`, 'sec'); if (lock) body += `<div class="sub bad">${lock}</div>`; }
+  } else if (z.kind === 'yard') {
+    const chk = E.canBuildYard(s, z.res), yc = E.yardCap(s, z.res);
+    body = `<div class="sub">在庫 ${E.fmtNum(s.inventory[z.res] || 0)} / ${E.fmtNum(yc)}t　貯鉱場 ${E.yardCount(s, z.res)}棟</div>` + btn(chk.ok, `Engine.buildYard(s,'${z.res}')`, `貯鉱場を建てる（${E.fmtMoney(E.yardCost(s))}）`);
+    if (!chk.ok && chk.msg) body += `<div class="sub">${chk.msg}</div>`;
+  } else {
+    const chk = E.canBuild(s, 'crudeTank');
+    body = `<div class="sub">原油 ${E.fmtNum(s.inventory.crude)} / ${E.fmtNum(E.capacity(s, 'crude'))}bbl　タンク ${E.count(s, 'crudeTank')}基</div>` + btn(chk.ok, `Engine.build(s,'crudeTank')`, `原油タンクを建てる（${E.fmtMoney(E.costOf(s, 'crudeTank'))}）`);
+  }
+  UI.html('mapinfo', `<div class="card"><div class="row"><h3>${z.label}</h3></div>${body}</div>`);
+}
+
 function render(s) {
   const tab = UI.tab('field-tab', 'oil');
-  UI.html('ftabs', UI.chips('field-tab', [{ id: 'oil', label: '🛢️ 石油' }, { id: 'mine', label: '⛏️ 鉱山' }], tab));
+  UI.html('ftabs', UI.chips('field-tab', [{ id: 'oil', label: '🛢️ 石油' }, { id: 'mine', label: '⛏️ 鉱山' }, { id: 'map', label: '🗺 地図' }], tab));
   $('oilview').style.display = tab === 'oil' ? '' : 'none';
   $('mineview').style.display = tab === 'mine' ? '' : 'none';
+  $('mapview').style.display = tab === 'map' ? '' : 'none';
   if (tab === 'mine') renderMines(s);
+  if (tab === 'map') { FieldMap.update(s); renderMapInfo(s); }
   const rate = E.totalWellRate(s);
   $('wellcount').textContent = `油井 ${s.wells.length}本`;
   $('rate').textContent = E.fmtNum(rate);
@@ -148,6 +182,7 @@ function render(s) {
 
   UI.html('log', s.log.slice(0, 30).map(l => `<div><span class="sub">${E.year({ day: l.day })}/${E.monthNum({ day: l.day })}</span> ${l.text}</div>`).join(''));
 }
+FieldMap.init($('fmap'), () => UI.refresh());
 UI.boot({ page: 'field', render });
 </script>
 </body>
