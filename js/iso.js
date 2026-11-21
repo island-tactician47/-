@@ -121,7 +121,30 @@
     };
 
     // ---- 地形 ----
+    // 飾り（木・岩・家・砂浜）：見た目だけ。タイル座標のハッシュで決まる（セーブには何も持たない）。建物の足あと（と隣）・道・港・海には置かない
+    function deco(tx, ty, occ, era) {
+      const h = (Math.imul(tx, 73856093) ^ Math.imul(ty, 19349663)) >>> 0, r = h % 1000;
+      for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) if (occ[(tx + dx) + ',' + (ty + dy)]) return;
+      const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => E.terrainAt(S(), tx + dx, ty + dy));
+      const nearRoad = nb.some(q => q === 'road'), nearSea = nb.some(q => q === 'sea');
+      const forest = ((tx >> 2) * 31 + (ty >> 2) * 17) % 5 === 0;   // 森になる区画（4×4タイル単位）
+      if (nearSea) { if (r < 80) g.prism(tx + 0.35, ty + 0.35, 0.3, 0.3, 0, 2.5, '#9a9a94'); return; }   // 海辺は岩
+      if (nearRoad) {   // 道沿いに小さな家（時代が進むと屋根が灰色に）
+        if (r < 70) {
+          const wall = ['#d8cdb0', '#c9b79a', '#bfc7b8', '#d3b9a0'][h % 4], roof = era >= 4 ? '#8d8f93' : ['#a8573f', '#8a4a36', '#6d6a60'][(h >>> 3) % 3];
+          g.prism(tx + 0.2, ty + 0.2, 0.6, 0.6, 0, 8, wall); g.prism(tx + 0.12, ty + 0.12, 0.76, 0.76, 8, 11.5, roof);
+        }
+        return;
+      }
+      const dens = forest ? 420 : 55;
+      if (r < dens) {
+        const hh = 9 + (h >>> 4) % 6, ox = ((h >>> 8) % 5) / 10, oy = ((h >>> 11) % 5) / 10, gr = ['#4f7a45', '#5a8650', '#456f3f', '#668f4f'][h % 4];
+        g.prism(tx + 0.42 + ox / 4, ty + 0.42 + oy / 4, 0.12, 0.12, 0, 5, '#6b4f33');
+        g.prism(tx + 0.14 + ox / 2, ty + 0.14 + oy / 2, 0.56, 0.56, 4, hh - 3, shade(gr, 0.9)); g.prism(tx + 0.24 + ox / 2, ty + 0.24 + oy / 2, 0.38, 0.38, hh - 3, hh + 1, gr); g.prism(tx + 0.33 + ox / 2, ty + 0.33 + oy / 2, 0.2, 0.2, hh + 1, hh + 4.5, shade(gr, 1.2));   // 3段（松のように先が細い）
+      } else if (r > 985) g.prism(tx + 0.3, ty + 0.3, 0.35, 0.3, 0, 3.2, '#8c8c86');   // 岩
+    }
     function drawTerrain(s, era) {
+      const occ = E.mapOccupancy(s);
       const M = GAME_DATA.map, eraK = clamp((era - 1) * 0.07, 0, 0.35), landA = mix('#8d9a69', '#8f8d80', eraK + 0.1), landB = mix('#869363', '#8f8d80', eraK + 0.1);
       for (let sum = 0; sum <= M.w + M.h - 2; sum++) for (let vx = Math.max(0, sum - M.h + 1); vx <= Math.min(M.w - 1, sum); vx++) {
         const vy = sum - vx, a = ptv(vx, vy, 0);   // 回したあとの座標のタイルを奥から手前へ
@@ -134,7 +157,10 @@
           col = near ? '#86b8cb' : (chk ? '#5f93b3' : '#5b8fb0');
         } else if (t === 'road') col = chk ? '#6f6d69' : '#6a6864';
         else if (t === 'port') col = chk ? '#a29b8c' : '#9b9486';
-        else col = chk ? landA : landB;
+        else {
+          col = chk ? landA : landB;
+          if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => E.terrainAt(s, tx + dx, ty + dy) === 'sea')) col = chk ? '#cdc298' : '#c6bb90';   // 砂浜
+        }
         poly([ptv(vx, vy, 0), ptv(vx + 1, vy, 0), ptv(vx + 1, vy + 1, 0), ptv(vx, vy + 1, 0)], col, col);
         if (t === 'road') {
           const alongX = ty % M.block === M.block - 1 && tx % M.block !== M.block - 1, alongY = tx % M.block === M.block - 1 && ty % M.block !== M.block - 1;
@@ -142,6 +168,7 @@
           if (alongY && (ty & 1)) g.line([[tx + 0.5, ty + 0.3, 0.2], [tx + 0.5, ty + 0.7, 0.2]], '#d6d3c8', 1);
         }
         if (t === 'land' && ((tx * 7 + ty * 13) % 11 === 0)) g.prism(tx + 0.4, ty + 0.4, 0.2, 0.2, 0, 1, '#6f9a5a');   // 草むら
+        if (t === 'land' && !I.noDeco) deco(tx, ty, occ, era);
       }
       // 陸の縁（海に面した側の崖）
       for (let tx = 0; tx < M.w; tx++) { const cy = E.coastY(tx); const t = E.terrainAt(s, tx, cy - 1); if (t && t !== 'sea') { const a = pt(tx, cy, 0); if (a[0] < -60 || a[0] > I.w + 60 || a[1] < -60 || a[1] > I.h + 60) continue; g.prism(tx, cy - 0.001, 1, 0.001, -4, 0, '#8d7e66'); } }
