@@ -13,10 +13,10 @@ window.GAME_DATA = window.GAME_DATA || {};
 GAME_DATA.resources = {
   // ---- 石油（ステップ1以前から。定義は変えない） ----
   crude:    { name: '原油',     unit: 'bbl', kind: 'raw',      tier: 1, canBuy: true, canSell: true, shipVol: 1, basePrice: 2.51, volatility: 0.035, marketDepth: 480000, color: '#6b5b4b' },
-  gasoline: { name: 'ガソリン', unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 4.50, volatility: 0.03,  marketDepth: 160000, color: '#e0a030' },
-  diesel:   { name: '軽油',     unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 3.90, volatility: 0.03,  marketDepth: 160000, color: '#4a90c0' },
-  naphtha:  { name: 'ナフサ',   unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 3.40, volatility: 0.04,  marketDepth: 80000,  color: '#9a6ac0' },
-  heavy:    { name: '重油',     unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 1.80, volatility: 0.04,  marketDepth: 160000, color: '#444444' },
+  gasoline: { name: 'ガソリン', unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 5.63, volatility: 0.03,  marketDepth: 160000, color: '#e0a030' },
+  diesel:   { name: '軽油',     unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 4.88, volatility: 0.03,  marketDepth: 160000, color: '#4a90c0' },
+  naphtha:  { name: 'ナフサ',   unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 4.25, volatility: 0.04,  marketDepth: 80000,  color: '#9a6ac0' },
+  heavy:    { name: '重油',     unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 2.25, volatility: 0.04,  marketDepth: 160000, color: '#444444' },
 
   // ---- 原料（市場で買うだけ。売れない）。lot＝市場画面の「買う」ボタン1回の量 ----
   coal:      { name: '石炭',       unit: 't', kind: 'raw', tier: 4, canBuy: true, canSell: false, shipVol: 1, storage: 'bulk', basePrice: 4.9,  volatility: 0.03, marketDepth: 1000000, lot: 500, color: '#3a3a3a' },
@@ -34,7 +34,7 @@ GAME_DATA.resources = {
   fiber:      { name: '合成繊維',     unit: 't', kind: 'material', tier: 3, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 900, volatility: 0.03, marketDepth: 600,  color: '#b58be0' },
   steel:      { name: '鋼材',         unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 110, volatility: 0.03, marketDepth: 8000, color: '#7c8a99' },
   aluminum:   { name: 'アルミ',       unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 354, volatility: 0.03, marketDepth: 2400, color: '#a9b8c4' },
-  copper:     { name: '銅',           unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 430, volatility: 0.045, marketDepth: 1500, color: '#c8743a' },
+  copper:     { name: '銅',           unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 500, volatility: 0.045, marketDepth: 1500, color: '#c8743a' },
   glass:      { name: 'ガラス',       unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 250, volatility: 0.02, marketDepth: 1800, color: '#8fd3e0' },
   cement:     { name: 'セメント',     unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 12.5, volatility: 0.02, marketDepth: 25000, color: '#a8a39a' },
   lumber:     { name: '木材',         unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 75,  volatility: 0.035, marketDepth: 3600, color: '#c49a5a' },
@@ -42,7 +42,7 @@ GAME_DATA.resources = {
 
   // ---- 製品（作って売る。買えない）。storeVol＝保管枠、shipVol＝出荷枠を食う量（大きいものほど大きい） ----
   detergent: { name: '洗剤・化粧品', unit: 't',   kind: 'product', tier: 3, canBuy: false, canSell: true, shipVol: 1,   storage: 'goods', storeVol: 1,   basePrice: 1800, volatility: 0.02, marketDepth: 800,  color: '#4fb0c6' },
-  buildmat:  { name: '建材',         unit: 't',   kind: 'product', tier: 4, canBuy: false, canSell: true, shipVol: 1,   storage: 'goods', storeVol: 1,   basePrice: 110,  volatility: 0.025, marketDepth: 5600, color: '#b0824a' },
+  buildmat:  { name: '建材',         unit: 't',   kind: 'product', tier: 4, canBuy: false, canSell: true, shipVol: 1,   storage: 'goods', storeVol: 1,   basePrice: 135,  volatility: 0.025, marketDepth: 5600, color: '#b0824a' },
   clothing:  { name: '衣料',         unit: '千着', kind: 'product', tier: 4, canBuy: false, canSell: true, shipVol: 0.3, storage: 'goods', storeVol: 0.3, basePrice: 3000, volatility: 0.025, marketDepth: 320,   color: '#d46aa0' },
   car:       { name: '自動車',       unit: '台',   kind: 'product', tier: 5, canBuy: false, canSell: true, shipVol: 3,   storage: 'goods', storeVol: 3,   basePrice: 1500, volatility: 0.02, marketDepth: 1680,  color: '#c0392b' },
 
@@ -107,3 +107,8 @@ window.GAME_DATA.contracts = {
     rocket:   { premium: 0.15, penaltyRate: 0.5, share: 0.5, integer: true, period: 12 }
   }
 };
+
+// 輸入（市場で買う）の上乗せ：自社で作れる品目（加工設備・油井・鉱山・精製が産出する品目）は、買値に extra を上乗せして割高にする（自社で作るほうが得）。
+// 自社で作る手段が無い品目（ボーキサイト・珪砂・原木・レアメタル・リチウム鉱石など）と exempt の品目（天然ガス＝輸入しか手段が無い）は据え置き（Market の BUY_PREMIUM のまま）。
+// 製油所の製品（ガソリン・軽油・ナフサ・重油）の売値は、原油の買値の上乗せぶん、元より約25%高くしてある（製油所の利益を大きくする）。
+GAME_DATA.importPremium = { extra: 0.25, exempt: ['naturalGas'] };

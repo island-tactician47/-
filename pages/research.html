@@ -82,7 +82,7 @@ function render(s) {
     <div class="sub" style="margin-top:4px">ノードを開く条件は二つ：<b>選択権</b>（その工場を回すぶんの素材が、輸入なしで余っている）と<b>解放権</b>（利益で貯まる）。研究所は廃止した。</div>`);
   const ids = Object.keys(E.treeNodes()).filter(id => E.nodeVisible(s, id)), hidden = Object.keys(E.treeNodes()).length - ids.length;
   const tiers = {}; for (const id of ids) (tiers[E.nodeDef(id).tier] = tiers[E.nodeDef(id).tier] || []).push(id);
-  const html = Object.keys(tiers).sort((a, b) => a - b).map(t => `<div class="tier-h"><h3>Tier ${t}</h3><span class="sub">${tiers[t].filter(id => E.nodeUnlocked(s, id)).length}／${tiers[t].length}</span></div>` + tiers[t].map(id => `<div class="card node ${E.nodeUnlocked(s, id) ? 'u' : ''}">${nodeCard(s, id)}</div>`).join('')).join('');
+  const html = Object.keys(tiers).sort((a, b) => a - b).map(t => `<div class="tier-h"><h3>Tier ${t}</h3><span class="sub">${tiers[t].filter(id => E.nodeUnlocked(s, id)).length}／${tiers[t].length}</span></div>` + tiers[t].map(id => { const st = E.nodeState(s, id); return `<div class="card node ${st.unlocked ? 'u' : st.canUnlock ? 'c' : st.selectable ? 's' : 'l'}">${nodeCard(s, id)}</div>`; }).join('')).join('');
   UI.html('tree', html);
   UI.html('foot', hidden > 0 ? `まだ見えていない産業が ${hidden} 個ある（前提のノードを開くと現れる。最後の産業は、Tier 5 のうち4つを開くと現れる）。` : 'すべてのノードが見えている。');
 }

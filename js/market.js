@@ -16,6 +16,20 @@
   const Market = {
     SELL_FEE, BUY_PREMIUM, SAT_IMPACT, SAT_DECAY_PER_DAY,
 
+    // 自社で作れる品目の集合（データから一度だけ作る）：加工設備のレシピの出力・鉱区の鉱石・精製の産出・原油（油井）。exempt（天然ガス）は除く
+    producible() {
+      const G = D();
+      if (G._producible) return G._producible;
+      const set = { crude: true };
+      for (const id in G.recipes || {}) for (const k in G.recipes[id].outputs) set[k] = true;
+      for (const id in G.mineSites || {}) set[G.mineSites[id].res] = true;
+      for (const m in G.distillModes || {}) for (const k in G.distillModes[m].yields) set[k] = true;
+      for (const k of (G.importPremium && G.importPremium.exempt) || []) delete set[k];
+      Object.defineProperty(G, '_producible', { value: set, enumerable: false });
+      return set;
+    },
+    importExtra(k) { const ip = D().importPremium; return ip && this.producible()[k] ? ip.extra : 0; },
+
     init(state) {
       const m = { level: {}, sat: {}, cyclePhase: Math.random() * Math.PI * 2 };
       for (const k of D().productOrder) {
@@ -59,7 +73,7 @@
     // 自社の売りによる飽和を除いた相場（採算の見積もりで、将来の飽和を別に織り込むときの基準）
     priceNoSat(state, k) { return state.market.level[k] * this.eventMul(state, k); },
     // 購入単価（自社の売りによる値崩れは関係なく、相場＋上乗せ）
-    buyPrice(state, k) { return state.market.level[k] * this.eventMul(state, k) * (1 + BUY_PREMIUM); },
+    buyPrice(state, k) { return state.market.level[k] * this.eventMul(state, k) * (1 + BUY_PREMIUM + this.importExtra(k)); },
 
     // 売却：飽和が進むぶん平均単価で精算
     sellRevenue(state, k, qty) {

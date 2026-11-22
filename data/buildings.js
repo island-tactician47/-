@@ -27,7 +27,7 @@ GAME_DATA.buildings = {
     ores: {
       coal:      { rate: 10, opexPerUnit: 1.6, costMul: 1 },
       ironore:   { rate: 10, opexPerUnit: 1.8, costMul: 1 },
-      copperore: { rate: 4,  opexPerUnit: 45,  costMul: 5 },
+      copperore: { rate: 4,  opexPerUnit: 52,  costMul: 5 },
       limestone: { rate: 35, opexPerUnit: 0.7, costMul: 1 }
     },
     desc: '鉱区に建てる。掘った鉱石は貯鉱場に入り、工場がまず使う（売れない）。年6%ずつ減る'

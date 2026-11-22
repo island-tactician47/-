@@ -149,7 +149,7 @@ function renderBuild(s, seg, info) {
   const locked = types.filter(t => !open.includes(t));
   const cons = s.construction.filter(c => types.includes(c.type));
   const body = open.map(t => buildBtn(s, t)).join('') || '<div class="sub">解放済みの設備はまだない</div>';
-  const lockedLine = locked.length ? `<div class="sub" style="margin-top:8px">解放前：${locked.map(t => `${G.buildings[t].name}（${E.tierName(G.buildings[t].tier)}）`).join('・')}</div>` : '';
+  const lockedLine = locked.length ? `<div class="sub" style="margin-top:8px">解放前：${locked.map(t => `${G.buildings[t].name}（${(E.buildLockReason(s, t) || '').replace(/を開くと建てられる|になると建てられる/, '')}）`).join('・')}</div>` : '';
   const head = `<span>設備を建てる <span class="sub">${open.length}種</span>${cons.length ? ` <span class="sub">🚧 建設中${cons.length}</span>` : ''}</span>`;
   UI.html('build', UI.fold('f-build-' + seg, head, body + lockedLine, info[seg].n === 0));
 }
@@ -213,7 +213,7 @@ function powerBody(s) {
   const fuels = Object.keys(PW.fuels).map(k => {
     const r = G.resources[k], ok = E.resourceUnlocked(s, k), pe = E.powerEconomics(s, k);
     return ok ? `<span class="chip ${pw.fuel === k ? 'on' : ''}" onclick="UI.act(s=>Engine.setPowerFuel(s,'${k}'))">${r.name}（発電1MWhあたり燃料$${pe.fuelCost.toFixed(2)}）</span>`
-              : `<span class="chip" style="opacity:.45" onclick="UI.toast('${E.tierName(r.tier)}になると使える')">🔒 ${r.name}</span>`;
+              : `<span class="chip" style="opacity:.45" onclick="UI.toast('${(E.nodeOfResource(k) ? '「' + E.nodeName(E.nodeOfResource(k)) + '」を開くと使える（研究タブ）' : E.tierName(r.tier) + 'になると使える')}')">🔒 ${r.name}</span>`;
   }).join('');
   const pe = E.powerEconomics(s, pw.fuel);
   return `<div class="sub">加工設備の電力需要 ${E.fmtNum(demand)}MWh/日（直近の稼働から）（送電単価 $${(PW.gridPrice * idx).toFixed(1)}/MWh。操業費に含まれている）</div>
