@@ -43,10 +43,10 @@
       const a = tvN(x, y, I.view), b = tvN(x + w, y + d, I.view);
       return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.abs(b[0] - a[0]), Math.abs(b[1] - a[1])];
     }
-    // 建物（mapEntities の要素）を回したあとの座標・足あとにする。vrot＝絵の向き番号（建物の向き＋視点）
+    // 建物（mapEntities の要素）を回したあとの座標・足あとにする。vrot＝絵の向き番号（建物の向き−視点）
     function viewOf(e) {
       const r = I.view, q = rectToView(e.x, e.y, e.fw, e.fd);
-      return Object.assign({}, e, { x: q[0], y: q[1], fw: q[2], fd: q[3], vrot: ((e.rot || 0) + r) & 3 });
+      return Object.assign({}, e, { x: q[0], y: q[1], fw: q[2], fd: q[3], vrot: ((e.rot || 0) - r + 4) & 3 });   // 視点を回すと世界は反時計回りに回る（tv1）。絵 k は「建物を時計回りに90°×k 回した姿」なので、視点が1つ進むと絵の番号は1つ戻る
     }
 
     // ---- 描画の道具（sprites.js が使う）----
@@ -210,7 +210,7 @@
     const LEVELS = [0.35, 0.5, 0.7, 0.9, 1.2, 1.5, 1.8], cache = new Map(), CACHE_PX = 24e6; let cachePx = 0;   // 上限 約2400万ピクセル（約96MB）
     const pickLevel = z => LEVELS.find(l => l >= z - 1e-6) || LEVELS[LEVELS.length - 1];
     // 絵（PNG）。読み込みが終わるまでは手続き描画。終わったらその種類のキャッシュを捨てる
-    //  ① Blender の4方向（assets/bl/、spritesBL）：向き番号 vrot＝建物の向き＋視点
+    //  ① Blender の4方向（assets/bl/、spritesBL）：向き番号 vrot＝建物の向き−視点（視点が回ると、絵の番号は逆に進む）
     //  ② 旧 NT の1方向（assets/nt/、spritesNT）：視点が回っていない（vrot=0）ときだけ
     //  ③ どちらも無い・回っている：手続き描画（js/sprites*.js。回したあとの座標で描くので向きが合う）
     const NTM = (window.GAME_DATA && GAME_DATA.spritesNT) || {}, ntImg = {}, BLM = (window.GAME_DATA && GAME_DATA.spritesBL) || {}, blImg = {};

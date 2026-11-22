@@ -206,7 +206,7 @@
     terrainAt(s, x, y) {
       const M = this.mapCfg(); if (!M || x < 0 || y < 0 || x >= M.w || y >= M.h) return null;
       const coast = this.coastY(x), inPort = x >= M.port.x0 && x <= M.port.x1, rec = inPort ? 0 : (s.map && s.map.reclaim) || 0;
-      if (y >= coast + rec) return 'sea';
+      if (y >= coast + rec && !(s.map && s.map.fill && s.map.fill[x + ',' + y])) return 'sea';   // 埋め立てたタイル（s.map.fill）は陸
       if (rec && y >= coast && this.inSeaFront(s, x, y)) return 'sea';   // 造船所の開口部の前は、埋め立てても海のまま
       if (inPort && y >= this.portTop()) return 'port';
       if (x % M.block === M.block - 1 || y % M.block === M.block - 1) return 'road';
@@ -246,6 +246,7 @@
         for (const c of s.construction) delete c.key;
         for (const p of s.plants) delete p.key;
       }
+      if (m.fill) { if (typeof m.fill !== 'object') m.fill = {}; for (const k in m.fill) { const mm = /^(\d+),(\d+)$/.exec(k); if (!mm || +mm[1] >= M.w || +mm[2] >= M.h) delete m.fill[k]; } }
       for (const k of Object.keys(m.placed)) { const q = m.placed[k]; if (!q || typeof q !== 'object') { delete m.placed[k]; continue; }
         const par = q.type === 'module' && q.parent && m.placed[q.parent], r = q.type === 'module' ? (((q.rot | 0) % 4) + 4) % 4 : this.cleanRot(q.type, q.rot);   // 向きを 0〜3 の整数にそろえる（回せない種類は 0、モジュールは親と同じ）
         if (r) q.rot = r; else delete q.rot; }
@@ -282,11 +283,11 @@
     canPlace(s, type, x, y, occIn, rot, parentType) {
       const M = this.mapCfg(); if (!M) return { ok: false, msg: 'マップ未対応' };
       if (!Number.isInteger(x) || !Number.isInteger(y)) return { ok: false, msg: '場所が不正' };
-      const [fw, fd] = this.footprintOf(type, type === 'module' ? rot : this.cleanRot(type, rot), parentType), occ = occIn || this.mapOccupancy(s), sf = this.seaFrontCfg(type);
+      const [fw, fd] = this.footprintOf(type, type === 'module' ? rot : this.cleanRot(type, rot), parentType), occ = occIn || this.mapOccupancy(s), sf = this.seaFrontCfg(type), fill = [];
       for (let i = 0; i < fw; i++) for (let j = 0; j < fd; j++) {
         const t = this.terrainAt(s, x + i, y + j);
         if (t === null) return { ok: false, msg: 'マップの外' };
-        if (t === 'sea' && !(sf && j >= fd - sf.mouth)) return { ok: false, msg: '海の上には建てられない（埋め立てが必要）' };
+        if (t === 'sea' && !(sf && j >= fd - sf.mouth)) { if (this.fillable(s, x + i, y + j)) { fill.push((x + i) + ',' + (y + j)); continue; } return { ok: false, msg: '海の上には建てられない（港の前・沖すぎる・造船所の開口部の前）' }; }
         if (t === 'road') return { ok: false, msg: '道路には建てられない' };
         if (t === 'port') return { ok: false, msg: '港の用地' };
         if (occ[(x + i) + ',' + (y + j)]) return { ok: false, msg: 'ほかの建物と重なる' };
@@ -296,8 +297,17 @@
         for (let i = 0; i < sf.open; i++) if (this.terrainAt(s, c0 + i, y + fd - 1) !== 'sea') return { ok: false, msg: 'ドックの開口部（海側の端）が海に面していない。海岸に建てる' };
         for (let i = 0; i < fw; i++) for (let j = fd; y + j < M.h; j++) if (occ[(x + i) + ',' + (y + j)]) return { ok: false, msg: 'ドックの開口部の前に建物がある' };   // 開口部の前（足あとの幅）は海のまま空けておく
       }
-      return { ok: true };
+      return { ok: true, fill };   // fill＝埋め立てるマス（海の上に置く分。費用は fillCost）
     },
+    // 埋め立て：海の上に置いた足あとが陸地になる（s.map.fill）。港の前・造船所の開口部の前・海岸線から reclaimMax 行より沖は不可
+    fillable(s, x, y) {
+      const M = this.mapCfg(); if (!M || x < 0 || y < 0 || x >= M.w || y >= M.h) return false;
+      if (x >= M.port.x0 && x <= M.port.x1) return false;
+      if (y >= this.coastY(x) + M.reclaimMax) return false;
+      return !this.inSeaFront(s, x, y);
+    },
+    fillCost(s, n) { const M = this.mapCfg(); return M ? Math.round((n || 0) * (M.reclaimCostPerTile || 0) * this.priceIndex(s)) : 0; },
+    applyFill(s, keys) { if (!keys || !keys.length) return; this.ensureMap(s); if (!s.map.fill) s.map.fill = {}; for (const k of keys) s.map.fill[k] = 1; },
     mapOccupancy(s, skip) {   // skip＝除く key の Set（移設中の建物と、そのモジュールを除いて当たりを見る）
       const occ = {};
       for (const k in (s.map && s.map.placed) || {}) { if (skip && skip.has(k)) continue; const p = s.map.placed[k], [fw, fd] = this.placedFootprint(s, p); for (let i = 0; i < fw; i++) for (let j = 0; j < fd; j++) occ[(p.x + i) + ',' + (p.y + j)] = k; }
@@ -386,7 +396,7 @@
       const prot = rot === undefined ? this.parentRot(s, p) : (((rot | 0) % 4) + 4) % 4, pc = this.canPlace(s, 'module', x, y, occ, prot, p.type); if (!pc.ok) return pc;
       const [w, d] = this.footprintOf('module', prot, p.type), rects = this.plantRects(s, p);
       const touch = rects.some(r => ((x + w === r.x || r.x + r.w === x) && y < r.y + r.d && r.y < y + d) || ((y + d === r.y || r.y + r.d === y) && x < r.x + r.w && r.x < x + w));
-      return touch ? { ok: true } : { ok: false, msg: '設備に隣接して置く' };
+      return touch ? { ok: true, fill: pc.fill || [] } : { ok: false, msg: '設備に隣接して置く' };
     },
     // 設備の近くで置ける一番近い場所
     findModuleSpot(s, p, rot) { this.ensureMap(s); return this.moduleSpot(s, p, rot); },
@@ -413,8 +423,9 @@
       const mrot = pos && pos.rot !== undefined ? (((pos.rot | 0) % 4) + 4) % 4 : this.parentRot(s, p);   // モジュールの向き（省略＝親と同じ）
       if (!pos) { pos = this.findModuleSpot(s, p); if (!pos) return { ok: false, msg: '隣に置ける場所がない' }; }
       const pc = this.canPlaceModule(s, p, pos.x, pos.y, undefined, mrot); if (!pc.ok) return pc;
-      const B = D().buildings[p.type], MC = this.moduleCfg(), days = this.buildDays(Math.max(3, Math.round(B.months * MC.monthsMul)));
-      s.cash -= chk.cost; s.month.construction += chk.cost;
+      const B = D().buildings[p.type], MC = this.moduleCfg(), days = this.buildDays(Math.max(3, Math.round(B.months * MC.monthsMul))), fillFee = this.fillCost(s, (pc.fill || []).length);
+      if (s.cash < chk.cost + fillFee) return { ok: false, msg: `資金不足（建設費＋埋め立て代 ${this.fmtMoney(chk.cost + fillFee)}）` };
+      s.cash -= chk.cost + fillFee; s.month.construction += chk.cost + fillFee; this.applyFill(s, pc.fill);
       const key = this.newKey(s, 'module'); s.map.placed[key] = { type: 'module', x: pos.x, y: pos.y, parent: p.key }; if (mrot) s.map.placed[key].rot = mrot;
       s.construction.push({ type: 'module', plantId: p.id, daysLeft: days, totalDays: days, key });
       this.log(s, `🚧 ${B.name}の増設モジュールの建設を開始（${this.fmtMoney(chk.cost)}、${this.fmtDuration(days)}）`);
@@ -433,6 +444,7 @@
       const rot = this.cleanRot(q.type, pos.rot === undefined ? q.rot : pos.rot);
       if (pos.x === q.x && pos.y === q.y && rot === (q.rot || 0)) return { ok: false, msg: '今の場所と同じ' };
       const occ = this.mapOccupancy(s, skip), pc = this.canPlace(s, q.type, pos.x, pos.y, occ, rot); if (!pc.ok) return pc;
+      const fillSet = new Set(pc.fill || []);
       const [fw, fd] = this.footprintOf(q.type, rot), mark = (x, y, w, d) => { for (let i = 0; i < w; i++) for (let j = 0; j < d; j++) occ[(x + i) + ',' + (y + j)] = 1; };
       mark(pos.x, pos.y, fw, fd);
       const rects = [{ x: pos.x, y: pos.y, w: fw, d: fd }], moves = [], same = rot === (q.rot || 0), M = this.mapCfg();
@@ -440,26 +452,26 @@
         const c = m.placed[k], crot = c.rot || 0, [w, d] = this.footprintOf('module', crot, q.type);
         const touches = (x, y) => rects.some(r => ((x + w === r.x || r.x + r.w === x) && y < r.y + r.d && r.y < y + d) || ((y + d === r.y || r.y + r.d === y) && x < r.x + r.w && r.x < x + w));
         let spot = null;
-        if (same) { const nx = pos.x + (c.x - q.x), ny = pos.y + (c.y - q.y); if (this.canPlace(s, 'module', nx, ny, occ, crot, q.type).ok && touches(nx, ny)) spot = { x: nx, y: ny }; }
+        if (same) { const nx = pos.x + (c.x - q.x), ny = pos.y + (c.y - q.y), cp = this.canPlace(s, 'module', nx, ny, occ, crot, q.type); if (cp.ok && touches(nx, ny)) spot = { x: nx, y: ny, fill: cp.fill }; }
         if (!spot) {
           const r0 = rects[0]; let bd = Infinity;
           for (let y = Math.max(0, r0.y - d - 1); y < Math.min(M.h, r0.y + r0.d + d + 2); y++) for (let x = Math.max(0, r0.x - w - 1); x < Math.min(M.w, r0.x + r0.w + w + 2); x++) {
             const dd = Math.abs(x - r0.x) + Math.abs(y - r0.y); if (dd >= bd) continue;
-            if (this.canPlace(s, 'module', x, y, occ, crot, q.type).ok && touches(x, y)) { spot = { x, y }; bd = dd; }
+            const cp = this.canPlace(s, 'module', x, y, occ, crot, q.type); if (cp.ok && touches(x, y)) { spot = { x, y, fill: cp.fill }; bd = dd; }
           }
         }
         if (!spot) return { ok: false, msg: '増設モジュールを置く余地がない（周囲に空きが必要）' };
-        mark(spot.x, spot.y, w, d); rects.push({ x: spot.x, y: spot.y, w, d }); moves.push({ key: k, x: spot.x, y: spot.y });
+        mark(spot.x, spot.y, w, d); rects.push({ x: spot.x, y: spot.y, w, d }); moves.push({ key: k, x: spot.x, y: spot.y }); for (const fk of spot.fill || []) fillSet.add(fk);
       }
       const p = s.plants.find(pp => pp.key === key);
-      const cost = Math.round(RC.fee * (this.costOf(s, q.type) + (p ? kids.length * this.moduleCost(s, p) : 0)));
-      if (s.cash < cost) return { ok: false, msg: `資金不足（${this.fmtMoney(cost)}）`, cost };
-      return { ok: true, cost, moves, rot, days: Math.max(1, Math.round(this.buildDays(D().buildings[q.type].months) * (RC.daysMul || 0.3))) };
+      const cost = Math.round(RC.fee * (this.costOf(s, q.type) + (p ? kids.length * this.moduleCost(s, p) : 0))) + this.fillCost(s, fillSet.size);
+      if (s.cash < cost) return { ok: false, msg: `資金不足（${this.fmtMoney(cost)}）`, cost, fill: [...fillSet] };
+      return { ok: true, cost, moves, rot, fill: [...fillSet], days: Math.max(1, Math.round(this.buildDays(D().buildings[q.type].months) * (RC.daysMul || 0.3))) };
     },
     relocate(s, key, pos) {
       const pl = this.planRelocate(s, key, pos); if (!pl.ok) return pl;
       const q = s.map.placed[key], B = D().buildings[q.type];
-      q.x = pos.x; q.y = pos.y; if (pl.rot) q.rot = pl.rot; else delete q.rot;
+      this.applyFill(s, pl.fill); q.x = pos.x; q.y = pos.y; if (pl.rot) q.rot = pl.rot; else delete q.rot;
       for (const mv of pl.moves) { const c = s.map.placed[mv.key]; c.x = mv.x; c.y = mv.y; }
       s.cash -= pl.cost; s.month.construction += pl.cost;
       s.construction.push({ type: 'move', key, lease: null, daysLeft: pl.days, totalDays: pl.days, label: `🔧 ${B.name}の移設` });
@@ -479,13 +491,13 @@
       // 自分自身を除いた親の足あとに隣接するか（canPlaceModule は自分の旧位置も数えるので、旧位置だけに接する置き方を弾く）
       const [w, d] = this.footprintOf('module', rot, p.type), rects = this.plantRects(s, p).filter(rr => !(rr.x === q.x && rr.y === q.y));
       if (!rects.some(rr => ((pos.x + w === rr.x || rr.x + rr.w === pos.x) && pos.y < rr.y + rr.d && rr.y < pos.y + d) || ((pos.y + d === rr.y || rr.y + rr.d === pos.y) && pos.x < rr.x + rr.w && rr.x < pos.x + w))) return { ok: false, msg: '設備に隣接して置く' };
-      const cost = Math.round(RC.fee * this.moduleCost(s, p)); if (s.cash < cost) return { ok: false, msg: `資金不足（${this.fmtMoney(cost)}）`, cost };
-      return { ok: true, cost, rot };
+      const fillKeys = r.fill || [], cost = Math.round(RC.fee * this.moduleCost(s, p)) + this.fillCost(s, fillKeys.length); if (s.cash < cost) return { ok: false, msg: `資金不足（${this.fmtMoney(cost)}）`, cost, fill: fillKeys };
+      return { ok: true, cost, rot, fill: fillKeys };
     },
     moveModule(s, key, pos) {
       const chk = this.canMoveModule(s, key, pos); if (!chk.ok) return chk;
       const q = s.map.placed[key]; q.x = pos.x; q.y = pos.y; if (chk.rot) q.rot = chk.rot; else delete q.rot;
-      s.cash -= chk.cost; s.month.construction += chk.cost;
+      this.applyFill(s, chk.fill); s.cash -= chk.cost; s.month.construction += chk.cost;
       this.log(s, `🔧 増設モジュールを置き直した（${this.fmtMoney(chk.cost)}）`);
       return { ok: true };
     },
@@ -1084,15 +1096,17 @@
       let stackKey = null;
       if (this.stackCfg(type) && (s.map || pos)) { if (!s.map) this.ensureMap(s); stackKey = this.stackSite(s, type); }   // 重ねて建てる設備：2棟目以降は1棟目の敷地に重ねる（場所の指定は無視）。地図も位置も無いゲームは従来どおり
       const rot = pos ? this.cleanRot(type, pos.rot) : 0;
-      if (pos && !stackKey) { this.ensureMap(s); const pc = this.canPlace(s, type, pos.x, pos.y, null, rot); if (!pc.ok) return pc; }
-      const b = D().buildings[type];
-      s.cash -= chk.cost; s.month.construction += chk.cost;
+      let fillKeys = [];
+      if (pos && !stackKey) { this.ensureMap(s); const pc = this.canPlace(s, type, pos.x, pos.y, null, rot); if (!pc.ok) return pc; fillKeys = pc.fill || []; }
+      const b = D().buildings[type], fillFee = this.fillCost(s, fillKeys.length);
+      if (s.cash < chk.cost + fillFee) return { ok: false, msg: `資金不足（建設費＋埋め立て代 ${this.fmtMoney(chk.cost + fillFee)}）` };
+      s.cash -= chk.cost + fillFee; s.month.construction += chk.cost + fillFee; this.applyFill(s, fillKeys);
       const days = this.buildDays(b.months);
       const entry = { type, lease: lease || null, daysLeft: days, totalDays: days };
       if (stackKey) entry.key = stackKey;
       else if (pos) { entry.key = this.newKey(s, type); s.map.placed[entry.key] = { type, x: pos.x, y: pos.y }; if (rot) s.map.placed[entry.key].rot = rot; }
       s.construction.push(entry);
-      this.log(s, `🚧 ${b.name}${lease ? '（' + D().leases[lease].name + '）' : ''}の建設を開始（${this.fmtMoney(chk.cost)}、${this.buildText(b.months)}）`);
+      this.log(s, `🚧 ${b.name}${lease ? '（' + D().leases[lease].name + '）' : ''}の建設を開始（${this.fmtMoney(chk.cost)}${fillFee ? '＋埋め立て ' + this.fmtMoney(fillFee) : ''}、${this.buildText(b.months)}）`);
       return { ok: true };
     },
     portUpgradeCost(s) { const n = this.nextPort(s); return n ? Math.round(n.cost * this.priceIndex(s)) : 0; },

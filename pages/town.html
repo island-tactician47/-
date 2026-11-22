@@ -171,9 +171,10 @@ function renderSheet(s) {
     else {
       const b = G.buildings[p.type], MC = E.moduleCfg(), mv = !!moveKey, rot = gh && gh.rot !== undefined ? gh.rot : placingRot;
       const chk = gh ? (mv ? E.canMoveModule(s, moveKey, { x: gh.x, y: gh.y, rot }) : E.canPlaceModule(s, p, gh.x, gh.y, undefined, rot)) : { ok: false, msg: 'マップをタップして場所を決める' }, cb = mv ? { ok: true } : E.canBuildModule(s, p);
-      const add = E.plantCap(E.plantDef(p), G.recipes[p.recipe]) * MC.gain, fee = mv ? (chk.cost !== undefined ? chk.cost : Math.round(((G.relocate || {}).fee || 0.2) * E.moduleCost(s, p))) : (cb.cost || E.moduleCost(s, p));
+      const add = E.plantCap(E.plantDef(p), G.recipes[p.recipe]) * MC.gain, mfill = chk.fill ? chk.fill.length : 0, mfillFee = E.fillCost(s, mfill), fee = mv ? (chk.cost !== undefined ? chk.cost : Math.round(((G.relocate || {}).fee || 0.2) * E.moduleCost(s, p))) : ((cb.cost || E.moduleCost(s, p)) + mfillFee);
       out.push(`<div class="card"><div class="row"><h3>🧱 ${b.name}の増設モジュール${mv ? 'を置き直す' : ''}</h3><span class="sub">${M(fee)}</span></div>
         <div class="sub">設備に隣接して置く（緑なら置ける）。向きは回せる。${mv ? '置き直しの費用は建設費の2割。' : `日量が +${E.fmtNum(add)}${G.resources[Object.keys(G.recipes[p.recipe].outputs)[0]].unit}/日（現在 ${E.fmtNum(E.plantCapOf(p))}）。維持費も増える`}</div>
+        ${mfill ? `<div class="sub" style="margin-top:4px">🌊 海の上に置く：${mfill}マスを埋め立てる（＋${M(mfillFee)}）</div>` : ''}
         <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">置ける</b>' : `<b class="bad">${chk.msg}</b>`}${cb.ok ? '' : `　<b class="bad">${cb.msg}</b>`}</div>
         <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">${mv ? '置き直す' : '建設する'}</button> <button class="btn small" onclick="rotatePlacing(1)">⟳ 回す</button> <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
       UI.html('sheet', out.join('')); return;
@@ -181,12 +182,14 @@ function renderSheet(s) {
   }
   if (placing) {
     const b = G.buildings[placing], gh = iso.ghost, mv = !!moveKey, chk = gh ? (mv ? E.planRelocate(s, moveKey, { x: gh.x, y: gh.y, rot: E.cleanRot(placing, placingRot) }) : E.canPlace(s, placing, gh.x, gh.y, null, E.cleanRot(placing, placingRot))) : { ok: false, msg: 'マップをタップして場所を決める' };
-    const cb = mv ? { ok: true } : E.canBuild(s, placing), full = !mv && !E.findSpot(s, placing), rc = E.canReclaim(s);
+    const cb0 = mv ? { ok: true } : E.canBuild(s, placing), fillN = chk.fill ? chk.fill.length : 0, fillFee = E.fillCost(s, fillN);
+    const cb = (!mv && cb0.ok && s.cash < E.costOf(s, placing) + fillFee) ? { ok: false, msg: `資金不足（建設費＋埋め立て代 ${M(E.costOf(s, placing) + fillFee)}）` } : cb0;
+    const fillInfo = fillN ? `<div class="sub" style="margin-top:4px">🌊 海の上に置く：${fillN}マスを埋め立てる（＋${M(fillFee)}）。置いた部分が陸地になる。</div>` : '';
     out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}${mv ? 'を移設する' : 'を建てる'}</h3><span class="sub">${mv ? (chk.cost !== undefined ? M(chk.cost) + '（建設費の2割）' : '') : M(E.costOf(s, placing)) + '・' + E.buildText(b.months)}</span></div>
       <div class="sub">マップをタップして場所を決める（緑なら置ける）。足あと ${E.footprintOf(placing, E.cleanRot(placing, placingRot)).join('×')}${E.canRotate(placing) ? '（向きを回せる）' : ''}</div>
       <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">置ける</b>' : `<b class="bad">${chk.msg}</b>`}${cb.ok ? '' : `　<b class="bad">${cb.msg}</b>`}</div>
-      ${full ? `<div class="sub bad" style="margin-top:4px">置ける場所がありません。海を埋め立てて用地を広げます（${rc.ok ? M(rc.cost) + '/行' : rc.msg}）。</div>` : ''}
-      <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">${mv ? '移設する' : '建設する'}</button> ${E.canRotate(placing) ? '<button class="btn small" onclick="rotatePlacing(1)">⟳ 回す</button> ' : ''}${mv ? '' : `<button class="btn small" ${rc.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.reclaim(s))">🏗️ 埋め立てる（${M(E.reclaimCost(s))}）</button>`} <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
+      ${fillInfo}
+      <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">${mv ? '移設する' : '建設する'}</button> ${E.canRotate(placing) ? '<button class="btn small" onclick="rotatePlacing(1)">⟳ 回す</button> ' : ''}<button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
   } else if (sel) {
     let e = (iso.ents || []).find(q => q.key === sel);
     if (e && e.type === 'module') {   // 増設モジュール：置き直しと撤去（本体は親の建物をタップ）
