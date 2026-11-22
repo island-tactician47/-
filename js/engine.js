@@ -92,7 +92,8 @@
         for (const p of s.plants || []) { const n = this.nodeOfRecipe(p.recipe); if (n && !this.nodeDef(n).auto) (s.nodes || (s.nodes = {}))[n] = true; }
         s.nv = 2; if (s.month) s.month.noSupply = true;   // 移行した月は消費の記録が途中からなので、選択権の測定に入れない（履歴に consumed を付けない）
       }
-      // ノード・解放権の壊れたセーブへの備え
+      // ゴール・ノード・解放権の壊れたセーブへの備え
+      if (s.goal !== undefined && (!s.goal || typeof s.goal !== 'object' || typeof s.goal.rank !== 'string' || !Number.isFinite(s.goal.score))) delete s.goal;
       if (s.nodes !== undefined) { if (!s.nodes || typeof s.nodes !== 'object' || Array.isArray(s.nodes)) delete s.nodes; else for (const id in s.nodes) if (s.nodes[id] !== true || !this.nodeDef(id)) delete s.nodes[id]; }
       if (s.tickets !== undefined) { const t0 = s.tickets; if (!t0 || typeof t0 !== 'object' || !Number.isFinite(t0.earned) || t0.earned < 0) delete s.tickets; else { if (!Number.isFinite(t0.spent) || t0.spent < 0) t0.spent = 0; t0.earned = Math.floor(t0.earned); t0.spent = Math.min(Math.floor(t0.spent), t0.earned); } }
       // データからレシピが消えていたら先頭のレシピに戻す
