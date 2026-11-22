@@ -82,3 +82,10 @@ canvas.chart { width: 100%; height: 160px; display: block; }
 
 #queue .qrow { margin-top: 4px; }
 #queue .card { border-color: #e7c9a8; background: #fff8ef; }
+
+#hdr { position: sticky; }
+#hdr #h-menu { background: #4a4137; color: #f6efe2; border: 0; border-radius: 8px; width: 36px; height: 36px; font-size: 20px; line-height: 1; flex: none; }
+#hdr #menu { position: absolute; right: 8px; top: 52px; background: #fffdf8; color: var(--ink); border: 1px solid var(--line); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.35); z-index: 30; min-width: 250px; overflow: hidden; }
+#hdr #menu a { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--ink); text-decoration: none; font-size: 14px; border-bottom: 1px solid var(--line); }
+#hdr #menu a:last-child { border-bottom: 0; }
+#hdr #menu a span { font-size: 18px; }

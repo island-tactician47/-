@@ -8,8 +8,15 @@
     { href: 'factory.html',  icon: '🏗️', label: '工場', alt: ['field.html', 'refinery.html'] },
     { href: 'market.html',   icon: '📈', label: '市場' },
     { href: 'dashboard.html', icon: '📊', label: '経営', show: s => Engine.dashboardVisible(s) },
-    { href: 'research.html', icon: '🔬', label: '研究', show: s => Engine.tierUnlocked(s, 5) },
-    { href: '../launcher.html', icon: '🏠', label: 'その他' }
+    { href: 'finance.html',  icon: '💰', label: '財務' },
+    { href: 'research.html', icon: '🔬', label: '研究', show: s => Engine.tierUnlocked(s, 5) }
+  ];
+  // 右上のメニュー（下のタブに無いページ）
+  const MENU = [
+    { href: 'field.html',        icon: '🛢️', label: '採掘地（油井・鉱山・貯鉱場）' },
+    { href: 'refinery.html',     icon: '🏭', label: '製油所' },
+    { href: '../launcher.html',  icon: '🏠', label: 'ホーム（設定・セーブの引き継ぎ・新規）' },
+    { href: 'debug.html',        icon: '🔧', label: 'デバッグ（PC用）' }
   ];
 
   let foldState = {};
@@ -138,10 +145,16 @@
 
   function buildChrome(page) {
     const hdr = document.createElement('div'); hdr.id = 'hdr';
-    hdr.innerHTML = `<div class="row"><div class="date" id="h-date"></div><div class="money" id="h-money"></div></div>
+    hdr.innerHTML = `<div class="row"><div class="date" id="h-date"></div><div class="money" id="h-money"></div><button type="button" id="h-menu" aria-label="メニュー">☰</button></div>
       <div class="speed">${SPEEDS.map(sp => `<button data-sp="${sp}">${sp === 0 ? '⏸ 停止' : '▶' + (sp > 1 ? '×' + sp : ' 1倍')}</button>`).join('')}</div>
       <div class="goal" id="h-goal"></div>`;
     document.body.prepend(hdr);
+    const menu = document.createElement('div'); menu.id = 'menu'; menu.style.display = 'none';
+    menu.innerHTML = MENU.map(m => `<a href="${m.href}"><span>${m.icon}</span>${m.label}</a>`).join('');
+    hdr.appendChild(menu);
+    const mb = hdr.querySelector('#h-menu');
+    mb.onclick = e => { e.stopPropagation(); menu.style.display = menu.style.display === 'none' ? 'block' : 'none'; };
+    document.addEventListener('click', e => { if (menu.style.display !== 'none' && !menu.contains(e.target)) menu.style.display = 'none'; });
     hdr.querySelectorAll('[data-sp]').forEach(b => b.onclick = () => UI.setSpeed(+b.dataset.sp));
     const nav = document.createElement('nav'); nav.id = 'nav';
     const isOn = n => n.href === page + '.html' || (n.alt || []).includes(page + '.html');
