@@ -64,7 +64,7 @@ function plTable(p, q) {   // q＝前の期（なければ undefined）
     ${row('販売費及び一般管理費', a.sga, b && b.sga)}${row('設備の維持費', a.fixed, b && b.fixed, 'sub2')}${row('研究開発費', a.research, b && b.research, 'sub2')}${a.penalty ? row('違約金', a.penalty, b && b.penalty, 'sub2') : ''}
     ${row('営業利益', a.op, b && b.op, 'tot')}<tr class="sub2"><td>営業利益率</td><td>${pct(a.op, a.rev)}</td><td></td></tr>
     ${row('営業外費用：支払利息', a.interest, b && b.interest)}${a.refund ? row('営業外収益：自家発電の払い戻し', a.refund, b && b.refund) : ''}
-    ${row('経常利益', a.ordinary, b && b.ordinary, 'tot')}${row('当期純利益（税なし）', a.net, b && b.net, 'tot')}</table>`;
+    ${row('経常利益', a.ordinary, b && b.ordinary, 'tot')}${row('法人税等', a.tax, b && b.tax)}${row('当期純利益', a.net, b && b.net, 'tot')}</table>`;
 }
 function bsTable(p, q) {
   const a = p.bs, b = q && q.bs;

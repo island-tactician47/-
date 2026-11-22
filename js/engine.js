@@ -945,16 +945,16 @@
       let prevClose = null;
       for (const g of groups) {
         const hs = g.hs, last = hs[hs.length - 1], c = h => h.costs || {};
-        const rev = sum(hs, h => h.revenue), purchase = sum(hs, h => c(h).purchase), opex = sum(hs, h => c(h).opex), fixed = sum(hs, h => c(h).fixed), research = sum(hs, h => c(h).research), penalty = sum(hs, h => c(h).penalty), refund = sum(hs, h => c(h).refund), interest = sum(hs, h => c(h).interest);
+        const rev = sum(hs, h => h.revenue), purchase = sum(hs, h => c(h).purchase), opex = sum(hs, h => c(h).opex), fixed = sum(hs, h => c(h).fixed), research = sum(hs, h => c(h).research), penalty = sum(hs, h => c(h).penalty), tax = sum(hs, h => c(h).tax), refund = sum(hs, h => c(h).refund), interest = sum(hs, h => c(h).interest);
         const cogs = purchase + opex, gross = rev - cogs, sga = fixed + research + penalty, op = gross - sga, ordinary = op - interest + refund;
         const capex = sum(hs, h => h.capex), borrowed = sum(hs, h => h.borrowed), odDraw = sum(hs, h => h.odDraw), principal = sum(hs, h => h.principal);
-        const cfo = rev - purchase - opex - fixed - research - penalty + refund - interest, cfi = -capex, cff = borrowed + odDraw - principal, net = cfo + cfi + cff;
+        const cfo = rev - purchase - opex - fixed - research - penalty + refund - interest - tax, cfi = -capex, cff = borrowed + odDraw - principal, net = cfo + cfi + cff;
         const close = last.cash, open = prevClose === null ? close - net : prevClose;
         const hasBs = !!last.bs, bs = hasBs ? last.bs : null;
         const assets = hasBs ? close + bs.inv + bs.fixed : null, liab = hasBs ? bs.loans + bs.od : (last.debt || 0);
         out.push({ key: g.key, y: g.y, m: g.m, n: hs.length, ongoing: unit !== 'month' && hs.length < 12,
           label: unit === 'month' ? `${g.y}年${g.m}月` : `${g.y}年${hs.length < 12 ? '（' + hs.length + 'か月）' : ''}`,
-          pl: { rev, purchase, opex, cogs, gross, fixed, research, penalty, sga, op, interest, refund, ordinary, net: ordinary },
+          pl: { rev, purchase, opex, cogs, gross, fixed, research, penalty, sga, op, interest, refund, ordinary, tax, net: ordinary - tax },
           bs: { cash: close, inv: hasBs ? bs.inv : null, fixed: hasBs ? bs.fixed : null, assets, loans: hasBs ? bs.loans : null, od: hasBs ? bs.od : null, liab, equity: hasBs ? assets - liab : null, hasBs },
           cf: { cfo, cfi, cff, net, open, close, other: close - (open + net), capex, borrowed, odDraw, principal } });
         prevClose = close;
@@ -1828,6 +1828,21 @@
       return stop;
     },
 
+    // 法人税（12月の決算の月だけ）。税引き前の利益 −（その年の設備投資。利益を0までしか減らさない）−（繰り越した赤字）−（非課税枠×物価指数）の超過分に税率。
+    // 税引き前が赤字の年は、赤字を繰り越す（s.tax.loss。赤字が出るまで s.tax は作らない）。GAME_DATA.tax が無ければ税なし。pre＝この月の税引き前の利益
+    corporateTax(s, pre) {
+      const cfg = D().tax; if (!cfg) return 0;
+      const d = s.day - 1; if (Math.floor((d % DAYS_PER_YEAR) / DAYS_PER_MONTH) !== 11) return 0;
+      const y = D().startYear + Math.floor(d / DAYS_PER_YEAR);
+      let pretax = pre, capex = s.month.construction || 0;
+      for (const x of s.history || []) if (x.y === y) { pretax += (x.profit || 0) + ((x.costs && x.costs.tax) || 0); capex += x.capex || 0; }
+      const loss = (s.tax && s.tax.loss) || 0, base = Math.max(0, pretax - capex * (cfg.capexDeduct === undefined ? 1 : cfg.capexDeduct));
+      const tax = cfg.rate * Math.max(0, base - loss - cfg.exempt * this.priceIndex(s));
+      const left = pretax < 0 ? loss - pretax : Math.max(0, loss - base);
+      if (left > 0 || s.tax) s.tax = { loss: left };
+      return tax;
+    },
+
     monthEnd(s) {
       let stop = false;
       const m = s.month;
@@ -1844,6 +1859,12 @@
       s.cash -= odi; m.interest += odi;
       this.researchMonth(s);
       if (s.contracts) this.contractMonth(s);   // 違約金は当座貸越の判定より前
+      // 法人税：12月の決算で、その年の分をまとめて払う（税引き前の月の結果を先に出す）。払ったあとの現金で、当座貸越を判定する
+      const revenue = Object.values(m.revenue).reduce((a, b) => a + b, 0);
+      const cost0 = m.purchase + m.opex + m.fixed + m.interest + (m.research || 0) + (m.penalty || 0) - (m.refund || 0);   // 自家発電の払い戻しは費用から引く（売上には入れない：運転資金枠の計算を変えないため）
+      const tax = this.corporateTax(s, revenue - cost0);
+      if (tax > 0) { s.cash -= tax; m.tax = tax; }
+      const cost = cost0 + tax;
       // 資金不足は当座貸越で自動的に埋める
       if (s.cash < 0) {
         s.overdraft += -s.cash; m.odDraw = (m.odDraw || 0) + (-s.cash);   // 当座貸越の借り増し（キャッシュ・フローの財務活動に使う）
@@ -1853,8 +1874,6 @@
         const r = Math.min(s.overdraft, s.cash);
         s.overdraft -= r; s.cash -= r; m.principal += r;
       }
-      const revenue = Object.values(m.revenue).reduce((a, b) => a + b, 0);
-      const cost = m.purchase + m.opex + m.fixed + m.interest + (m.research || 0) + (m.penalty || 0) - (m.refund || 0);   // 自家発電の払い戻しは費用から引く（売上には入れない：運転資金枠の計算を変えないため）
       const prices = {};
       for (const k of D().productOrder) prices[k] = Market.price(s, k);
       const d = s.day - 1;
@@ -1864,7 +1883,7 @@
         cash: s.cash, debt: this.totalDebt(s),
         bs: { inv: this.inventoryValue(s), fixed: this.assetValue(s), loans: Object.values(s.loans).reduce((a, l) => a + l.principal, 0), od: s.overdraft || 0 }, odDraw: m.odDraw || 0,   // 財務三表用：棚卸資産・設備の評価額・借入金・当座貸越（月末）／当座貸越の借り増し
         produced: { ...m.produced }, ...(m.noSupply ? {} : { consumed: { ...(m.consumed || {}) } }), sold: { ...m.sold }, lostCrude: m.lostCrude, refined: m.refined,
-        costs: { purchase: m.purchase, opex: m.opex, fixed: m.fixed, interest: m.interest, research: m.research || 0, refund: m.refund || 0, ...(m.penalty ? { penalty: m.penalty } : {}) }, segPL: this.roundSegPL(m.seg)
+        costs: { purchase: m.purchase, opex: m.opex, fixed: m.fixed, interest: m.interest, research: m.research || 0, refund: m.refund || 0, ...(m.penalty ? { penalty: m.penalty } : {}), ...(tax > 0 ? { tax } : {}) }, segPL: this.roundSegPL(m.seg)
       });
       if (s.history.length > 600) s.history.shift();
       if (m.lostCrude > 1) this.log(s, `⚠️ 原油タンクが満杯で ${this.fmtNum(m.lostCrude)}bbl を採り損ねた`);

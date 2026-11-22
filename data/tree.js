@@ -87,3 +87,7 @@ GAME_DATA.goal = {
   restructurePenalty: 10, overdraftPenaltyPerMonth: 2, overdraftPenaltyMax: 15,
   ranks: [{ min: 85, rank: 'S', title: '宇宙企業' }, { min: 70, rank: 'A', title: '世界企業' }, { min: 55, rank: 'B', title: '国内大手' }, { min: 40, rank: 'C', title: '地方の雄' }, { min: 0, rank: 'D', title: '町工場' }]
 };
+
+// 法人税：12月の決算で、その年の税引き前の利益（−その年の設備投資−繰り越した赤字）が exempt（1950年のドル。物価指数で増える）を超えた分に、rate をかける。
+// 設備投資は、利益を0になるまで差し引ける（capexDeduct 1＝全額）。赤字の年は、翌年以降に繰り越す。ゴール・解放権の「利益」は税引き後。値は仮：遊んで調整する。
+GAME_DATA.tax = { rate: 0.30, exempt: 20000000, capexDeduct: 1 };
