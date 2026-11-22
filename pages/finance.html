@@ -81,7 +81,12 @@ function render(s) {
 
   const m = s.month;
   const rev = Object.values(m.revenue).reduce((a, b) => a + b, 0);
-  const rows = Object.entries(m.revenue).map(([k, v]) => `<tr><td>　売上：${G.resources[k].name}（${E.fmtNum(m.sold[k] || 0)}${G.resources[k].unit}）</td><td>${M(v)}</td></tr>`).join('');
+  // 売上の行は、一度出た品目は残す（出荷のたびに行が増えて画面が揺れないように。月が替わって0になっても行は消さない）
+  let seen = []; try { seen = JSON.parse(localStorage.getItem('factorySim.ui.finRows') || '[]') || []; } catch (e) { seen = []; }
+  const add = Object.keys(m.revenue).filter(k => G.resources[k] && !seen.includes(k));
+  if (add.length) { seen = seen.concat(add); try { localStorage.setItem('factorySim.ui.finRows', JSON.stringify(seen)); } catch (e) {} }
+  const order = G.productOrder || Object.keys(G.resources);
+  const rows = seen.filter(k => G.resources[k]).sort((a, b) => order.indexOf(a) - order.indexOf(b)).map(k => `<tr><td>　売上：${G.resources[k].name}（${E.fmtNum(m.sold[k] || 0)}${G.resources[k].unit}）</td><td>${M(m.revenue[k] || 0)}</td></tr>`).join('');
   const cost = m.purchase + m.opex + m.fixed + m.interest + (m.research || 0);
   UI.html('cur', `<tr><th>項目</th><th>金額</th></tr>${rows}
     <tr><td><b>売上合計</b></td><td><b>${M(rev)}</b></td></tr>
@@ -89,7 +94,7 @@ function render(s) {
     <tr><td>　操業費（採掘・精製）</td><td>${M(-m.opex)}</td></tr>
     <tr><td>　設備の維持費</td><td>${M(-m.fixed)}</td></tr>
     <tr><td>　利息</td><td>${M(-m.interest)}</td></tr>
-    ${m.research ? `<tr><td>　研究費</td><td>${M(-m.research)}</td></tr>` : ''}
+    <tr><td>　研究費</td><td>${M(-(m.research || 0))}</td></tr>
     <tr><td><b>営業利益</b></td><td class="${rev - cost >= 0 ? 'good' : 'bad'}"><b>${M(rev - cost)}</b></td></tr>
     <tr><td class="sub">設備投資</td><td class="sub">${M(-m.construction)}</td></tr>
     <tr><td class="sub">借入</td><td class="sub">${M(m.borrowed)}</td></tr>

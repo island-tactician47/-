@@ -72,7 +72,7 @@ th:first-child, td:first-child { text-align: left; }
 /* モーダル（決裁ポイント・イベント） */
 #modal { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 20; display: none; align-items: center; justify-content: center; padding: 20px; }
 #modal.show { display: flex; }
-#modal .box { background: var(--card); border-radius: 12px; padding: 16px; max-width: 420px; width: 100%; }
+#modal .box { background: var(--card); border-radius: 12px; padding: 16px; max-width: 420px; width: 100%; max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px); overflow-y: auto; -webkit-overflow-scrolling: touch; }
 #modal h3 { font-size: 17px; }
 #toast { position: fixed; left: 50%; bottom: 84px; transform: translateX(-50%); background: #2b2620; color: #fff; padding: 8px 14px;
   border-radius: 18px; font-size: 13px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 30; max-width: 90%; }
