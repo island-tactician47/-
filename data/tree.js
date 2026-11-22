@@ -81,7 +81,7 @@ GAME_DATA.tree = {
 //   減点：債務の再編を使った（restructurePenalty）、当座貸越の借り増しをした月（月ごとに overdraftPenaltyPerMonth、最大 overdraftPenaltyMax）
 // コロニーは、1基の材料を、そのまま市場で売ったときの利益のおよそ2倍の利益になるように、価格・費用を決めた（tools/calibrate_recipes.py）。
 GAME_DATA.goal = {
-  profitMultiplier: 1.5,   // ゴールの金額＝コロニー1基（年1基）を材料まで全部自前で作って売ったときの年間利益×この倍率（Engine.colonyChainProfit1950）
+  profitMultiplier: 10,   // ゴールの金額＝コロニー1基（年1基）を材料まで全部自前で作って売ったときの年間利益×この倍率（Engine.colonyChainProfit1950）
   speedBest: 25, speedWorst: 70, speedOffset: { rich: 0, tight: 5, indebted: 10 },
   weights: { speed: 0.5, equity: 0.25, margin: 0.25 }, marginFull: 0.30,
   restructurePenalty: 10, overdraftPenaltyPerMonth: 2, overdraftPenaltyMax: 15,
