@@ -41,14 +41,15 @@ GAME_DATA.recipes = {
   semiconductor: { name: '半導体', inputs: { silicon: 0.85, copper: 0.002 }, outputs: { semiconductor: 1 }, opexPerUnit: 609.4, energyShare: 0.3 },
   pc: { name: 'PC', inputs: { semiconductor: 0.05, plastic: 0.01, glass: 0.005, aluminum: 0.01 }, outputs: { pc: 1 }, opexPerUnit: 60.0, energyShare: 0.08 },
   ev: { name: '電池・EV', inputs: { steel: 0.8, aluminum: 0.3, rubber: 0.08, lithium: 0.2, semiconductor: 0.05, copper: 0.1 }, outputs: { ev: 1 }, opexPerUnit: 349.0, energyShare: 0.08 },
-  pharmaMat: { name: '医薬原料', inputs: { naphtha: 15 }, outputs: { pharmaMat: 1 }, opexPerUnit: 1789.9, energyShare: 0.1, speed: 0.07, tier: 6, research: 'pharma' },
-  explosive: { name: '火薬', inputs: { naturalGas: 2 }, outputs: { explosive: 1 }, opexPerUnit: 646.9, energyShare: 0.1, speed: 0.15, tier: 6, research: 'explosives' },
+  pharmaMat: { name: '医薬原料', inputs: { naphtha: 15 }, outputs: { pharmaMat: 1 }, opexPerUnit: 1652.6, energyShare: 0.1, speed: 0.07 },
+  explosive: { name: '火薬', inputs: { naturalGas: 2 }, outputs: { explosive: 1 }, opexPerUnit: 614.9, energyShare: 0.1, speed: 0.15 },
   pharma: { name: '医薬品', inputs: { pharmaMat: 1.2, glass: 0.4 }, outputs: { pharma: 1 }, opexPerUnit: 1013.0, energyShare: 0.1 },
   rocket: { name: 'ロケット', inputs: { alloy: 400, semiconductor: 60, explosive: 300, aluminum: 100 }, outputs: { rocket: 1 }, opexPerUnit: 297691.7, energyShare: 0.05 },
-  weapon: { name: '兵器', inputs: { steel: 1.0, alloy: 0.5, semiconductor: 0.05, explosive: 0.4 }, outputs: { weapon: 1 }, opexPerUnit: 362.9, energyShare: 0.07 }
+  weapon: { name: '兵器', inputs: { steel: 1.0, alloy: 0.5, semiconductor: 0.05, explosive: 0.4 }, outputs: { weapon: 1 }, opexPerUnit: 362.9, energyShare: 0.07 },
+  colony: { name: '宇宙コロニー', inputs: { paper: 1500, buildmat: 4000, car: 300, detergent: 250, clothing: 1500, pharma: 150, semiconductor: 300, pc: 1000, ev: 200, weapon: 50, rocket: 2, alloy: 1000 }, outputs: { colony: 1 }, opexPerUnit: 3479558.7, energyShare: 0.05 }
 };
 GAME_DATA.plants = {
-  chemPlant: { recipes: ['plastic', 'rubber', 'surfactant', 'fiber', 'pharmaMat', 'explosive'], throughput: 10 },
+  chemPlant: { recipes: ['plastic', 'rubber', 'surfactant', 'fiber'], legacyRecipes: ['pharmaMat', 'explosive'], throughput: 10 },
   steelMill: { recipes: ['steel', 'alloy'], throughput: 25 },
   aluminumSmelter: { recipes: ['aluminum'], throughput: 7 },
   copperSmelter: { recipes: ['copper', 'lithium'], throughput: 4 },
@@ -66,5 +67,8 @@ GAME_DATA.plants = {
   evFactory: { recipes: ['ev'], throughput: 3.2 },
   pharmaFactory: { recipes: ['pharma'], throughput: 1.0 },
   rocketFactory: { recipes: ['rocket'], throughput: 0.0045 },
-  munitionsFactory: { recipes: ['weapon'], throughput: 3.0 }
+  munitionsFactory: { recipes: ['weapon'], throughput: 3.0 },
+  fineChemPlant: { recipes: ['pharmaMat'], throughput: 10 },
+  explosivesFactory: { recipes: ['explosive'], throughput: 10 },
+  colonyFactory: { recipes: ['colony'], throughput: 0.0012 }
 };

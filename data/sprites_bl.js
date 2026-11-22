@@ -3030,5 +3030,131 @@ window.GAME_DATA.spritesBL = {
     "fd": 4
    }
   ]
+ },
+ "fineChemPlant": {
+  "fw": 6,
+  "fd": 5,
+  "r": [
+   {
+    "file": "../assets/bl/fineChemPlant_r0.png",
+    "w": 363.0,
+    "h": 245.0,
+    "ax": 181.5,
+    "ay": 161.1,
+    "fw": 6,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/fineChemPlant_r1.png",
+    "w": 363.0,
+    "h": 220.5,
+    "ax": 181.5,
+    "ay": 136.6,
+    "fw": 5,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/fineChemPlant_r2.png",
+    "w": 363.0,
+    "h": 245.0,
+    "ax": 181.5,
+    "ay": 161.1,
+    "fw": 6,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/fineChemPlant_r3.png",
+    "w": 363.0,
+    "h": 296.5,
+    "ax": 181.5,
+    "ay": 212.6,
+    "fw": 5,
+    "fd": 6
+   }
+  ]
+ },
+ "explosivesFactory": {
+  "fw": 6,
+  "fd": 6,
+  "r": [
+   {
+    "file": "../assets/bl/explosivesFactory_r0.png",
+    "w": 395.0,
+    "h": 239.5,
+    "ax": 197.5,
+    "ay": 148.1,
+    "fw": 6,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/explosivesFactory_r1.png",
+    "w": 395.0,
+    "h": 194.0,
+    "ax": 197.5,
+    "ay": 102.6,
+    "fw": 6,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/explosivesFactory_r2.png",
+    "w": 395.0,
+    "h": 205.5,
+    "ax": 197.5,
+    "ay": 114.1,
+    "fw": 6,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/explosivesFactory_r3.png",
+    "w": 395.0,
+    "h": 239.5,
+    "ax": 197.5,
+    "ay": 148.1,
+    "fw": 6,
+    "fd": 6
+   }
+  ]
+ },
+ "colonyFactory": {
+  "fw": 12,
+  "fd": 12,
+  "r": [
+   {
+    "file": "../assets/bl/colonyFactory_r0.png",
+    "w": 779.0,
+    "h": 685.5,
+    "ax": 389.5,
+    "ay": 508.1,
+    "fw": 12,
+    "fd": 12
+   },
+   {
+    "file": "../assets/bl/colonyFactory_r1.png",
+    "w": 779.0,
+    "h": 572.5,
+    "ax": 389.5,
+    "ay": 395.1,
+    "fw": 12,
+    "fd": 12
+   },
+   {
+    "file": "../assets/bl/colonyFactory_r2.png",
+    "w": 779.0,
+    "h": 527.0,
+    "ax": 389.5,
+    "ay": 349.6,
+    "fw": 12,
+    "fd": 12
+   },
+   {
+    "file": "../assets/bl/colonyFactory_r3.png",
+    "w": 779.0,
+    "h": 610.0,
+    "ax": 389.5,
+    "ay": 432.6,
+    "fw": 12,
+    "fd": 12
+   }
+  ]
  }
 };

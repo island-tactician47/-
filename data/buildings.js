@@ -102,11 +102,15 @@ GAME_DATA.buildings = {
   // ---- 段階3b：自家発電所（本部に属さない全社の設備。電力は加工設備のレシピの energyShare から出る需要で、発電した分の送電料金を払い戻す。GAME_DATA.power 参照） ----
   powerPlant:        { name: '自家発電所',       icon: '⚡', category: 'power', tier: 3, maxCount: 6, cost: 1500000, months: 18, fixedPerMonth: 6000, desc: '燃料（重油・石炭・天然ガス）を燃やして、日量100MWhまで発電する。加工設備が買う電力の代わりになる（送電料金の払い戻し）' },
   // ---- 研究棟：研究を始めるのに1棟以上が必要。増やすと研究の基礎の進み（+30%/棟）と加速の上限（1+棟数、最大×4）が上がる。同時に進められる研究は1件のまま ----
-  researchLab:       { name: '研究棟',           icon: '🔬', category: 'lab', tier: 5, maxCount: 3, cost: 1500000, months: 18, fixedPerMonth: 6000, desc: '研究を始めるのに必要。増築すると研究が速くなり、加速の上限が上がる（最大3棟）' },
+  researchLab:       { name: '研究棟',           icon: '🔬', category: 'lab', tier: 5, retired: true, maxCount: 3, cost: 1500000, months: 18, fixedPerMonth: 6000, desc: '【廃止】研究は技術ツリーに置き換わった。建てた研究棟は撤去すると全額が戻る' },
   // ---- 段階2c：研究（buildings.research）が済むと建てられる専用工場 ----
-  pharmaFactory:     { name: '製薬工場',         icon: '💊', category: 'factory', tier: 6, research: 'pharma',   cost: 2000000, months: 24, fixedPerMonth: 8000,  desc: '医薬原料とガラスから医薬品' },
-  rocketFactory:     { name: 'ロケット工場',     icon: '🚀', category: 'factory', tier: 6, research: 'rocketry', cost: 4000000, months: 36, fixedPerMonth: 16000, desc: '合金・半導体・火薬・アルミからロケット（まとめて高く売れるが、年に数基）' },
-  munitionsFactory:  { name: '軍需工場',         icon: '🎖️', category: 'factory', tier: 6, research: 'arms',     cost: 3000000, months: 30, fixedPerMonth: 12000, desc: '鋼材・合金・半導体・火薬から兵器（国家契約は段階3）' },
+  pharmaFactory:     { name: '製薬工場',         icon: '💊', category: 'factory', tier: 6, cost: 2000000, months: 24, fixedPerMonth: 8000,  desc: '医薬原料とガラスから医薬品' },
+  rocketFactory:     { name: 'ロケット工場',     icon: '🚀', category: 'factory', tier: 6, cost: 4000000, months: 36, fixedPerMonth: 16000, desc: '合金・半導体・火薬・アルミからロケット（まとめて高く売れるが、年に数基）' },
+  munitionsFactory:  { name: '軍需工場',         icon: '🎖️', category: 'factory', tier: 6, cost: 3000000, months: 30, fixedPerMonth: 12000, desc: '鋼材・合金・半導体・火薬から兵器（国家契約は段階3）' },
+  // ---- 技術ツリーで開く新設の工場（data/tree.js のノードが解放する。tier は付けない）----
+  fineChemPlant:     { name: '精密化学工場',     icon: '🧪', category: 'factory', tier: 6, cost: 1000000, months: 24, fixedPerMonth: 4000, desc: 'ナフサから医薬原料（製薬の入口）。ステンレスの反応釜と精留塔' },
+  explosivesFactory: { name: '火薬工場',         icon: '💥', category: 'factory', tier: 6, cost: 900000, months: 18, fixedPerMonth: 3600, desc: '天然ガスから火薬（兵器・ロケットの入口）。盛り土で囲んだ貯蔵庫と柵' },
+  colonyFactory:     { name: '宇宙コロニー工場', icon: '🛰️', category: 'factory', tier: 6, cost: 12000000, months: 48, fixedPerMonth: 48000, desc: '船と航空機以外のすべての最終製品と合金から、葉巻型の宇宙コロニーを組み立てる（増設モジュールなし。まとめて高く売れるが、年に1基ほど。相場は特に荒い）' },
   evFactory:         { name: '電池・EV工場',     icon: '🔋', category: 'factory', tier: 6, cost: 3500000, months: 30, fixedPerMonth: 14000, desc: '鋼材・アルミ・合成ゴム・リチウム・半導体・銅から電池・EV' }
 };
 

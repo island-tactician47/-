@@ -72,20 +72,20 @@
         s.construction = s.construction.filter(c => c.type !== 'mine' || (MS[c.site] && s.mineSites[c.site] && s.mineSites[c.site].owned));
       }
       if (s.power && !(D().power && D().power.fuels[s.power.fuel])) s.power.fuel = 'heavy';
-      // 研究（開始するまで s.research は無い。あれば欠けた項目を補い、データに無い研究は進行中から外す）
+      // 研究の廃止（技術ツリーに置き換わった）：完了した研究は対応するノードを開き、進行中の研究は払った分（概算）を返金して外す
       if (s.research) {
-        const RS = D().research || {};
-        if (!s.research.done) s.research.done = {};
-        const a = s.research.active;
-        if (a) {
-          if (!RS[a.id] || s.research.done[a.id]) s.research.active = null;
-          else { if (!(a.months >= 0)) a.months = 0; a.paused = !!a.paused; if (!(a.accel >= 1)) a.accel = 1; }
+        const LR = this.legacyResearch(), done = (s.research && s.research.done) || {}, a = s.research.active;
+        for (const id in done) if (done[id] && LR[id]) for (const n of LR[id].nodes) (s.nodes || (s.nodes = {}))[n] = true;
+        if (a && LR[a.id] && a.months > 0) {
+          const back = Math.round(LR[a.id].cost * Math.min(1, a.months / LR[a.id].months) * this.priceIndex(s));
+          if (back > 0) { s.cash += back; this.log(s, `🔬 研究は技術ツリーに置き換わった。進行中の研究に払った分 ${this.fmtMoney(back)}が戻った`); }
         }
+        delete s.research;
       }
       // データからレシピが消えていたら先頭のレシピに戻す
       for (const p of s.plants) {
         const pd = this.plantDef(p);
-        if (pd && (!pd.recipes.includes(p.recipe) || !this.recipeUnlocked(s, p.recipe))) p.recipe = pd.recipes.find(id => this.recipeUnlocked(s, id)) || pd.recipes[0];
+        if (pd && ((!pd.recipes.includes(p.recipe) && !(pd.legacyRecipes || []).includes(p.recipe)) || !this.recipeUnlocked(s, p.recipe))) p.recipe = pd.recipes.find(id => this.recipeUnlocked(s, id)) || pd.recipes[0];
       }
       return s;
     },
@@ -136,7 +136,7 @@
     contractPrice(s, k) { const cfg = this.contractCfg(k); return cfg ? Market.priceNoSat(s, k) * (1 + cfg.premium) : 0; },
     contractLockReason(s, k) {
       const cfg = this.contractCfg(k); if (!cfg) return 'この品目は契約できない';
-      if (cfg.research && !this.researchDone(s, cfg.research)) return `研究「${this.researchName(cfg.research)}」が必要`;
+      { const nd = this.nodeOfResource(k); if (nd && !this.nodeUnlocked(s, nd)) return `「${this.nodeName(nd)}」を開くと契約できる`; }
       if (this.contractCapacity(s, k) <= 0) return `${D().resources[k].name}を作る設備がない`;
       if (this.contractQuota(s, k) < 1) return '産出が少なすぎて契約できない';
       return null;
@@ -533,6 +533,13 @@
         this.log(s, `🗑️ ${D().buildings[p.type].name}の増設モジュールを撤去（${this.fmtMoney(refund)}が戻る。日量 ${this.fmtNum(this.plantCapOf(p))}）`);
         return { ok: true };
       }
+      if (D().buildings[q.type] && D().buildings[q.type].retired && this.stackCfg(q.type)) {   // 廃止された重ね建ての設備（研究棟）：敷地ごと撤去し、建てた棟すべての建設費が全額戻る
+        const n = s.buildings[q.type] || 0, back = Math.round(n * D().buildings[q.type].cost * this.priceIndex(s));
+        delete m.placed[key]; delete s.buildings[q.type];
+        s.cash += back; s.month.construction -= back;
+        this.log(s, `🗑️ ${D().buildings[q.type].name}（廃止）${n}棟を撤去（建設費の全額 ${this.fmtMoney(back)}が戻る）`);
+        return { ok: true };
+      }
       if (this.offMap(q.type) || this.stackCfg(q.type)) return { ok: false, msg: 'この建物は撤去できない' };
       const B = D().buildings[q.type], kids = Object.keys(m.placed).filter(k => m.placed[k].parent === key);
       for (const k of kids) delete m.placed[k];
@@ -663,6 +670,16 @@
     },
 
     // ---------- 研究開発（段階2c。同時に1件、毎月均等払い、現金が足りない月は止まる） ----------
+    // 廃止した研究の対応表（旧セーブの移行用）：完了＝どのノードを開くか、cost・months＝進行中の払い戻しの概算（1950年ドル）
+    legacyResearch() { return { pharma: { nodes: ['fine', 'pharma'], cost: 1000000, months: 36 }, explosives: { nodes: ['explo'], cost: 800000, months: 24 }, rocketry: { nodes: ['explo', 'rocket'], cost: 2000000, months: 48 }, arms: { nodes: ['explo', 'weapon'], cost: 1200000, months: 36 } }; },
+    // ノードを開く（s.nodes は最初に開くまで作らない）
+    unlockNode(s, id) {
+      const d = this.nodeDef(id); if (!d || this.nodeUnlocked(s, id)) return false;
+      (s.nodes || (s.nodes = {}))[id] = true;
+      this.log(s, `${d.icon || '🔓'} 「${d.name}」を開いた`);
+      s.pendingEvents.push({ title: `${d.icon || '🔓'} ${d.name}`, text: '新しい工場が使えるようになった。' });
+      return true;
+    },
     researchName(id) { const d = (D().research || {})[id]; return d ? d.name : id; },
     researchDone(s, id) { return !!(s.research && s.research.done && s.research.done[id]); },
     labCount(s) { return this.count(s, 'researchLab'); },
@@ -1222,6 +1239,7 @@
     canBuild(s, type, lease) {
       const b = D().buildings[type];
       if (!b) return { ok: false, msg: '不明な設備' };
+      if (b.retired) return { ok: false, msg: '廃止された設備（技術ツリーに置き換わった）' };
       if (b.unique && (this.count(s, type) > 0 || this.constructing(s, type) > 0)) return { ok: false, msg: 'すでに建設済み・建設中' };
       { const lock = this.buildLockReason(s, type); if (lock) return { ok: false, msg: lock }; }
       if (b.maxCount && this.count(s, type) + this.constructing(s, type) >= b.maxCount) return { ok: false, msg: `最大${b.maxCount}棟まで` };

@@ -32,7 +32,10 @@
     evFactory:        { color: '#bfd1c4', h: 16, glass: true, green: true },
     pharmaFactory:    { color: '#e6dfe4', h: 14, glass: true, clean: true, tanks: 1 },
     rocketFactory:    { color: '#cfd5da', h: 18, rocket: true },
-    munitionsFactory: { color: '#8e9a7a', h: 10, bunker: true, stacks: 1 }
+    munitionsFactory: { color: '#8e9a7a', h: 10, bunker: true, stacks: 1 },
+    fineChemPlant:    { color: '#e2e6e6', h: 14, glass: true, clean: true, tanks: 2 },
+    explosivesFactory: { color: '#b8a98a', h: 8, bunker: true, stacks: 1 },
+    colonyFactory:    { color: '#dfe4e8', h: 40, glass: true, clean: true }
   };
   const TANKCOL = { crudeTank: '#7a5a3a', tank_gasoline: '#e0b84a', tank_diesel: '#4f86b8', tank_naphtha: '#9a6fb8', tank_heavy: '#4a4540' };
 
