@@ -86,10 +86,10 @@
 
     setSpeed(sp) { state.speed = sp; UI.save(); updateHeader(); },
 
-    toast(msg) {
+    toast(msg, ms) {
       const t = document.getElementById('toast');
       t.textContent = msg; t.classList.add('show');
-      clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2200);
+      clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), ms || 2200);
     },
 
     modal(title, html, buttons) {
@@ -193,8 +193,18 @@
     NAV.forEach(n => { if (!n.show) return; const a = document.querySelector(`#nav a[href="${n.href}"]`); if (a) a.style.display = (n.show(s) || a.classList.contains('on')) ? '' : 'none'; });
   }
 
+  // 知らせ：modal のもの（最初の製油所の完成・目標の達成・留守中の報告）だけ、時間を止めてポップアップで出す。
+  // ほかの出来事（相場のイベント・ノードの解放・解放権・大規模製油所など）は、時間を止めずに、画面の下にさっと出す（記録は経営画面のログに残る）
+  function eventToast(ev) {
+    let msg = ev.title;
+    if (ev.effects) msg += ' ' + Object.entries(ev.effects).map(([k, v]) => `${GAME_DATA.resources[k].name}${v > 1 ? '↑' : '↓'}${Math.round(Math.abs(v - 1) * 100)}%`).join('・');
+    else if (ev.text) msg += '：' + String(ev.text).replace(/<[^>]*>/g, '').slice(0, 36) + (String(ev.text).length > 36 ? '…' : '');
+    UI.toast(msg, 3600);
+  }
   function showPending() {
-    if (modalOpen || !state.pendingEvents.length) return;
+    if (modalOpen) return;
+    while (state.pendingEvents.length && !state.pendingEvents[0].modal) eventToast(state.pendingEvents.shift());
+    if (!state.pendingEvents.length) return;
     const ev = state.pendingEvents.shift();
     let html = `<p>${ev.text}</p>`;
     if (ev.effects) {
@@ -215,7 +225,7 @@
       if (days > 0) {
         acc -= days * DAY_MS;
         const n = Math.min(days, 60), ran = Engine.advanceDays(state, n);
-        if (ran < n || state.pendingEvents.length) { state.speed = 0; acc = 0; }
+        if (ran < n || state.pendingEvents.some(e => e.modal)) { state.speed = 0; acc = 0; }
         dirty = true;
       }
     }
@@ -234,7 +244,7 @@
     const ran = Engine.advanceDays(state, days);
     const gained = state.cash - before.cash;
     state.pendingEvents.unshift({
-      title: '留守中の報告書',
+      title: '留守中の報告書', modal: true,
       text: `${Math.round(ran / 30 * 10) / 10}か月操業しました${ran < days ? '（決裁が必要な出来事で停止）' : ''}。資金は ${gained >= 0 ? '+' : ''}${Engine.fmtMoney(gained)}。`
     });
     UI.save();

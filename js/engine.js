@@ -695,7 +695,7 @@
       this.log(s, `🏆 目標達成：${last.y}年の純利益 ${this.fmtMoney(yp)}。ランク ${sc.rank}「${sc.title}」・スコア ${s.goal.score}点`);
       const f = v => v.toFixed(0);
       s.pendingEvents.push({
-        title: '🏆 目標達成',
+        title: '🏆 目標達成', modal: true,
         text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、年間の純利益 <b>${this.fmtMoney(yp)}</b>（コロニー1基の年間利益の${cfg.profitMultiplier}倍）に届き、コロニーを完成させた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
         goal: { company: name, diff: s.difficulty, years: Math.round(sc.years * 10) / 10, score: s.goal.score, rank: sc.rank, title: sc.title, profit: Math.round(yp), at: Date.now() }
       });
@@ -1751,11 +1751,10 @@
         if (c.type === 'refinery' || c.type === 'refineryLarge') {
           if (!s.flags.refineryRunning) {   // 最初の製油所の完成だけ「稼働」の知らせ（従来どおり）
             s.flags.refineryRunning = true;
-            s.pendingEvents.push({ title: '製油所が稼働', text: '蒸留塔に火が入った。原油は製油所で優先的に使われ、余った分と精製品は出荷日にまとめて売られる。製品タンクの空きと港の出荷能力に注意。' });
+            s.pendingEvents.push({ title: '製油所が稼働', text: '蒸留塔に火が入った。原油は製油所で優先的に使われ、余った分と精製品は出荷日にまとめて売られる。製品タンクの空きと港の出荷能力に注意。', modal: true });   // 時間を止めて知らせるのは、この最初の製油所の完成と、目標の達成だけ。ほかの出来事は、時間を止めずに画面の下にさっと出す
             stop = true;
           } else if (c.type === 'refineryLarge') {   // 2棟目以降（大規模）は、処理能力が増えたことと港の上限だけ知らせる
             s.pendingEvents.push({ title: '大規模製油所が稼働', text: `処理能力が日量${this.fmtNum(this.refineryThroughput(s))}bblになった。精製品の出荷は港の出荷能力が上限になる（石油積出港なら定格まで出せる）。` });
-            stop = true;
           }
         }
       }
@@ -1824,7 +1823,7 @@
 
       // 6) 月末処理
       if (s.day % DAYS_PER_MONTH === 0 && this.monthEnd(s)) stop = true;
-      if (s.pendingEvents.length) stop = true;
+      if (s.pendingEvents.some(e => e.modal)) stop = true;   // 時間を止めるのは modal の知らせだけ
       return stop;
     },
 
@@ -1873,11 +1872,9 @@
       if (ev) {
         this.log(s, `📰 ${ev.title}`);
         s.pendingEvents.push({ title: ev.title, text: ev.text, effects: ev.effects, months: ev.months });
-        stop = true;
       }
-      if (this.updateTickets(s)) stop = true;
-      if (this.checkGoal(s)) stop = true;
-      if (this.checkTiers(s)) stop = true;
+      this.updateTickets(s); this.checkTiers(s);   // 解放権・ティアの知らせは、時間を止めない
+      if (this.checkGoal(s)) stop = true;   // 目標の達成は、スコアを出すので止める
       return stop;
     },
 
