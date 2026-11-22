@@ -651,7 +651,7 @@
         for (const k in need) { const rec = G.recipes[made[k]], pt = plantOf(made[k]), cap = G.plants[pt].throughput * (rec.speed || 1); cost += need[k] * (rec.opexPerUnit || 0) + need[k] / (cap * 360) * G.buildings[pt].fixedPerMonth * 12; }
         for (const k in raw) cost += raw[k] * R[k].basePrice;
         cost += (crec.opexPerUnit || 0) * n + G.buildings.colonyFactory.fixedPerMonth * 12;
-        v = n * R.colony.basePrice * (1 - Market.SELL_FEE) * (1 - 0.075) - cost;
+        v = n * R.colony.basePrice * (1 - Market.SELL_FEE) * (1 - Math.min(0.5, Market.SAT_IMPACT * 0.5 / R.colony.marketDepth)) - cost;
       }
       Object.defineProperty(G, '_colonyProfit', { value: v, enumerable: false });
       return v;
