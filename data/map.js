@@ -6,11 +6,12 @@
 window.GAME_DATA = window.GAME_DATA || {};
 window.GAME_DATA.map = {
   layoutVer: 9,
-  w: 72, h: 72,
+  w: 128, h: 128,                  // 旧 72×72 を、西と北に32タイルずつ広げた（面積 約3.2倍。origin ぶん、旧セーブの位置をずらす＝ensureMap の mapVer 2）
+  mapVer: 2, origin: { x: 32, y: 32 },   // origin＝旧マップの左上（0,0）が、いまのマップのどこか。ブロック（16）の倍数にして、道路の線をそろえる
   block: 16,                       // x%block または y%block が block-1 の格子線が道路
-  coast: { base: 50, a1: 3, a2: 2 },   // 海岸線 y = base + a1·sin(0.35x) + a2·sin(0.13x+1)
-  anchor: { x: 34, y: 30 },        // 自動配置は、ここに近い空きから詰める
-  port: { x0: 2, x1: 18, depth: 6 },   // 港の予約地（x0..x1、海岸線から depth タイル手前まで）
+  coast: { base: 82, a1: 3, a2: 2, ox: 32 },   // 海岸線 y = base + a1·sin(0.35(x-ox)) + a2·sin(0.13(x-ox)+1)（旧マップと同じ形のまま、32ずらした）
+  anchor: { x: 66, y: 62 },        // 自動配置は、ここに近い空きから詰める
+  port: { x0: 34, x1: 50, depth: 6 },   // 港の予約地（x0..x1、海岸線から depth タイル手前まで）
   // 海に隣接してしか建てられない設備（造船所）。足あとの +y 側（海側）の端が「ドックの開口部」。奥の部分は陸、海側の mouth 行は陸でも海でもよく（ドックの先端が海に張り出す）、
   // 海側の端の中央 open マスは海であること。埋め立てても、置いた設備の開口部の前（足あとの幅 × 海側の mouth 行より先）は海のまま（港と同じ扱い）
   seaFront: { shipyard: { mouth: 3, open: 3 } },

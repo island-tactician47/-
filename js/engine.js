@@ -202,7 +202,7 @@
     // 加工設備の周囲に空けておく幅（増設モジュールを隣に置けるように。モジュールの大きい方の辺）
     // 区画（道路で囲まれた block-1 マス）に収まる範囲まで（製鉄所は区画 15 に対して 12 なので残りの 3）
     moduleGap(type) { const M = this.mapCfg(), mf = M && M.moduleFootprint && M.moduleFootprint[type], fp = this.footprintOf(type), room = M ? (M.block - 1) - Math.max(fp[0], fp[1]) : 2; return Math.max(2, Math.min(mf ? Math.max(mf[0], mf[1]) : 2, room)); },
-    coastY(x) { const M = this.mapCfg(), c = (M && M.coast) || { base: 26, a1: 2.5, a2: 1.5 }; return Math.round(c.base + c.a1 * Math.sin(x * 0.35) + c.a2 * Math.sin(x * 0.13 + 1)); },
+    coastY(x) { const M = this.mapCfg(), c = (M && M.coast) || { base: 26, a1: 2.5, a2: 1.5 }, u = x - (c.ox || 0); return Math.round(c.base + c.a1 * Math.sin(u * 0.35) + c.a2 * Math.sin(u * 0.13 + 1)); },
     // タイルの地形：'land'|'road'|'port'|'sea'（範囲外は null）
     terrainAt(s, x, y) {
       const M = this.mapCfg(); if (!M || x < 0 || y < 0 || x >= M.w || y >= M.h) return null;
@@ -237,8 +237,15 @@
     portTop() { const M = this.mapCfg(); let c = Infinity; for (let x = M.port.x0; x <= M.port.x1; x++) c = Math.min(c, this.coastY(x)); return c - M.port.depth; },
     ensureMap(s) {
       const M = this.mapCfg();
-      if (!s.map) s.map = { placed: {}, seq: {}, layoutVer: M ? M.layoutVer : 0 };
+      if (!s.map) s.map = { placed: {}, seq: {}, layoutVer: M ? M.layoutVer : 0, mv: M ? (M.mapVer || 1) : 1 };
       const m = s.map; if (!m.placed) m.placed = {}; if (!m.seq) m.seq = {}; if (!(m.reclaim >= 0)) m.reclaim = 0;
+      // マップを広げたとき（mapVer 2）の、旧セーブの位置のずらし：置いた建物・埋め立てた陸のタイルを origin だけ動かす（旧マップの左上が、いまのマップの origin になる）
+      if (M && M.origin && (m.mv || 1) < (M.mapVer || 1)) {
+        const ox = M.origin.x, oy = M.origin.y;
+        for (const k in m.placed) { const q = m.placed[k]; if (q && typeof q === 'object' && Number.isFinite(q.x) && Number.isFinite(q.y)) { q.x += ox; q.y += oy; } }
+        if (m.fill && typeof m.fill === 'object') { const nf = {}; for (const k in m.fill) { const mm = /^(\d+),(\d+)$/.exec(k); if (mm) nf[(+mm[1] + ox) + ',' + (+mm[2] + oy)] = 1; } m.fill = nf; }
+        m.mv = M.mapVer;
+      }
       // 足あと・マップの大きさが変わった（layoutVer が違う）：置き場所を全部置き直す。手で置いた位置は失われるが、建設中・稼働中・増設モジュールの数は保つ
       let relayout = false;
       if (M && m.layoutVer !== M.layoutVer) {

@@ -290,8 +290,9 @@
     const CARCOL = ['#c9503a', '#3f6fa0', '#d9c34a', '#e8e4d8', '#4f8a5a', '#2f2f33', '#a05a9a'];
     function drawAmbient(s, era) {
       const M = GAME_DATA.map, T = I.t;
-      for (let i = 0; i < 14; i++) {
-        const alongX = i % 2 === 0, line = M.block * (1 + (i >> 1) % 3) - 1, dir = (i % 4 < 2) ? 1 : -1, sp = 1.6 + (i % 5) * 0.45, len = alongX ? M.w : M.h;
+      const nLines = Math.max(1, Math.floor(M.w / M.block));
+      for (let i = 0; i < 12 + 4 * nLines; i++) {   // 道路の線の数に応じて、車を増やす
+        const alongX = i % 2 === 0, line = M.block * (1 + (i >> 1) % nLines) - 1, dir = (i % 4 < 2) ? 1 : -1, sp = 1.6 + (i % 5) * 0.45, len = alongX ? M.w : M.h;
         const pos = (((i * 7.3 + T * sp * dir) % len) + len) % len, tx = alongX ? Math.floor(pos) : line, ty = alongX ? line : Math.floor(pos);
         if (E.terrainAt(s, tx, ty) !== 'road') continue;
         const lane = 0.27 * dir, c = CARCOL[i % CARCOL.length], big = i % 5 === 4;   // 5台に1台はトラック
@@ -299,15 +300,15 @@
         if (alongX) { const x = pos - L / 2, y = line + 0.5 + lane - Wd / 2; g.prism(x, y, L, Wd, 0.5, big ? 5 : 3, c); if (!big) g.prism(x + L * 0.25, y + 0.03, L * 0.5, Wd - 0.06, 3, 5, '#cfd8dc'); else g.prism(x + (dir > 0 ? L - 0.16 : 0), y, 0.16, Wd, 0.5, 6.5, '#d9d6c8'); }
         else { const y = pos - L / 2, x = line + 0.5 + lane - Wd / 2; g.prism(x, y, Wd, L, 0.5, big ? 5 : 3, c); if (!big) g.prism(x + 0.03, y + L * 0.25, Wd - 0.06, L * 0.5, 3, 5, '#cfd8dc'); else g.prism(x, y + (dir > 0 ? L - 0.16 : 0), Wd, 0.16, 0.5, 6.5, '#d9d6c8'); }
       }
-      for (let k = 0; k < 4; k++) {   // 船
+      for (let k = 0; k < Math.max(4, Math.round(M.w / 16)); k++) {   // 船
         const dir = k % 2 ? 1 : -1, pos = (((k * 19 + T * 0.45 * dir) % M.w) + M.w) % M.w, tx = Math.floor(pos), ty = Math.min(M.h - 2, E.coastY(tx) + 6 + k * 2.5);
         if (E.terrainAt(s, tx, ty) !== 'sea' || E.terrainAt(s, Math.floor(pos + 1.5), ty) !== 'sea' || E.terrainAt(s, Math.floor(pos - 1.5), ty) !== 'sea') continue;
-        const hull = ['#3f5a70', '#7a3f35', '#41594a', '#5a5f66'][k];
+        const hull = ['#3f5a70', '#7a3f35', '#41594a', '#5a5f66'][k % 4];
         g.prism(pos - 0.8, ty + 0.2, 1.6, 0.6, 0, 3, hull); g.prism(pos - 0.4 * dir - 0.25, ty + 0.3, 0.5, 0.4, 3, 7, '#eceae0'); g.prism(pos + 0.5 * dir - 0.08, ty + 0.4, 0.16, 0.2, 3, 5, '#d8d3c4');
         g.line([[pos - 0.8 * dir, ty + 0.5, 0.2], [pos - 2.2 * dir, ty + 0.5, 0.2]], 'rgba(255,255,255,.55)', 1);   // 航跡
       }
       // 灯台（海岸の東端の道路より海側でない空き地。建物と重なるなら出さない）
-      const lx = M.w - 6, ly = E.coastY(lx) - 2;
+      const lx = ((M.origin && M.origin.x) || 0) + 66, ly = E.coastY(lx) - 2;   // 旧マップの東端（x=66）のまま
       if (E.terrainAt(s, lx, ly) === 'land' && !(I.ents || []).some(e => lx + 1 > e.x - 1 && lx < e.x + e.fw + 1 && ly + 1 > e.y - 1 && ly < e.y + e.fd + 1)) {
         g.prism(lx + 0.1, ly + 0.1, 0.8, 0.8, 0, 3, '#8c8c86'); g.prism(lx + 0.22, ly + 0.22, 0.56, 0.56, 3, 14, '#efe9da'); g.prism(lx + 0.24, ly + 0.24, 0.52, 0.52, 14, 20, '#c9503a');
         g.prism(lx + 0.22, ly + 0.22, 0.56, 0.56, 20, 26, '#efe9da'); g.prism(lx + 0.3, ly + 0.3, 0.4, 0.4, 26, 31, '#2f3238');
@@ -427,7 +428,7 @@
       const M = GAME_DATA.map, c = I.unproject(I.w / 2, I.h / 2), cx = clamp(c.x, 0, M.w), cy = clamp(c.y, 0, M.h);
       if (cx !== c.x || cy !== c.y) I.center(cx, cy);
     }
-    function saveCam() { try { const c = I.unproject(I.w / 2, I.h / 2); localStorage.setItem('factorySim.ui.town.cam', JSON.stringify({ x: c.x, y: c.y, z: I.cam.z, v: I.view })); } catch (e) {} }
+    function saveCam() { try { const c = I.unproject(I.w / 2, I.h / 2); localStorage.setItem('factorySim.ui.town.cam', JSON.stringify({ x: c.x, y: c.y, z: I.cam.z, v: I.view, m: GAME_DATA.map.mapVer || 1 })); } catch (e) {} }
 
     // ---- サイズと描画ループ ----
     function resize() {
@@ -436,7 +437,8 @@
       I.dpr = dpr; I.w = w; I.h = h; canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
       if (first) {
         let c = null; try { c = JSON.parse(localStorage.getItem('factorySim.ui.town.cam')); } catch (e) {}
-        const M = GAME_DATA.map; if (c && c.z) I.cam.z = c.z; if (c && Number.isInteger(c.v) && c.v >= 0 && c.v < 4 && M.w === M.h) I.view = c.v; I.center(c ? c.x : M.anchor.x, c ? c.y : M.anchor.y);
+        const M = GAME_DATA.map; if (c && c.z) I.cam.z = c.z; if (c && Number.isInteger(c.v) && c.v >= 0 && c.v < 4 && M.w === M.h) I.view = c.v; if (c && !(c.m >= (M.mapVer || 1)) && M.origin && Number.isFinite(c.x) && Number.isFinite(c.y)) { c.x += M.origin.x; c.y += M.origin.y; }   // 旧マップの座標で保存されたカメラの中心は、origin だけずらす
+        I.center(c && Number.isFinite(c.x) && Number.isFinite(c.y) ? c.x : M.anchor.x, c && Number.isFinite(c.x) && Number.isFinite(c.y) ? c.y : M.anchor.y);
       }
     }
     window.addEventListener('resize', resize);
