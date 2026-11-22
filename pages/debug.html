@@ -36,7 +36,7 @@
     <div class="sub" id="tierinfo" style="margin-top:6px"></div>
   </div>
   <div class="card">
-    <h3>研究開発</h3>
+    <h3>技術ツリー（解放権・ノード）</h3>
     <div class="btns" id="rsch"></div>
   </div>
   <div class="card">
@@ -98,7 +98,7 @@ function imp() {
   UI.blockSave(); location.reload();
 }
 $('tiers').innerHTML = [3, 4, 5, 6].map(t => `<button class="btn sec small" onclick="UI.act(s=>E.unlockTier(s,${t}))">${G.tiers[t].name}を解放</button>`).join('');
-$('rsch').innerHTML = `<button class="btn sec small" onclick="UI.act(s=>{s.buildings.researchLab=3})">研究棟を3棟にする</button>` + Object.keys(G.research).map(id => `<button class="btn sec small" onclick="UI.act(s=>E.forceResearch(s,'${id}'))">${G.research[id].name}を完了</button>`).join('');
+$('rsch').innerHTML = `<button class="btn sec small" onclick="UI.act(s=>{s.tickets={earned:E.ticketsEarned(s)+5,spent:(s.tickets&&s.tickets.spent)||0}})">解放権を5枚ふやす</button>` + Object.keys(E.treeNodes()).filter(id => !E.nodeDef(id).auto).map(id => `<button class="btn sec small" onclick="UI.act(s=>E.unlockNode(s,'${id}'))">${E.nodeDef(id).icon || ''}${E.nodeDef(id).name}を開く</button>`).join('');
 $('evs').innerHTML = G.events.list.map(e => `<button class="btn ghost small" onclick="UI.act(s=>{const d=Market.startEvent(s,'${e.id}');s.pendingEvents.push({title:d.title,text:d.text,effects:d.effects,months:d.months});})">${e.title}</button>`).join('');
 
 function render(s) {

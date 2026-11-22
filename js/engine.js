@@ -20,7 +20,7 @@
         version: Save.VERSION, difficulty: diffKey, day: 0,
         cash: diff.cash, overdraft: 0, loans: {},
         inventory: {}, hold: {}, leases: {}, wells: [],
-        buildings: {}, construction: [], portGrade: 0, plants: [], nextPlantId: 1, tiers: {},
+        buildings: {}, construction: [], portGrade: 0, plants: [], nextPlantId: 1, tiers: {}, nv: 2,
         refinery: { mode: 'standard', runRate: 1, autoBuyCrude: false },
         month: emptyMonth(), history: [], shipments: [], log: [],
         stats: { totalRevenue: 0 }, flags: {},
@@ -81,6 +81,16 @@
           if (back > 0) { s.cash += back; this.log(s, `🔬 研究は技術ツリーに置き換わった。進行中の研究に払った分 ${this.fmtMoney(back)}が戻った`); }
         }
         delete s.research;
+      }
+      // 旧セーブ（ティア・研究の方式。s.nv が無い）のノードへの移行：到達していた旧ティアのノードを開く（研究待ちだったノードは、研究が済んでいたか、設備がすでにあるときだけ）。
+      // 持っている設備・使っているレシピのノードも開く。解放済みのノードは解放権を使わない（解放権は利益から別に貯まる）
+      if (!s.nv && D().tree) {
+        let maxT = 2; for (let t = 3; t <= 6; t++) if (s.tiers && s.tiers[t]) maxT = t;
+        for (const id in this.treeNodes()) { const d = this.nodeDef(id); if (d.auto || d.legacyResearch || d.legacyTier === undefined) continue; if (d.legacyTier <= maxT) (s.nodes || (s.nodes = {}))[id] = true; }
+        for (const type in s.buildings) if (s.buildings[type] > 0) { const n = this.nodeOfBuilding(type); if (n && !this.nodeDef(n).auto) (s.nodes || (s.nodes = {}))[n] = true; }
+        for (const c of s.construction || []) { const n = this.nodeOfBuilding(c.type); if (n && !this.nodeDef(n).auto) (s.nodes || (s.nodes = {}))[n] = true; }
+        for (const p of s.plants || []) { const n = this.nodeOfRecipe(p.recipe); if (n && !this.nodeDef(n).auto) (s.nodes || (s.nodes = {}))[n] = true; }
+        s.nv = 2;
       }
       // データからレシピが消えていたら先頭のレシピに戻す
       for (const p of s.plants) {
@@ -585,27 +595,23 @@
     // レシピ単位の解放（rec.tier が無ければ設備と同じ＝常に選べる）。設備のティアより後に解放するレシピ（製鋼所の合金など）用
     recipeLockReason(s, id) {
       const rec = D().recipes[id]; if (!rec) return '不明なレシピ';
-      if (rec.tier && !this.tierUnlocked(s, rec.tier)) return `${this.tierName(rec.tier)}になると選べる`;
       const n = this.nodeOfRecipe(id);
-      if (n && !this.nodeUnlocked(s, n)) return `「${this.nodeName(n)}」を開くと選べる`;
-      if (rec.research && !this.researchDone(s, rec.research)) return `研究「${this.researchName(rec.research)}」が必要`;
+      if (n) return this.nodeUnlocked(s, n) ? null : `「${this.nodeName(n)}」を開くと選べる`;
+      if (rec.tier && !this.tierUnlocked(s, rec.tier)) return `${this.tierName(rec.tier)}になると選べる`;   // ノードに属さないレシピは旧ティアで
       return null;
     },
     recipeUnlocked(s, id) { return this.recipeLockReason(s, id) === null; },
     // 設備の建設の解放（ティアと研究）。解放済みなら null、そうでなければ理由
     buildLockReason(s, type) {
       const b = D().buildings[type]; if (!b) return '不明な設備';
-      const t = this.buildTierLock(s, type);
-      if (t) return t;
-      if (b.research && !this.researchDone(s, b.research)) return `研究「${this.researchName(b.research)}」が必要`;
-      return null;
+      return this.buildTierLock(s, type);
     },
     // ティア（旧）とノードによる解放だけ（研究待ちは含めない）。画面の一覧で、研究待ちの設備を理由つきで出すのに使う
     buildTierLock(s, type) {
       const b = D().buildings[type]; if (!b) return '不明な設備';
-      if (b.tier && !this.tierUnlocked(s, b.tier)) return `${this.tierName(b.tier)}になると建てられる`;
       const n = this.nodeOfBuilding(type);
-      if (n && !this.nodeUnlocked(s, n)) return `「${this.nodeName(n)}」を開くと建てられる`;
+      if (n) return this.nodeUnlocked(s, n) ? null : `「${this.nodeName(n)}」を開くと建てられる`;
+      if (b.tier && !this.tierUnlocked(s, b.tier)) return `${this.tierName(b.tier)}になると建てられる`;   // ノードに属さない設備（鉱山・大規模製油所など）は旧ティアで
       return null;
     },
     buildingOpen(s, type) { return this.buildTierLock(s, type) === null; },
@@ -614,6 +620,29 @@
     treeNodes() { return (D().tree && D().tree.nodes) || {}; },
     nodeDef(id) { return this.treeNodes()[id] || null; },
     nodeName(id) { const d = this.nodeDef(id); return d ? d.name : id; },
+    // ノード画面に描くか：開いたノード／前提がすべて開いているノード／その「一個次」（config.revealDepth 段。前提の足りないものが、描かれるノードだけ）。例外：コロニーは Tier 5 のうち count 個が開いたら
+    nodeVisible(s, id, depth) {
+      const d = this.nodeDef(id); if (!d) return false;
+      if (this.nodeUnlocked(s, id)) return true;
+      const cfg = this.treeCfg(), cr = cfg.colonyReveal;
+      if (cr && cr.node === id) { let n = 0; for (const k in this.treeNodes()) if (this.nodeDef(k).tier === cr.tier && this.nodeUnlocked(s, k)) n++; if (n >= cr.count) return true; }
+      const missing = (d.needs || []).filter(n => !this.nodeUnlocked(s, n));
+      if (!missing.length) return true;
+      const dep = depth === undefined ? (cfg.revealDepth || 0) : depth;
+      return dep > 0 && missing.every(m => this.nodeVisible(s, m, dep - 1));
+    },
+    // 開いたノードの数と、ノードの総数（自動で開くものを含む）
+    nodeCounts(s) { let n = 0, all = 0; for (const id in this.treeNodes()) { all++; if (this.nodeUnlocked(s, id)) n++; } return { open: n, all }; },
+    // 次の目標の文（ヘッダーに出す）：選べるノード → 解放権をためる → 素材を増やす → すべて開いた
+    nodeGoal(s) {
+      const ids = Object.keys(this.treeNodes()).filter(id => !this.nodeUnlocked(s, id) && !this.nodeDef(id).auto && this.nodeVisible(s, id, 0));
+      if (!ids.length) return Object.keys(this.treeNodes()).every(id => this.nodeUnlocked(s, id)) ? '目標：すべてのノードを開いた。純資産の目標へ' : null;
+      const sts = ids.map(id => ({ id, st: this.nodeState(s, id) }));
+      const c = sts.find(x => x.st.canUnlock); if (c) return `目標：研究タブで「${this.nodeName(c.id)}」を開ける（解放権${c.st.tickets.need}枚）`;
+      const sel = sts.find(x => x.st.selectable); if (sel) { const nx = this.ticketSteps()[this.ticketsEarned(s)]; return `目標：解放権をためて「${this.nodeName(sel.id)}」を開く${nx ? '（次は直近12か月の利益 ' + this.fmtMoney(nx) + '）' : ''}`; }
+      const p = sts.find(x => x.st.prereq); if (p) return `目標：「${this.nodeName(p.id)}」の素材を、輸入なしで回るだけ増やす（研究タブ）`;
+      return null;
+    },
     // 設備・レシピ・品目 → ノード（データから一度だけ作る）
     _nodeIndex() {
       const T = D().tree; if (!T) return { b: {}, r: {}, k: {} };
@@ -626,13 +655,79 @@
     nodeOfBuilding(type) { return this._nodeIndex().b[type] || null; },
     nodeOfRecipe(id) { return this._nodeIndex().r[id] || null; },
     nodeOfResource(k) { return this._nodeIndex().k[k] || null; },
-    // ノードが開いているか：s.nodes（開いたノード。最初に開くまで作らない）。移行期は、旧ティアが開いていれば開いている扱い（unlockTier の互換）
+    // ノードが開いているか：s.nodes（開いたノード。最初に開くまで作らない）。自動で開くノード（Tier 1〜2）は旧ティア（data/eras.js の条件）で開く
     nodeUnlocked(s, id) {
       const d = this.nodeDef(id); if (!d) return true;
       if (s.nodes && s.nodes[id]) return true;
-      return d.legacyTier !== undefined && this.tierUnlocked(s, d.legacyTier);
+      return !!d.auto && d.legacyTier !== undefined && this.tierUnlocked(s, d.legacyTier);
     },
-    resourceUnlocked(s, k) { const r = D().resources[k]; if (r && r.tier && !this.tierUnlocked(s, r.tier)) return false; const n = this.nodeOfResource(k); return !n || this.nodeUnlocked(s, n); },
+    // ---------- ノードの解放：解放権（会社の利益で貯まる）と選択権（輸入なしで回る素材の余剰） ----------
+    ticketSteps() { return this.treeCfg().ticketSteps || []; },
+    profit12(s) { const h = s.history || []; let v = 0; for (let i = Math.max(0, h.length - 12); i < h.length; i++) v += h[i].profit || 0; return v; },
+    ticketsEarned(s) { return (s.tickets && s.tickets.earned) || 0; },
+    ticketsLeft(s) { return this.ticketsEarned(s) - ((s.tickets && s.tickets.spent) || 0); },
+    // 月末：直近12か月の利益が次の段の額に届いていれば解放権を増やす（増えたら true）。一度もらった枚数は減らない
+    updateTickets(s) {
+      const steps = this.ticketSteps(); if (!steps.length) return false;
+      const p = this.profit12(s); let n = 0; while (n < steps.length && p >= steps[n]) n++;
+      if (n <= this.ticketsEarned(s)) return false;
+      const gained = n - this.ticketsEarned(s);
+      s.tickets = { earned: n, spent: (s.tickets && s.tickets.spent) || 0 };
+      this.log(s, `🎫 解放権が${gained}枚増えた（直近12か月の利益 ${this.fmtMoney(p)}。残り ${this.ticketsLeft(s)}枚）`);
+      s.pendingEvents.push({ title: '🎫 解放権が増えた', text: `直近12か月の利益が ${this.fmtMoney(p)} に届いた。解放権が${gained}枚増えて、残り${this.ticketsLeft(s)}枚。技術ツリー（研究）で、次に開くノードを選べる。` });
+      return true;
+    },
+    // 選択権の量の基準：そのノードの設備を、増設モジュールをすべて付けて全開で回すときの入力（日量）。加工設備が作る品目だけを数える（原料・鉱石・精製品は除く）
+    _plantMade() {
+      const T = D().tree; if (!T) return {};
+      if (T._made) return T._made;
+      const made = {}; for (const id in D().recipes) for (const k in D().recipes[id].outputs) made[k] = true;
+      Object.defineProperty(T, '_made', { value: made, enumerable: false });
+      return made;
+    },
+    supplyNeeds(id) {
+      const d = this.nodeDef(id); if (!d) return [];
+      const type = (d.supply && d.supply.building) || (d.buildings && d.buildings[0]), pd = type && D().plants[type];
+      const rid = (d.supply && d.supply.recipe) || (pd && pd.recipes[0]), rec = rid && D().recipes[rid];
+      if (!pd || !rec) return [];
+      const MC = this.moduleCfg() || {}, full = this.plantCap(pd, rec) * (this.hasModule(type) ? 1 + (MC.gain || 0) * Math.min(this.treeCfg().supplyModules || 0, MC.max || 0) : 1) * (this.treeCfg().supplyFactor || 1), made = this._plantMade(), out = [];
+      for (const k in rec.inputs) if (made[k]) out.push({ k, need: rec.inputs[k] * full });
+      return out;
+    },
+    // 選択権の判定：直近 supplyMonths か月の（生産−加工設備の消費）の平均（日量）が必要量以上か。新形式（消費の記録つき）の履歴が足りないうちは測れない
+    supplyCheck(s, id) {
+      const N = this.treeCfg().supplyMonths || 3, hs = (s.history || []).slice(-N), needs = this.supplyNeeds(id);
+      const measurable = !needs.length || (hs.length >= N && hs.every(h => h.consumed !== undefined));
+      const items = needs.map(n => { let net = 0; for (const h of hs) net += ((h.produced || {})[n.k] || 0) - ((h.consumed || {})[n.k] || 0); const have = hs.length ? net / (hs.length * DAYS_PER_MONTH) : 0; return { k: n.k, need: n.need, have, ok: have >= n.need - 1e-9 }; });
+      return { measurable, items, ok: measurable && items.every(i => i.ok) };
+    },
+    // ノードの状態：{ unlocked, auto, prereq, missing（開いていない前提）, supply, tickets:{need, have}, selectable（前提が開き、選択権がある）, canUnlock（さらに解放権も足りる）, reason }
+    nodeState(s, id) {
+      const d = this.nodeDef(id); if (!d) return null;
+      const unlocked = this.nodeUnlocked(s, id), missing = (d.needs || []).filter(n => !this.nodeUnlocked(s, n)), prereq = missing.length === 0;
+      const supply = prereq && !unlocked && !d.auto ? this.supplyCheck(s, id) : { measurable: true, items: [], ok: false }, need = d.tickets || 0, have = this.ticketsLeft(s);
+      const selectable = !unlocked && !d.auto && prereq && supply.ok, canUnlock = selectable && have >= need;
+      let reason = null;
+      if (!unlocked) {
+        if (d.auto) reason = '条件を満たすと自動で開く';
+        else if (!prereq) reason = `先に「${missing.map(n => this.nodeName(n)).join('」「')}」を開く`;
+        else if (!supply.measurable) reason = '生産の記録がたまるのを待つ（3か月）';
+        else if (!supply.ok) reason = '輸入なしで回るだけの素材の余りが足りない：' + supply.items.filter(i => !i.ok).map(i => `${D().resources[i.k].name} 日量${this.fmtNum(i.have)}／必要${this.fmtNum(i.need)}`).join('、');
+        else if (have < need) reason = `解放権が足りない（${need}枚必要・残り${have}枚）`;
+      }
+      return { unlocked, auto: !!d.auto, prereq, missing, supply, tickets: { need, have }, selectable, canUnlock, reason };
+    },
+    // ノードを選んで開く（解放権を使う）
+    selectNode(s, id) {
+      const d = this.nodeDef(id); if (!d) return { ok: false, msg: '不明なノード' };
+      const st = this.nodeState(s, id);
+      if (st.unlocked) return { ok: false, msg: 'もう開いている' };
+      if (!st.canUnlock) return { ok: false, msg: st.reason || '開けない' };
+      s.tickets = { earned: this.ticketsEarned(s), spent: ((s.tickets && s.tickets.spent) || 0) + st.tickets.need };
+      this.unlockNode(s, id);
+      return { ok: true };
+    },
+    resourceUnlocked(s, k) { const n = this.nodeOfResource(k); if (n) return this.nodeUnlocked(s, n); const r = D().resources[k]; return !(r && r.tier && !this.tierUnlocked(s, r.tier)); },
 
     // ---------- 電力・自家発電（段階3b） ----------
     // 自家発電所は、今日の電力需要（加工設備のレシピの energyShare から出る MWh）の範囲で発電し、発電量×送電単価×物価指数を現金で払い戻す
@@ -657,7 +752,7 @@
     setPowerFuel(s, k) {
       const f = D().power.fuels[k], r = D().resources[k];
       if (!f || !r) return { ok: false, msg: 'その燃料は使えない' };
-      if (!this.resourceUnlocked(s, k)) return { ok: false, msg: this.nodeOfResource(k) && !this.nodeUnlocked(s, this.nodeOfResource(k)) ? `「${this.nodeName(this.nodeOfResource(k))}」を開くと使える` : `${this.tierName(r.tier)}になると使える` };
+      if (!this.resourceUnlocked(s, k)) return { ok: false, msg: this.nodeOfResource(k) ? `「${this.nodeName(this.nodeOfResource(k))}」を開くと使える` : `${this.tierName(r.tier)}になると使える` };
       (s.power || (s.power = { fuel: 'heavy', autoBuy: false, gen: 0 })).fuel = k; return { ok: true };
     },
     setPowerAutoBuy(s, on) { (s.power || (s.power = { fuel: 'heavy', autoBuy: false, gen: 0 })).autoBuy = !!on; return { ok: true }; },
@@ -746,7 +841,8 @@
       } else if (!a.paused) { a.paused = true; this.log(s, `⏸ 資金不足のため研究が止まった：${d.name}`); }
       return false;
     },
-    currentTier(s) { let t = 2; for (let i = 3; i <= 6; i++) if (this.tierUnlocked(s, i)) t = i; return t; },
+    // 時代（era）：画面の絵（土地の色・飾り）などの目安。自動で開くティア（3・4）と、開いたノードの旧ティアの最大
+    currentTier(s) { let t = 2; for (let i = 3; i <= 6; i++) if (this.tierUnlocked(s, i)) t = i; for (const id in (s.nodes || {})) { const d = this.nodeDef(id); if (d && d.legacyTier > t) t = d.legacyTier; } return t; },
     // 資産額：現金−借入＋設備の評価額（建設費×物価指数、減価なし）。在庫は含めない
     netWorth(s) { return s.cash - this.totalDebt(s) + this.assetValue(s); },
     // 在庫の評価額（市場の中値。売れない原料も同じ基準）
@@ -803,7 +899,13 @@
       if (!parts.length) return { met: false, parts, undefinedCond: true };   // cond が空（{}）でも未定として扱う
       return { met: parts.every(x => x.ok), parts };
     },
+    // 互換（試験・デバッグ用）：そのティアに入り、旧ティアの番号が t 以下のノードもすべて開く
     unlockTier(s, t) {
+      const r = this._unlockTierOnly(s, t);
+      if (this.tierDef(t)) for (const id in this.treeNodes()) { const d = this.nodeDef(id); if (!d.auto && d.legacyTier !== undefined && d.legacyTier <= t && !(s.nodes && s.nodes[id])) (s.nodes || (s.nodes = {}))[id] = true; }
+      return r;
+    },
+    _unlockTierOnly(s, t) {
       if (this.tierUnlocked(s, t) || !this.tierDef(t)) return false;
       s.tiers[t] = true;
       const d = this.tierDef(t);
@@ -816,7 +918,7 @@
       let any = false;
       for (let t = 3; t <= 6; t++) {
         // 前のティアが解放済みのときだけ（同じ月に続けて解放されることはある）
-        if (!this.tierUnlocked(s, t) && this.tierUnlocked(s, t - 1) && this.tierProgress(s, t).met && this.unlockTier(s, t)) any = true;
+        if (!this.tierUnlocked(s, t) && this.tierUnlocked(s, t - 1) && this.tierProgress(s, t).met && this._unlockTierOnly(s, t)) any = true;
       }
       return any;
     },
@@ -1422,7 +1524,8 @@
         if (!(t > 1e-9)) continue;
         const pt = s.stats.producedTotal || (s.stats.producedTotal = {});
         for (const k of outKeys) pt[k] = (pt[k] || 0) + rec.outputs[k] * t;
-        for (const k of inKeys) s.inventory[k] -= rec.inputs[k] * t;
+        const cons = s.month.consumed || (s.month.consumed = {});
+        for (const k of inKeys) { s.inventory[k] -= rec.inputs[k] * t; add(cons, k, rec.inputs[k] * t); }
         for (const k of outKeys) { s.inventory[k] += rec.outputs[k] * t; add(s.month.produced, k, rec.outputs[k] * t); }
         const c = t * (rec.opexPerUnit || 0) * idx;
         s.month.opex += c; s.cash -= c;
@@ -1668,7 +1771,7 @@
         prices, revenue, cost, profit: revenue - cost, capex: m.construction, principal: m.principal, borrowed: m.borrowed,
         cash: s.cash, debt: this.totalDebt(s),
         bs: { inv: this.inventoryValue(s), fixed: this.assetValue(s), loans: Object.values(s.loans).reduce((a, l) => a + l.principal, 0), od: s.overdraft || 0 }, odDraw: m.odDraw || 0,   // 財務三表用：棚卸資産・設備の評価額・借入金・当座貸越（月末）／当座貸越の借り増し
-        produced: { ...m.produced }, sold: { ...m.sold }, lostCrude: m.lostCrude, refined: m.refined,
+        produced: { ...m.produced }, consumed: { ...(m.consumed || {}) }, sold: { ...m.sold }, lostCrude: m.lostCrude, refined: m.refined,
         costs: { purchase: m.purchase, opex: m.opex, fixed: m.fixed, interest: m.interest, research: m.research || 0, refund: m.refund || 0, ...(m.penalty ? { penalty: m.penalty } : {}) }, segPL: this.roundSegPL(m.seg)
       });
       if (s.history.length > 600) s.history.shift();
@@ -1680,6 +1783,7 @@
         s.pendingEvents.push({ title: ev.title, text: ev.text, effects: ev.effects, months: ev.months });
         stop = true;
       }
+      if (this.updateTickets(s)) stop = true;
       if (this.checkTiers(s)) stop = true;
       return stop;
     },

@@ -68,11 +68,11 @@ function buildBtn(s, type) {
 }
 
 function renderTier(s) {
-  const cur = E.currentTier(s), d = E.tierDef(cur);
+  const cur = E.currentTier(s), d = E.tierDef(Math.min(cur, 4));
   let next = null;
-  for (let t = cur + 1; t <= 6; t++) if (E.tierDef(t)) { next = t; break; }
+  for (let t = 3; t <= 4; t++) if (!E.tierUnlocked(s, t) && E.tierDef(t)) { next = t; break; }   // 自動で開く素材の段（化学・多角化）。そのあとは技術ツリー
   let body = '';
-  if (!next) body = '<div class="sub">すべてのティアを解放した</div>';
+  if (!next) { const c = E.nodeCounts(s); body = `<div class="sub">開いたノード ${c.open}／${c.all}・解放権 残り${E.ticketsLeft(s)}枚。新しい産業は<a href="research.html">研究（技術ツリー）</a>で選んで開く。</div>`; const g = E.nodeGoal(s); if (g) body += `<div class="sub">${g.replace(/^目標：/, '次：')}</div>`; }
   else {
     const nd = E.tierDef(next), p = E.tierProgress(s, next);
     body += `<div class="sub">次：${nd.icon} ${nd.name} — ${nd.text || ''}</div>`;
@@ -82,8 +82,8 @@ function renderTier(s) {
       : `<div class="row sub"><span>${x.ok ? '✔' : '・'} ${x.label}</span><span class="num">${x.money ? E.fmtMoney(x.cur) + ' / ' + E.fmtMoney(x.need) : E.fmtNum(x.cur) + ' / ' + E.fmtNum(x.need)}</span></div>
          <div class="bar"><i style="width:${Math.max(0, Math.min(100, x.cur / x.need * 100))}%"></i></div>`).join('');
   }
-  const head = `<span><b>${d.icon} ${d.name}</b> <span class="sub">技術ティア ${cur}</span></span>`;
-  UI.html('tier', UI.fold('f-tier', head, body, !!next && cur < 4));
+  const head = next ? `<span><b>${d.icon} ${d.name}</b> <span class="sub">素材の段階</span></span>` : `<span><b>🔬 技術ツリー</b> <span class="sub">${E.nodeCounts(s).open}／${E.nodeCounts(s).all}</span></span>`;
+  UI.html('tier', UI.fold('f-tier', head, body, !!next || E.ticketsLeft(s) > 0));
 }
 
 // 本部ごとの集計：設備数・止まっている数
@@ -233,7 +233,7 @@ function renderHq(s, seg) {
   UI.html('hq', UI.fold('f-hq-build', '<span>倉庫・発電所を建てる</span>', open.map(t => buildBtn(s, t)).join('') || '<div class="sub">解放済みの設備はまだない</div>', false)
     + UI.fold('f-hq-power', '<span>⚡ 電力 <span class="sub">' + (E.count(s, 'powerPlant') ? `自家発電 ${E.fmtNum(s.power ? s.power.gen : 0)}MWh/日` : '買電のみ') + '</span></span>', powerBody(s), E.count(s, 'powerPlant') > 0)
     + UI.fold('f-hq-pools', '<span>倉庫の使用状況</span>', pools || '<div class="sub">倉庫はまだない</div>', true)
-    + '<div class="sub" style="margin-top:8px">研究と研究棟は下の「研究」タブ（重工業期から）</div>');
+    + '<div class="sub" style="margin-top:8px">新しい産業は下の「研究」タブ（技術ツリー）で開く</div>');
 }
 
 function render(s) {

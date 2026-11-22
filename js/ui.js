@@ -9,7 +9,7 @@
     { href: 'market.html',   icon: '📈', label: '市場' },
     { href: 'dashboard.html', icon: '📊', label: '経営', show: s => Engine.dashboardVisible(s) },
     { href: 'finance.html',  icon: '💰', label: '財務', alt: ['statements.html'] },
-    { href: 'research.html', icon: '🔬', label: '研究', show: s => Engine.tierUnlocked(s, 5) }
+    { href: 'research.html', icon: '🔬', label: '研究' }
   ];
   // 右上のメニュー（下のタブに無いページ）
   const MENU = [
@@ -140,6 +140,7 @@
         if (!x) return `目標：${d.name}へ（条件達成。月末に解放）`;
         return `目標：${d.name}へ — ${x.label}${x.cur === undefined ? '' : (x.money ? ' ' + Engine.fmtMoney(x.cur) + ' / ' + Engine.fmtMoney(x.need) : ' ' + Engine.fmtNum(x.cur) + ' / ' + Engine.fmtNum(x.need))}`;
       }
+      { const g = Engine.nodeGoal ? Engine.nodeGoal(s) : null; if (g) return g; }
       return '目標：精製品で稼ぎ、事業を広げる';
     }
   };

@@ -54,7 +54,7 @@ function last12(s) { const h = s.history.slice(-12); return { rev: h.reduce((a, 
 function renderSummary(s) {
   const t = last12(s);
   const room = E.spendable(s) - Math.max(0, s.cash);
-  UI.html('summary', `<div class="row"><h3>${E.dateStr(s)}</h3><span class="sub">${E.tierName(E.currentTier(s))}</span></div>
+  UI.html('summary', `<div class="row"><h3>${E.dateStr(s)}</h3><span class="sub">開いたノード ${E.nodeCounts(s).open}／${E.nodeCounts(s).all}</span></div>
     <table>
       <tr><td>資産額（現金−借入＋設備評価）</td><td><b>${M(E.netWorth(s))}</b></td></tr>
       <tr><td>現金 / 借入</td><td>${M(s.cash)} / ${M(E.totalDebt(s))}${s.overdraft > 0 ? `<div class="sub bad">うち当座貸越 ${M(s.overdraft)}</div>` : ''}</td></tr>
@@ -216,7 +216,7 @@ function renderDeals(s) {
 }
 
 function renderInvest(s) {
-  UI.html('invest', s.research && s.research.active ? `<div class="card sub">🔬 研究中：${E.researchName(s.research.active.id)}（月 ${M(E.researchMonthly(s, s.research.active.id))}）</div>` : '');
+  UI.html('invest', false ? `<div class="card sub">🔬 研究中：${E.researchName(s.research.active.id)}（月 ${M(E.researchMonthly(s, s.research.active.id))}）</div>` : '');
 }
 
 function render(s) {

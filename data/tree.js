@@ -7,15 +7,17 @@
 //   legacyTier：旧ティア（era）の番号。移行期の互換（unlockTier(s,t)＝legacyTier ≤ t のノードをすべて開く）と、旧セーブの解放済みの判定に使う
 //   tickets：解放権の枚数（Tier 3+）。auto：自動で開く（Tier 1〜2。旧ティアの条件で開く）
 //   supply：{ building, recipe }（選択権の量の基準：その設備を、増設モジュールをすべて付けて全開で回す量の入力）。省略時は buildings[0] とそのレシピ
-//   hidden：画面に出さないノード（旧ティアの互換のための設備置き場）
+//   legacyResearch：旧セーブでは研究が済んでいたときだけ開いた（旧ティアの到達では開かない）。移行の判定に使う
+//   colony：最後のノード（Tier 5 のうち4つが開くまで画面に描かない。config.colonyReveal）
 // }
 window.GAME_DATA = window.GAME_DATA || {};
 GAME_DATA.tree = {
   config: {
     // 解放権：会社全体の直近12か月の利益（名目）が、この額を超えるたびに1枚。一度もらった枚数は減らない
-    ticketSteps: [1000000, 3000000, 6000000, 10000000, 15000000, 22000000, 30000000, 40000000, 55000000, 75000000, 100000000, 140000000, 200000000],
+    ticketSteps: [150000, 200000, 260000, 340000, 440000, 570000, 740000, 960000, 1250000, 1600000, 2100000, 2700000, 3500000, 4600000, 6000000, 7800000, 10000000, 13000000, 17000000, 22000000, 29000000, 37000000],   // 全部のノードを開くのに要る枚数はおよそ22枚（Tier 3 が5・Tier 4 が6・Tier 5 が8・コロニー3）。値は仮：バランスのボットで調整
     supplyMonths: 3,          // 選択権：直近3か月の実績の平均で、輸入なしで回る余剰を測る
-    supplyFactor: 1.0,        // 必要な量にかける係数（バランス調整用。1＝増設モジュールを全部付けて全開）
+    supplyModules: 0,         // 必要な量：その設備に、増設モジュールを何個付けて全開で回す量か（0＝増設なしの1基。上限は map.js の modules.max）
+    supplyFactor: 1.0,        // 必要な量にかける係数（バランス調整用）
     revealDepth: 1,           // ノード画面：選べるノードの「一個次」まで描く（前提がすべて開いているノードまで）
     colonyReveal: { node: 'colony', tier: 5, count: 4 }   // 例外：コロニーは Tier 5 のうち4つが開いたら描く
   },
@@ -35,9 +37,9 @@ GAME_DATA.tree = {
                  buildings: ['sawmill'], recipes: ['lumber'], resources: ['lumber', 'logs'] },
     paper:     { name: '製紙',         icon: '📄', tier: 2, legacyTier: 4, auto: true, needs: ['chem'],
                  buildings: ['paperMill'], recipes: ['paper'], resources: ['paper'] },
-    fine:      { name: '精密化学',     icon: '🧪', tier: 3, legacyTier: 6, tickets: 1, needs: ['chem'],
+    fine:      { name: '精密化学',     icon: '🧪', tier: 3, legacyTier: 6, tickets: 1, legacyResearch: true, needs: ['chem'],
                  buildings: ['fineChemPlant'], recipes: ['pharmaMat'], resources: ['pharmaMat'], supply: { building: 'fineChemPlant', recipe: 'pharmaMat' } },
-    explo:     { name: '火薬',         icon: '💥', tier: 3, legacyTier: 6, tickets: 1, needs: ['chem'],
+    explo:     { name: '火薬',         icon: '💥', tier: 3, legacyTier: 6, tickets: 1, legacyResearch: true, needs: ['chem'],
                  buildings: ['explosivesFactory'], recipes: ['explosive'], resources: ['explosive', 'naturalGas'], supply: { building: 'explosivesFactory', recipe: 'explosive' } },
     detergent: { name: '洗剤・化粧品', icon: '🧴', tier: 3, legacyTier: 3, tickets: 1, needs: ['chem'],
                  buildings: ['detergentFactory'], recipes: ['detergent'], resources: ['detergent'] },
@@ -49,7 +51,7 @@ GAME_DATA.tree = {
                  buildings: ['carFactory'], recipes: ['car'], resources: ['car'] },
     ship:      { name: '造船',         icon: '🚢', tier: 4, legacyTier: 5, tickets: 2, needs: ['steel', 'copper'],
                  buildings: ['shipyard'], recipes: ['ship'], resources: ['ship'] },
-    pharma:    { name: '製薬',         icon: '💊', tier: 4, legacyTier: 6, tickets: 2, needs: ['fine', 'kiln'],
+    pharma:    { name: '製薬',         icon: '💊', tier: 4, legacyTier: 6, tickets: 2, legacyResearch: true, needs: ['fine', 'kiln'],
                  buildings: ['pharmaFactory'], recipes: ['pharma'], resources: ['pharma'] },
     semi:      { name: '半導体',       icon: '💾', tier: 4, legacyTier: 6, tickets: 2, needs: ['kiln', 'copper'],
                  buildings: ['semiconductorFactory'], recipes: ['semiconductor'], resources: ['semiconductor'] },
@@ -59,11 +61,12 @@ GAME_DATA.tree = {
                  buildings: ['evFactory'], recipes: ['ev'], resources: ['ev'] },
     aircraft:  { name: '航空機',       icon: '✈️', tier: 5, legacyTier: 6, tickets: 2, needs: ['aluminum', 'steel', 'semi', 'chem', 'copper'],
                  buildings: ['aircraftFactory'], recipes: ['aircraft'], resources: ['aircraft'] },
-    weapon:    { name: '兵器',         icon: '🎖️', tier: 5, legacyTier: 6, tickets: 2, needs: ['steel', 'semi', 'explo'],
+    weapon:    { name: '兵器',         icon: '🎖️', tier: 5, legacyTier: 6, tickets: 2, legacyResearch: true, needs: ['steel', 'semi', 'explo'],
                  buildings: ['munitionsFactory'], recipes: ['weapon'], resources: ['weapon'] },
-    rocket:    { name: 'ロケット',     icon: '🚀', tier: 5, legacyTier: 6, tickets: 2, needs: ['steel', 'semi', 'explo', 'aluminum'],
+    // 最後の工場：船と航空機以外のすべての最終製品と合金が材料（半導体を最終製品に数えるかは要確認）
+    colony:    { name: '宇宙コロニー', icon: '🛰️', tier: 6, tickets: 3, needs: ['steel', 'semi', 'pharma', 'pc', 'ev', 'weapon', 'rocket', 'car', 'buildmat', 'detergent', 'clothing', 'paper'],
+                 buildings: ['colonyFactory'], recipes: ['colony'], resources: ['colony'] },
+    rocket:    { name: 'ロケット',     icon: '🚀', tier: 5, legacyTier: 6, tickets: 2, legacyResearch: true, needs: ['steel', 'semi', 'explo', 'aluminum'],
                  buildings: ['rocketFactory'], recipes: ['rocket'], resources: ['rocket'] },
-    // 旧ティアの互換：研究棟（廃止予定。設備だけ旧ティア5で開く。画面には出さない）
-    research:  { name: '研究棟', icon: '🔬', tier: 4, legacyTier: 5, hidden: true, needs: [], buildings: ['researchLab'] }
   }
 };

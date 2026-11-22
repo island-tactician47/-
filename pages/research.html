@@ -5,15 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="manifest" href="../manifest.json">
 <meta name="theme-color" content="#26221e">
-<title>研究 - 工場地帯シミュ</title>
+<title>研究（技術ツリー） - 工場地帯シミュ</title>
 <link rel="stylesheet" href="../css/style.css">
+<style>
+  .tier-h { display: flex; align-items: baseline; justify-content: space-between; margin: 14px 0 6px; }
+  .node { border-left: 5px solid var(--line); }
+  .node.u { border-left-color: #2e7d4f; }
+  .node.c { border-left-color: #c27a1f; background: #fff8ee; }
+  .node.s { border-left-color: #2b6f94; }
+  .node.l { opacity: .78; }
+  .badge { font-size: 11px; border-radius: 10px; padding: 1px 8px; border: 1px solid var(--line); white-space: nowrap; }
+  .badge.u { background: #e4f3ea; color: #1f6a3f; border-color: #b8dcc6; }
+  .badge.c { background: #fdecd2; color: #8a5200; border-color: #ecc78a; }
+  .badge.s { background: #e3eef6; color: #1f5a7d; border-color: #b7d2e4; }
+  .chips2 { display: flex; flex-wrap: wrap; gap: 4px; margin: 4px 0; }
+  .chip2 { font-size: 11px; border: 1px solid var(--line); border-radius: 10px; padding: 1px 7px; }
+  .chip2.ok { background: #e4f3ea; border-color: #b8dcc6; color: #1f6a3f; }
+  .chip2.ng { background: #f8e6e3; border-color: #e3b7b0; color: #8f3326; }
+  .sup td { padding: 2px 4px; font-size: 12px; }
+  .sup td:nth-child(n+2) { text-align: right; white-space: nowrap; }
+</style>
 </head>
 <body>
 <main>
-  <h2>🔬 研究</h2>
-  <div class="card" id="lab"></div>
-  <div class="card" id="projects"></div>
-  <p class="sub">研究は同時に1件。研究棟を増やすと基礎の進みと加速の上限が上がり、加速するほど総額は割高になる。完了すると、その研究の設備・レシピが使えるようになる（工場ページの各本部）。</p>
+  <h2>🔬 研究（技術ツリー）</h2>
+  <div class="card" id="head"></div>
+  <div id="tree"></div>
+  <p class="sub" id="foot"></p>
 </main>
 
 <script src="../data/resources.js"></script>
@@ -35,35 +53,40 @@
 <script src="../js/ui.js"></script>
 <script>
 const $ = id => document.getElementById(id);
-const E = Engine, G = GAME_DATA;
+const E = Engine, G = GAME_DATA, M = E.fmtMoney;
+const qty = v => v >= 100 ? E.fmtNum(v) : v >= 1 ? String(parseFloat(v.toFixed(2))) : v > 0 ? String(parseFloat(v.toPrecision(2))) : '0';
 
-function renderLab(s) {
-  const labs = E.labCount(s), mx = E.researchMaxAccel(s), chk = E.canBuild(s, 'researchLab'), b = G.buildings.researchLab;
-  UI.html('lab', `<div class="row"><h3>研究棟 ${labs}棟</h3><span class="sub">基礎の進み×${parseFloat(E.researchBase(s).toFixed(2))}・加速は×${mx}まで</span></div>
-    <div style="margin-top:6px"><button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?build=researchLab'">${b.icon} ${b.name}を建てる（${E.fmtMoney(E.costOf(s, 'researchLab'))}・${E.buildText(b.months)}）</button>
-    <div class="sub">${b.desc}</div>${chk.ok ? '' : `<div class="sub">${chk.msg}</div>`}</div>`);
+function nodeCard(s, id) {
+  const d = E.nodeDef(id), st = E.nodeState(s, id), R = G.resources;
+  const cls = st.unlocked ? 'u' : st.canUnlock ? 'c' : st.selectable ? 's' : 'l';
+  const badge = st.unlocked ? '<span class="badge u">開いた</span>' : st.auto ? '<span class="badge">自動で開く</span>' : st.canUnlock ? `<span class="badge c">選べる・解放権${st.tickets.need}枚</span>` : st.selectable ? `<span class="badge s">選択権あり・解放権${st.tickets.need}枚（足りない）</span>` : `<span class="badge">解放権${st.tickets.need}枚</span>`;
+  const needs = (d.needs || []).length ? `<div class="chips2">${d.needs.map(n => `<span class="chip2 ${E.nodeUnlocked(s, n) ? 'ok' : 'ng'}">${E.nodeUnlocked(s, n) ? '✓' : '✗'} ${E.nodeName(n)}</span>`).join('')}</div>` : '';
+  const bs = (d.buildings || []).filter(b => !G.buildings[b].retired).map(b => `${G.buildings[b].icon || ''}${G.buildings[b].name}`).join('、');
+  let body = `<div class="sub">${bs ? '建てられる：' + bs : ''}</div>${needs}`;
+  if (!st.unlocked && !st.auto) {
+    if (st.prereq) {
+      if (!st.supply.measurable) body += '<div class="sub">選択権：生産の記録がたまるのを待つ（消費の記録つきで3か月）</div>';
+      else if (st.supply.items.length) body += `<div class="sub" style="margin-top:4px">選択権：その工場を建てて回すぶん（1基・全開）の素材が、輸入なしで余っているか（直近${G.tree.config.supplyMonths}か月の生産−加工設備の消費）</div><table class="sup">${st.supply.items.map(i => `<tr><td>${i.ok ? '✓' : '✗'} ${R[i.k].name}</td><td>余り ${qty(i.have)}${R[i.k].unit}/日</td><td>必要 ${qty(i.need)}</td></tr>`).join('')}</table>`;
+      else body += '<div class="sub">選択権：素材の条件はない（前提が開いていれば選べる）</div>';
+    }
+    if (st.canUnlock) body += `<div class="btns" style="margin-top:6px"><button class="btn small" onclick="pick('${id}')">このノードを開く（解放権${st.tickets.need}枚）</button></div>`;
+    else if (st.reason) body += `<div class="sub ${st.selectable ? 'warn' : ''}" style="margin-top:4px">${st.reason}</div>`;
+  }
+  return UI.fold('node-' + id, `<span style="display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%"><b>${d.icon || ''} ${d.name}</b>${badge}</span>`, body, st.canUnlock || st.selectable);
 }
 
-function renderProjects(s) {
-  const RS = G.research || {}, ids = Object.keys(RS);
-  if (!ids.length || !E.tierUnlocked(s, 5)) { UI.html('projects', '<div class="sub">重工業期になると研究を始められる</div>'); return; }
-  const a = s.research && s.research.active;
-  const rows = ids.map(id => {
-    const d = RS[id], done = E.researchDone(s, id), chk = E.canResearch(s, id);
-    const st = done ? '<b class="good">✔ 完了</b>'
-      : a && a.id === id ? `<span class="${a.paused ? 'bad' : 'good'}">${a.paused ? '⏸ 資金不足で停止中' : '🔬 進行中'}</span>`
-      : `<button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.startResearch(s,'${id}'))">始める</button>`;
-    const prog = a && a.id === id ? `<div class="bar"><i style="width:${Math.min(100, a.months / d.months * 100)}%"></i></div><div class="row sub"><span>進捗 ${parseFloat(a.months.toFixed(1))} / ${d.months}　あと約${Math.max(1, Math.ceil((d.months - a.months) / E.researchSpeed(s)))}か月</span><button class="btn ghost small" onclick="UI.modal('研究を中止', '進捗は失われ、支払い済みは戻りません。中止しますか？', [{label:'やめる'},{label:'中止する',onClick:()=>UI.act(s=>Engine.cancelResearch(s))}])">中止</button></div>` : '';
-    return `<div style="margin-top:8px"><div class="row"><span>${d.icon} ${d.name}</span>${st}</div>
-      <div class="sub">${d.desc}　標準${d.months}か月・月${E.fmtMoney(E.researchMonthly(s, id, 1))}（計${E.fmtMoney(d.cost * E.priceIndex(s))}・物価で変わる）${!done && !chk.ok && !(a && a.id === id) ? `<br>${chk.msg}` : ''}</div>${prog}</div>`;
-  }).join('');
-  const labs = E.labCount(s), mx = E.researchMaxAccel(s);
-  const accelRow = a ? `<div class="row" style="margin-top:8px"><span class="sub">加速（月 ${E.fmtMoney(E.researchMonthly(s, a.id))}）</span><div class="chips">${[1, 2, 3, 4].filter(x => x <= mx).map(x => `<span class="chip ${E.researchAccel(s) === x ? 'on' : ''}" onclick="UI.act(s=>Engine.setResearchAccel(s,${x}))">×${x}</span>`).join('')}</div></div><div class="sub">加速するほど総額は割高（×2で1.15倍、×4で1.45倍）</div>` : '';
-  UI.html('projects', `<div class="sub">同時に1件。毎月、現金が月額以上あり当座貸越が無いときだけ進む。${labs ? '' : '<br><b>研究を始めるには研究棟が必要（上の研究棟を建てる）</b>'}</div>${accelRow}${rows}`);
+function render(s) {
+  const left = E.ticketsLeft(s), earned = E.ticketsEarned(s), steps = E.ticketSteps(), p12 = E.profit12(s), next = steps[earned];
+  UI.html('head', `<div class="row"><h3>🎫 解放権</h3><b class="num">残り ${left}枚</b></div>
+    <div class="sub">会社全体の直近12か月の利益が、段の額に届くたびに1枚ふえる（これまでに${earned}枚。減らない）。いまの利益 <b>${M(p12)}</b>${next ? `／次は <b>${M(next)}</b>` : '／これで最後'}。</div>
+    <div class="sub" style="margin-top:4px">ノードを開く条件は二つ：<b>選択権</b>（その工場を回すぶんの素材が、輸入なしで余っている）と<b>解放権</b>（利益で貯まる）。研究所は廃止した。</div>`);
+  const ids = Object.keys(E.treeNodes()).filter(id => E.nodeVisible(s, id)), hidden = Object.keys(E.treeNodes()).length - ids.length;
+  const tiers = {}; for (const id of ids) (tiers[E.nodeDef(id).tier] = tiers[E.nodeDef(id).tier] || []).push(id);
+  const html = Object.keys(tiers).sort((a, b) => a - b).map(t => `<div class="tier-h"><h3>Tier ${t}</h3><span class="sub">${tiers[t].filter(id => E.nodeUnlocked(s, id)).length}／${tiers[t].length}</span></div>` + tiers[t].map(id => `<div class="card node ${E.nodeUnlocked(s, id) ? 'u' : ''}">${nodeCard(s, id)}</div>`).join('')).join('');
+  UI.html('tree', html);
+  UI.html('foot', hidden > 0 ? `まだ見えていない産業が ${hidden} 個ある（前提のノードを開くと現れる。最後の産業は、Tier 5 のうち4つを開くと現れる）。` : 'すべてのノードが見えている。');
 }
-
-
-function render(s) { renderLab(s); renderProjects(s); }
+function pick(id) { const d = E.nodeDef(id); if (!confirm(`「${d.name}」を開きます（解放権${d.tickets}枚を使う）。よろしいですか？`)) return; UI.act(s => E.selectNode(s, id)); }
 UI.boot({ page: 'research', render });
 </script>
 </body>
