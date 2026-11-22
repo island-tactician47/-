@@ -47,6 +47,8 @@ GAME_DATA.events = {
     { id: 'chipboom', segment: 'advanced', weight: 3, title: '半導体ブーム', text: '電子機器の需要で、半導体とPCが足りない。', effects: { semiconductor: 1.4, pc: 1.2 }, months: 10 },
     { id: 'chipglut', segment: 'advanced', weight: 2, title: '半導体の在庫調整', text: '作りすぎで、半導体の価格が下がっている。', effects: { semiconductor: 0.75 }, months: 8 },
     { id: 'spacerace', segment: 'advanced', weight: 2, title: '宇宙開発ブーム', text: '国家プロジェクトで、ロケットの発注が増えている。', effects: { rocket: 1.3 }, months: 12 },
+    { id: 'colonyboom', segment: 'space', weight: 2, title: '宇宙移住ブーム', text: '各国が宇宙居住に乗り出し、コロニーの引き合いが強い。', effects: { colony: 1.4 }, months: 18 },
+    { id: 'colonyslump', segment: 'space', weight: 2, title: '宇宙計画の見直し', text: '大型の宇宙計画が見直され、コロニーの発注が冷え込んでいる。', effects: { colony: 0.7 }, months: 18 },
     { id: 'defense', segment: 'advanced', weight: 2, title: '防衛予算の増額', text: '兵器の発注が増えている。', effects: { weapon: 1.25 }, months: 10 },
     { id: 'pcwave', segment: 'advanced', weight: 1, title: 'パソコンの普及', text: '家庭にもPCが入り、需要が伸びている。', effects: { pc: 1.3 }, months: 10 }
   ]

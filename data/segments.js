@@ -11,9 +11,10 @@ GAME_DATA.segments = {
   forestry:  { name: '林業本部', icon: '🌲', group: 'material' },
   consumer:  { name: '生活・消費財本部', icon: '🧴', group: 'product' },
   transport: { name: '輸送機本部', icon: '🚗', group: 'product' },
-  advanced:  { name: '先端・防衛本部', icon: '💾', group: 'product' }
+  advanced:  { name: '先端・防衛本部', icon: '💾', group: 'product' },
+  space:     { name: '宇宙事業', icon: '🛰️', group: 'product' }   // コロニー工場だけ。ゴール（コロニー由来の利益の割合）のために、損益を分けて数える
 };
-GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 'transport', 'advanced'];
+GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 'transport', 'advanced', 'space'];
 (function () {
   const R = {}, B = {};
   const set = (map, seg, keys) => keys.split(/\s+/).forEach(k => { map[k] = seg; });
@@ -23,13 +24,15 @@ GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 't
   set(R, 'forestry', 'logs lumber paper');
   set(R, 'consumer', 'detergent clothing pharma buildmat');
   set(R, 'transport', 'car ship aircraft ev');
-  set(R, 'advanced', 'semiconductor pc rocket weapon colony');
+  set(R, 'advanced', 'semiconductor pc rocket weapon');
+  set(R, 'space', 'colony');
   set(B, 'oil', 'oilWell crudeTank refinery refineryLarge distillation tank_gasoline tank_diesel tank_naphtha tank_heavy chemPlant fineChemPlant explosivesFactory');
   set(B, 'metal', 'steelMill aluminumSmelter copperSmelter');
   set(B, 'ceramics', 'kiln');
   set(B, 'forestry', 'sawmill paperMill');
   set(B, 'consumer', 'detergentFactory garmentFactory pharmaFactory buildmatFactory');
   set(B, 'transport', 'carFactory shipyard aircraftFactory evFactory');
-  set(B, 'advanced', 'semiconductorFactory pcFactory rocketFactory munitionsFactory colonyFactory');
+  set(B, 'advanced', 'semiconductorFactory pcFactory rocketFactory munitionsFactory');
+  set(B, 'space', 'colonyFactory');
   GAME_DATA.segmentOf = { resources: R, buildings: B };   // 倉庫・研究棟は本部に属さない（全社）
 })();
