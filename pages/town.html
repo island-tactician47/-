@@ -128,6 +128,8 @@ function startModule(plantId) {
   else { cursor = null; iso.ghost = { type: 'module', plantId, rot: placingRot, x: -9, y: -9 }; }
   UI.refresh();
 }
+// メニューを閉じる（×）：建設・置き直しの途中ならやめる。そうでなければ、選んでいる建物・タイルの選択を外す
+function closeSheet() { if (placing) { cancelPlacing(); return; } sel = null; cursor = null; if (iso) { iso.selected = null; iso.cursor = null; } UI.refresh(); }
 function cancelPlacing() { placing = null; placingPlant = null; placingRot = 0; moveKey = null; iso.ghost = null; UI.refresh(); }
 function confirmPlacing() {
   const gh = iso.ghost; if (!gh || !placing) return;
@@ -192,7 +194,7 @@ function renderSheet(s) {
       const b = G.buildings[p.type], MC = E.moduleCfg(), mv = !!moveKey, rot = gh && gh.rot !== undefined ? gh.rot : placingRot;
       const chk = gh ? (mv ? E.canMoveModule(s, moveKey, { x: gh.x, y: gh.y, rot }) : E.canPlaceModule(s, p, gh.x, gh.y, undefined, rot)) : { ok: false, msg: 'マップをタップして場所を決める' }, cb = mv ? { ok: true } : E.canBuildModule(s, p);
       const add = E.plantCap(E.plantDef(p), G.recipes[p.recipe]) * MC.gain, mfill = chk.fill ? chk.fill.length : 0, mfillFee = E.fillCost(s, mfill), fee = mv ? (chk.cost !== undefined ? chk.cost : Math.round(((G.relocate || {}).fee || 0.2) * E.moduleCost(s, p))) : ((cb.cost || E.moduleCost(s, p)) + mfillFee);
-      out.push(`<div class="card"><div class="row"><h3>🧱 ${b.name}の増設モジュール${mv ? 'を置き直す' : ''}</h3><span class="sub">${M(fee)}</span></div>
+      out.push(`<div class="card"><div class="row"><h3>🧱 ${b.name}の増設モジュール${mv ? 'を置き直す' : ''}</h3><span style="display:flex;align-items:center"><span class="sub">${M(fee)}</span><button type="button" class="xbtn" onclick="closeSheet()" aria-label="閉じる">×</button></span></div>
         <div class="sub">設備に隣接して置く（緑なら置ける）。向きは回せる。${mv ? '置き直しの費用は建設費の2割。' : `日量が +${E.fmtNum(add)}${G.resources[Object.keys(G.recipes[p.recipe].outputs)[0]].unit}/日（現在 ${E.fmtNum(E.plantCapOf(p))}）。維持費も増える`}</div>
         ${mfill ? `<div class="sub" style="margin-top:4px">🌊 海の上に置く：${mfill}マスを埋め立てる（＋${M(mfillFee)}）</div>` : ''}
         <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">置ける</b>' : `<b class="bad">${chk.msg}</b>`}${cb.ok ? '' : `　<b class="bad">${cb.msg}</b>`}</div>
@@ -205,7 +207,7 @@ function renderSheet(s) {
     const cb0 = mv ? { ok: true } : E.canBuild(s, placing), fillN = chk.fill ? chk.fill.length : 0, fillFee = E.fillCost(s, fillN);
     const cb = (!mv && cb0.ok && s.cash < E.costOf(s, placing) + fillFee) ? { ok: false, msg: `資金不足（建設費＋埋め立て代 ${M(E.costOf(s, placing) + fillFee)}）` } : cb0;
     const fillInfo = fillN ? `<div class="sub" style="margin-top:4px">🌊 海の上に置く：${fillN}マスを埋め立てる（＋${M(fillFee)}）。置いた部分が陸地になる。</div>` : '';
-    out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}${mv ? 'を移設する' : 'を建てる'}</h3><span class="sub">${mv ? (chk.cost !== undefined ? M(chk.cost) + '（建設費の2割）' : '') : M(E.costOf(s, placing)) + '・' + E.buildText(b.months)}</span></div>
+    out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}${mv ? 'を移設する' : 'を建てる'}</h3><span style="display:flex;align-items:center"><span class="sub">${mv ? (chk.cost !== undefined ? M(chk.cost) + '（建設費の2割）' : '') : M(E.costOf(s, placing)) + '・' + E.buildText(b.months)}</span><button type="button" class="xbtn" onclick="closeSheet()" aria-label="閉じる">×</button></span></div>
       <div class="sub">マップをタップして場所を決める（緑なら置ける）。足あと ${E.footprintOf(placing, E.cleanRot(placing, placingRot)).join('×')}${E.canRotate(placing) ? '（向きを回せる）' : ''}</div>
       <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">置ける</b>' : `<b class="bad">${chk.msg}</b>`}${cb.ok ? '' : `　<b class="bad">${cb.msg}</b>`}</div>
       ${fillInfo}
@@ -221,7 +223,7 @@ function renderSheet(s) {
     }
     if (e && e.type !== 'module') {
       const b = G.buildings[e.type], p = e.plant, rec = p && G.recipes[p.recipe];
-      out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}</h3><span>${statusOf(s, e)}</span></div>
+      out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}</h3><span style="display:flex;align-items:center">${statusOf(s, e)}<button type="button" class="xbtn" onclick="closeSheet()" aria-label="閉じる">×</button></span></div>
         ${rec ? `<div class="sub">生産：${rec.name}（稼働率 ${Math.round(p.runRate * 100)}%）　日量 ${E.fmtNum(E.plantCapOf(p))}</div>` : ''}
         ${p && !e.building && !e.moving ? flowHtml(s, p, sel) : ''}
         ${p && !e.building && E.hasModule(p.type) ? (() => { const n = E.moduleCount(s, p), MC = E.moduleCfg(), cb = E.canBuildModule(s, p); return `<div class="row" style="margin-top:6px"><span class="sub">🧱 増設モジュール ${n}/${MC.max}（1個で日量+${Math.round(MC.gain * 100)}%・${M(E.moduleCost(s, p))}）</span><button class="btn small" ${n >= MC.max || !cb.ok ? 'disabled' : ''} onclick="startModule(${p.id})">置く</button></div>`; })() : ''}
@@ -236,7 +238,7 @@ function renderSheet(s) {
     const cat = UI.tab('town-cat', 'factory');
     const items = CATS.find(c => c.id === cat) || CATS[0];
     const types = Object.keys(G.buildings).filter(t => !E.offMap(t) && items.match(G.buildings[t].category) && !G.buildings[t].retired && E.buildingOpen(s, t));
-    out.push(`<div class="card"><div class="row"><h3>ここに建てる</h3><span class="sub">タイル ${cursor.x},${cursor.y}</span></div>
+    out.push(`<div class="card"><div class="row"><h3>ここに建てる</h3><span style="display:flex;align-items:center"><span class="sub">タイル ${cursor.x},${cursor.y}</span><button type="button" class="xbtn" onclick="closeSheet()" aria-label="閉じる">×</button></span></div>
       ${UI.chips('town-cat', CATS.map(c => ({ id: c.id, label: c.label })), items.id)}
       ${types.map(t => { const b = G.buildings[t], chk = E.canBuild(s, t), cant = !chk.ok && !/資金不足/.test(chk.msg || ''); return `<button class="btn tbtn" ${cant ? 'disabled' : ''} onclick="startPlacing('${t}')">${b.icon || ''} ${b.name}　${M(E.costOf(s, t))}・${E.buildText(b.months)}${cant ? `<div class="sub">${chk.msg}</div>` : (!chk.ok ? `<div class="sub warn">${chk.msg}</div>` : '')}</button>`; }).join('') || '<div class="sub">解放済みの設備はまだない</div>'}</div>`);
   } else {

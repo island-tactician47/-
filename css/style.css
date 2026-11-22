@@ -89,3 +89,6 @@ canvas.chart { width: 100%; height: 160px; display: block; }
 #hdr #menu a { display: flex; align-items: center; gap: 10px; padding: 12px 14px; color: var(--ink); text-decoration: none; font-size: 14px; border-bottom: 1px solid var(--line); }
 #hdr #menu a:last-child { border-bottom: 0; }
 #hdr #menu a span { font-size: 18px; }
+
+/* 閉じる×ボタン（マップ下の建物・建設メニューなど） */
+.xbtn { width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--line); background: #fffdf8; color: #5b554d; font-size: 18px; line-height: 1; padding: 0; margin-left: 6px; cursor: pointer; flex: none; }

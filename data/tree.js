@@ -1,4 +1,5 @@
 // 技術ツリー（ノード）。設計は docs/技術ツリーとゴールの設計.md。file:// で開けるよう代入形式。
+// Tier 2 の素材（化学・製鋼・アルミ・窯業・非鉄・製材・製紙）は、同じ条件（旧ティア3：製油所の稼働＋精製品の累計売上）でいっしょに開く。
 // 時代（ティア）をノードに置き換える：ノードの tier は 1〜6（数字が大きいほど先端）。
 // GAME_DATA.tree.nodes[id] = {
 //   name, icon, tier,
@@ -9,7 +10,7 @@
 //   supply：{ building, recipe }（選択権の量の基準：その設備を、増設モジュールをすべて付けて全開で回す量の入力）。省略時は buildings[0] とそのレシピ
 //   legacyResearch：旧セーブでは研究が済んでいたときだけ開いた（旧ティアの到達では開かない）。移行の判定に使う
 //   colony：最後のノード（Tier 5 のうち4つが開くまで画面に描かない。config.colonyReveal）
-//   x・color：決定木の図での横の位置（図の幅 1700 の中の中心）と、このノードから出る線の色
+//   x・color：技術ツリーの図での横の位置（図の幅 1700 の中の中心）と、このノードから出る線の色
 // }
 window.GAME_DATA = window.GAME_DATA || {};
 GAME_DATA.tree = {
@@ -25,17 +26,17 @@ GAME_DATA.tree = {
     refinery:  { x: 1300, color: '#6b7b8c', name: '精製所',       icon: '🏭', tier: 1, legacyTier: 2, auto: true, needs: [] },
     chem:      { x: 1300, color: '#6a4c93', name: '化学',         icon: '⚗️', tier: 2, legacyTier: 3, auto: true, needs: ['refinery'],
                  buildings: ['chemPlant', 'warehouse_bulk', 'warehouse_goods', 'powerPlant'], recipes: ['plastic', 'rubber', 'surfactant', 'fiber'], resources: ['plastic', 'rubber', 'surfactant', 'fiber'] },
-    steel:     { x: 610, color: '#3d5a80', name: '製鋼',         icon: '🔩', tier: 2, legacyTier: 4, auto: true, needs: ['chem'],
+    steel:     { x: 610, color: '#3d5a80', name: '製鋼',         icon: '🔩', tier: 2, legacyTier: 3, auto: true, needs: ['chem'],
                  buildings: ['steelMill'], recipes: ['steel', 'alloy'], resources: ['steel', 'ironore', 'coal', 'alloy', 'rareMetal'] },
-    aluminum:  { x: 840, color: '#2a9d8f', name: 'アルミ',       icon: '🥫', tier: 2, legacyTier: 4, auto: true, needs: ['chem'],
+    aluminum:  { x: 840, color: '#2a9d8f', name: 'アルミ',       icon: '🥫', tier: 2, legacyTier: 3, auto: true, needs: ['chem'],
                  buildings: ['aluminumSmelter'], recipes: ['aluminum'], resources: ['aluminum', 'bauxite'] },
-    kiln:      { x: 380, color: '#c08a2e', name: '窯業',         icon: '🧱', tier: 2, legacyTier: 4, auto: true, needs: ['chem'],
+    kiln:      { x: 380, color: '#c08a2e', name: '窯業',         icon: '🧱', tier: 2, legacyTier: 3, auto: true, needs: ['chem'],
                  buildings: ['kiln'], recipes: ['glass', 'cement', 'silicon'], resources: ['glass', 'cement', 'limestone', 'silica', 'silicon'] },
-    copper:    { x: 1070, color: '#c1553b', name: '非鉄',         icon: '🔶', tier: 2, legacyTier: 4, auto: true, needs: ['chem'],
+    copper:    { x: 1070, color: '#c1553b', name: '非鉄',         icon: '🔶', tier: 2, legacyTier: 3, auto: true, needs: ['chem'],
                  buildings: ['copperSmelter'], recipes: ['copper', 'lithium'], resources: ['copper', 'copperore', 'lithium', 'lithiumOre'] },
-    sawmill:   { x: 150, color: '#8b6b3a', name: '製材',         icon: '🪵', tier: 2, legacyTier: 4, auto: true, needs: ['chem'],
+    sawmill:   { x: 150, color: '#8b6b3a', name: '製材',         icon: '🪵', tier: 2, legacyTier: 3, auto: true, needs: ['chem'],
                  buildings: ['sawmill'], recipes: ['lumber'], resources: ['lumber', 'logs'] },
-    paper:     { x: 1520, color: '#9a8f6a', name: '製紙',         icon: '📄', tier: 2, legacyTier: 4, auto: true, needs: ['chem'],
+    paper:     { x: 1520, color: '#9a8f6a', name: '製紙',         icon: '📄', tier: 2, legacyTier: 3, auto: true, needs: ['chem'],
                  buildings: ['paperMill'], recipes: ['paper'], resources: ['paper'] },
     fine:      { x: 1000, color: '#8a6d3b', name: '精密化学',     icon: '🧪', tier: 3, legacyTier: 6, tickets: 1, legacyResearch: true, needs: ['chem'],
                  buildings: ['fineChemPlant'], recipes: ['pharmaMat'], resources: ['pharmaMat'], supply: { building: 'fineChemPlant', recipe: 'pharmaMat' } },

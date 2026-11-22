@@ -624,14 +624,13 @@
     treeNodes() { return (D().tree && D().tree.nodes) || {}; },
     nodeDef(id) { return this.treeNodes()[id] || null; },
     nodeName(id) { const d = this.nodeDef(id); return d ? d.name : id; },
-    // ノード画面に描くか：開いたノードと、いま選べる（前提が開き、選択権がある）ノード。その先のノード（前提がまだ・素材の余りが足りないもの）は描かない。例外：コロニーは Tier 5 のうち count 個が開いたら。自動で開くノードは前提がそろえば描く
+    // 技術ツリーの画面に描くか：開いたノードと、前提のノードがすべて開いているノード（選択権が無くても、表示だけはする）。その先（前提がまだのノード）は描かない。例外：コロニーは Tier 5 のうち count 個が開いたら
     nodeVisible(s, id) {
       const d = this.nodeDef(id); if (!d) return false;
       if (this.nodeUnlocked(s, id)) return true;
       const cr = this.treeCfg().colonyReveal;
       if (cr && cr.node === id) { let n = 0; for (const k in this.treeNodes()) if (this.nodeDef(k).tier === cr.tier && this.nodeUnlocked(s, k)) n++; if (n >= cr.count) return true; }
-      if (d.auto) return (d.needs || []).every(n => this.nodeUnlocked(s, n));
-      return this.nodeState(s, id).selectable;
+      return (d.needs || []).every(n => this.nodeUnlocked(s, n));
     },
     // ---------- ゴール：純資産（貸借対照表の資本）の目標。達成でスコア。s.goal は達成するまで作らない ----------
     goalCfg() { return D().goal || null; },
@@ -686,7 +685,13 @@
       const sts = ids.map(id => ({ id, st: this.nodeState(s, id) }));
       const c = sts.find(x => x.st.canUnlock); if (c) return `目標：研究タブで「${this.nodeName(c.id)}」を開ける（解放権${c.st.tickets.need}枚）`;
       const sel = sts.find(x => x.st.selectable); if (sel) { const nx = this.ticketSteps()[this.ticketsEarned(s)]; return `目標：解放権をためて「${this.nodeName(sel.id)}」を開く${nx ? '（次は直近12か月の利益 ' + this.fmtMoney(nx) + '）' : ''}`; }
-      const p = sts.find(x => x.st.prereq); if (p) return `目標：「${this.nodeName(p.id)}」の素材を、輸入なしで回るだけ増やす（研究タブ）`;
+      // 選べる候補が無いとき：素材の足りなさがいちばん小さいノードについて、何をどれだけ増やすかを具体的に言う
+      const sc = x => x.st.supply.items.length ? x.st.supply.items.reduce((a, i) => a + Math.max(0, 1 - Math.max(0, i.have) / i.need), 0) / x.st.supply.items.length : 0;
+      const cand = sts.filter(x => x.st.prereq && !x.st.unlocked).sort((a, b) => sc(a) - sc(b))[0];
+      if (!cand) return null;
+      if (!cand.st.supply.measurable) return `目標：「${this.nodeName(cand.id)}」を開くため、工場を動かして生産の記録をためる（3か月）`;
+      const bad = cand.st.supply.items.filter(i => !i.ok).sort((a, b) => (b.need - Math.max(0, b.have)) / b.need - (a.need - Math.max(0, a.have)) / a.need)[0];
+      if (bad) return `目標：「${this.nodeName(cand.id)}」を開くため、${D().resources[bad.k].name}を増産する（余り 日量${this.fmtNum(Math.max(0, bad.have))} → 必要 ${this.fmtNum(bad.need)}。研究タブで確認）`;
       return null;
     },
     // 設備・レシピ・品目 → ノード（データから一度だけ作る）
@@ -755,7 +760,7 @@
       const selectable = !unlocked && !d.auto && prereq && supply.ok, canUnlock = selectable && have >= need;
       let reason = null;
       if (!unlocked) {
-        if (d.auto) reason = '条件を満たすと自動で開く';
+        if (d.auto) { const tp = d.legacyTier > 2 ? this.tierProgress(s, d.legacyTier) : null, x = tp && tp.parts.find(q => !q.ok); reason = x ? `自動で開く条件：${x.label}${x.cur === undefined ? '' : ' ' + (x.money ? this.fmtMoney(x.cur) + ' / ' + this.fmtMoney(x.need) : this.fmtNum(x.cur) + ' / ' + this.fmtNum(x.need))}` : '条件を満たすと自動で開く（月末）'; }
         else if (!prereq) reason = `先に「${missing.map(n => this.nodeName(n)).join('」「')}」を開く`;
         else if (!supply.measurable) reason = '生産の記録がたまるのを待つ（3か月）';
         else if (!supply.ok) reason = '輸入なしで回るだけの素材の余りが足りない：' + supply.items.filter(i => !i.ok).map(i => `${D().resources[i.k].name} 日量${this.fmtNum(i.have)}／必要${this.fmtNum(i.need)}`).join('、');
@@ -947,6 +952,7 @@
     },
     // 互換（試験・デバッグ用）：そのティアに入り、旧ティアの番号が t 以下のノードもすべて開く
     unlockTier(s, t) {
+      for (let i = 3; i < t && i <= 6; i++) this._unlockTierOnly(s, i);   // それより前のティアも開く（Tier 2 の素材は旧ティア3と4の条件で開くので、4に入ったときは3も開いている）
       const r = this._unlockTierOnly(s, t);
       if (this.tierDef(t)) for (const id in this.treeNodes()) { const d = this.nodeDef(id); if (!d.auto && d.legacyTier !== undefined && d.legacyTier <= t && !(s.nodes && s.nodes[id])) (s.nodes || (s.nodes = {}))[id] = true; }
       return r;
