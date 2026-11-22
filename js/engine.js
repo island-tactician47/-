@@ -715,7 +715,7 @@
     // 輸入の罰：レシピの Tier（ノードの Tier）で決まる「全部を輸入したときの利益÷自前の利益」（1＝罰なし）
     importRatio(recipeId) {
       const n = this.nodeOfRecipe(recipeId), d = n && this.nodeDef(n), r = d && (this.treeCfg().importRatio || {})[d.tier];
-      return r === undefined ? 1 : r;
+      return typeof r === 'number' ? r : 1;   // ノードに属さないレシピ・Tier の指定が無いときは罰なし
     },
     // 輸入手数料：boughtValue＝その日、市場から買った原料の価値（買値）。買った割合＝boughtValue÷（その日の入力の買値）。粗利がマイナスなら0
     importFee(s, p, rec, t, boughtValue) {
