@@ -806,6 +806,29 @@
       return r;
     },
 
+    // 加工設備1基の、いまの稼働の月あたりの流れ（マップの建物の詳細用。状態は変えない）。
+    // 生産量は昨日の実績（p.last.t。まだ動いていなければ 能力×稼働率）を30日ぶんにしたもの。
+    // 入力は、自動購入がオンで買えるなら買値、そうでなければ自社在庫（売値換算）で数える
+    plantFlow(s, p) {
+      const rec = D().recipes[p.recipe], def = this.plantDef(p), b = D().buildings[p.type], R = D().resources;
+      if (!rec || !def || !b) return null;
+      const idx = this.priceIndex(s), MC = this.moduleCfg() || {}, nm = p.modules || 0;
+      const rated = this.plantCapOf(p) * (p.runRate === undefined ? 1 : p.runRate);
+      const ran = !!(p.last && typeof p.last.t === 'number'), t = ran ? p.last.t : rated, M30 = t * DAYS_PER_MONTH;
+      const ins = [], outs = []; let inCost = 0, revenue = 0;
+      for (const k in rec.inputs) {
+        const buy = !!(p.autoBuy && R[k].canBuy), price = buy ? Market.buyPrice(s, k) : Market.sellPrice(s, k), qty = rec.inputs[k] * M30, need = rec.inputs[k] * rated;
+        inCost += qty * price;
+        ins.push({ k, qty, cost: qty * price, buy, stockDays: need > 0 ? (s.inventory[k] || 0) / need : Infinity, canBuy: R[k].canBuy !== false });
+      }
+      for (const k in rec.outputs) {
+        const qty = rec.outputs[k] * M30, sellable = R[k].canSell !== false, value = sellable ? qty * Market.sellPrice(s, k) : 0;
+        revenue += value; outs.push({ k, qty, value, sellable });
+      }
+      const opex = (rec.opexPerUnit || 0) * idx * M30, fixed = (b.fixedPerMonth || 0) * idx * (1 + nm * (MC.fixedMul || 0));
+      return { rec, ran, t, rated, ins, outs, revenue, inCost, opex, fixed, profit: revenue - inCost - opex - fixed, reason: p.last && p.last.reason, short: p.last && p.last.short };
+    },
+
     // データの整合性検査。問題の文字列の配列を返す（空なら正常）。selftest と debug で使う
     validateData() {
       const G = D(), out = [];
