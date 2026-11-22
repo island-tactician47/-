@@ -93,7 +93,8 @@ function treeSvg(s, ids) {
   const xs = ids.map(id => E.nodeDef(id).x), x0 = Math.min(...xs) - NW / 2 - 24, x1 = Math.max(...xs) + NW / 2 + 24, W = x1 - x0, H = TOP * 2 + (tiers.length - 1) * ROWGAP + NH + 12;
   treeX0 = x0;
   const cx = id => E.nodeDef(id).x - x0, top = id => ry[E.nodeDef(id).tier], outs = {}, ins = {};
-  for (const id of ids) for (const n of E.nodeDef(id).needs || []) if (ids.includes(n)) { (outs[n] = outs[n] || []).push(id); (ins[id] = ins[id] || []).push(n); }
+  for (const id of ids) for (const n of E.nodeDef(id).needs || []) if (ids.includes(n) && E.nodeDef(n).tier !== E.nodeDef(id).tier) { (outs[n] = outs[n] || []).push(id);   // 同じ Tier どうしの線は描かない（化学→他の素材など。前提としては効いている）
+     (ins[id] = ins[id] || []).push(n); }
   const slot = (list, key, id) => { const l = list.slice().sort((a, b) => E.nodeDef(a).x - E.nodeDef(b).x), i = l.indexOf(key), n = l.length; return n > 1 ? cx(id) - NW / 2 + 14 + (NW - 28) * (i + 0.5) / n : cx(id); };
   let edges = '', nodes = '';
   for (const id of ids) for (const n of ins[id] || []) {
