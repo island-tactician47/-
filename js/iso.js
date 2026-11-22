@@ -235,10 +235,11 @@
     }
     // 絵を貼る：足あと中心（地面）の位置 m.ax,m.ay → 足あとの上の頂点 A の位置（e は回したあとの足あと fw×fd）
     function buildCacheImg(e, im, m, level, pre) {
-      const pad = 6 * level, dpr = I.dpr, W = im.width * level + 2 * pad, Ht = im.height * level + 2 * pad;
+      const q = m.w && im.width ? m.w / im.width : 1;   // 絵の実寸に対する、64px基準（マニフェストの w,h,ax,ay）の比。高解像度の絵は 0.5
+      const pad = 6 * level, dpr = I.dpr, W = im.width * q * level + 2 * pad, Ht = im.height * q * level + 2 * pad;
       const cv = document.createElement('canvas'); cv.width = Math.ceil(W * dpr); cv.height = Math.ceil(Ht * dpr);
       const c2 = cv.getContext('2d'); c2.setTransform(dpr, 0, 0, dpr, 0, 0); c2.imageSmoothingEnabled = true; c2.imageSmoothingQuality = 'high';
-      c2.drawImage(im, pad, pad, im.width * level, im.height * level);
+      c2.drawImage(im, pad, pad, im.width * q * level, im.height * q * level);
       const cx = pad + m.ax * level, cy = pad + m.ay * level;
       return { cv, ax: cx - (e.fw - e.fd) / 2 * TW * level, ay: cy - (e.fw + e.fd) / 2 * TH * level, W, H: Ht, level, dyn: fxOf(e, m), px: cv.width * cv.height };
     }
