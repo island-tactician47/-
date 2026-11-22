@@ -55,6 +55,7 @@
 
     // 中身が変わったときだけ innerHTML を差し替える
     // ---- 共通部品：折りたたみ（開閉の状態は保存し、再描画しても保つ）と、本部のタブ ----
+    addRecord(g) { try { const k = 'factorySim.records.v1', a = JSON.parse(localStorage.getItem(k) || '[]'); a.push(g); a.sort((x, y) => y.score - x.score); localStorage.setItem(k, JSON.stringify(a.slice(0, 30))); } catch (e) {} },
     // fold(key, 見出しHTML, 中身HTML, 既定で開くか)。key は英数字とハイフンだけ
     fold(key, summary, body, defOpen) {
       const open = key in foldState ? foldState[key] : !!defOpen;
@@ -200,6 +201,7 @@
       html += '<p class="sub">' + Object.entries(ev.effects).map(([k, v]) =>
         `${GAME_DATA.resources[k].name} ${v > 1 ? '↑' : '↓'}${Math.round(Math.abs(v - 1) * 100)}%`).join('　') + `（約${ev.months}か月かけて元に戻る）</p>`;
     }
+    if (ev.goal) UI.addRecord(ev.goal);   // 目標達成の記録（会社名つき）を、ブラウザに残す（セーブとは別のキー。新しいゲームを始めても消えない）
     UI.save();
     UI.modal(ev.title, html);
   }

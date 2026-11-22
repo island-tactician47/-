@@ -34,6 +34,7 @@
   <div class="card">
     <label class="row"><span>留守中の操業<br><span class="sub">ON：閉じていた時間だけ1倍速で進む（決裁が必要な出来事で停止）</span></span><input type="checkbox" id="offline"></label>
   </div>
+  <div class="card" id="records" style="display:none"></div>
   <div class="card" id="xfer">
     <h3>セーブの引き継ぎ</h3>
     <div class="sub">セーブはこの端末のブラウザの中にあります。端末の変更や、公開先のURLが変わるとき、バックアップにお使いください。</div>
@@ -175,7 +176,13 @@ function newGame() {
   location.href = 'pages/factory.html';
 }
 
-try { if (normErr) throw normErr; renderDiffs(); renderCont(); } catch (err) {
+try { if (normErr) throw normErr; renderDiffs(); renderCont();
+// これまでの記録（目標達成のスコア。ブラウザごと。セーブとは別のキーなので、新しいゲームを始めても残る）
+try {
+  const rec = JSON.parse(localStorage.getItem('factorySim.records.v1') || '[]').filter(r => r && Number.isFinite(r.score)).slice(0, 5), el = document.getElementById('records');
+  const esc = x => String(x).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  if (rec.length) { el.style.display = ''; el.innerHTML = '<h3>🏆 これまでの記録</h3>' + rec.map((r, i) => `<div class="row"><span>${i + 1}. <b>${esc(r.rank)}</b>「${esc(r.title)}」 ${esc(r.company || '')}</span><span class="num">${Number(r.score).toFixed(1)}点・${Number(r.years).toFixed(1)}年</span></div>`).join('') + '<div class="sub">純資産の目標に届いたときのスコア（上位5件）。</div>'; }
+} catch (e) {} } catch (err) {
   console.error(err);
   $('cont').innerHTML = '<div class="card"><b>⚠️ 画面の表示に失敗しました</b><div class="sub">ページを読み込み直してください（キャッシュの更新待ちのことがあります）。直らないときは、下の「セーブの引き継ぎ」でセーブをファイルに保存してから、サイトのデータを消して試してください。<br>' + String(err && err.message || err).replace(/[<>&]/g, '') + '</div></div>';
 }

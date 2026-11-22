@@ -20,6 +20,7 @@
   <div id="deals"></div>
   <h2>本部別</h2>
   <div id="segs"></div>
+  <div id="goalcard"></div>
   <div id="invest"></div>
   <p class="sub">本部は画面の整理用の分類（現金や意思決定は全社で1つ）。利益率は「いまの相場で、原料を市場で買って1基を動かしたとき」の粗利率（値崩れは含めない）で、月の粗利と回収年数は月産を売ったときの値崩れを含む机上の値です。本部ごとの実績損益は今後足します。実績の損益は上のグラフと<a href="finance.html">財務ページ</a>。</p>
 </main>
@@ -216,6 +217,11 @@ function renderDeals(s) {
 }
 
 function renderInvest(s) {
+  { const g = E.goalProgress(s), sc = s.goal ? null : null;
+    UI.html('goalcard', g ? `<div class="card"><div class="row"><h3>🏆 目標：純資産 ${M(g.target)}</h3><b class="num">${(g.ratio * 100).toFixed(1)}%</b></div>
+      <div class="bar"><i style="width:${Math.max(0, Math.min(100, g.ratio * 100))}%"></i></div>
+      <div class="sub">いま ${M(g.eq)}（現金＋在庫＋設備の評価額−借入）${g.reached ? '　<b class="good">達成済み（ランク ' + s.goal.rank + '「' + s.goal.title + '」・' + s.goal.score + '点）</b>' : (g.years ? `　今のペースなら約${g.years.toFixed(0)}年` : '')}</div>
+      ${s.goal ? '' : '<div class="sub">届くとスコア（早さ・自己資本比率・営業利益率）とランクが出る。コロニー工場は必須ではないが、使わないと遠い。</div>'}</div>` : ''); }
   UI.html('invest', false ? `<div class="card sub">🔬 研究中：${E.researchName(s.research.active.id)}（月 ${M(E.researchMonthly(s, s.research.active.id))}）</div>` : '');
 }
 

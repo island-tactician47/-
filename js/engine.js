@@ -634,12 +634,56 @@
       const dep = depth === undefined ? (cfg.revealDepth || 0) : depth;
       return dep > 0 && missing.every(m => this.nodeVisible(s, m, dep - 1));
     },
+    // ---------- ゴール：純資産（貸借対照表の資本）の目標。達成でスコア。s.goal は達成するまで作らない ----------
+    goalCfg() { return D().goal || null; },
+    equity(s) { return s.cash + this.inventoryValue(s) + this.assetValue(s) - this.totalDebt(s); },
+    // 進み具合：{ eq, target, ratio, growth（1年前からの増加。分からなければ null）, years（今のペースで届くまでの年数。届かない見込みは null）, reached }
+    goalProgress(s) {
+      const cfg = this.goalCfg(); if (!cfg) return null;
+      const eq = this.equity(s), h = s.history || [], b = h.length >= 13 ? h[h.length - 13] : null;
+      const past = b && b.bs ? b.cash + b.bs.inv + b.bs.fixed - b.bs.loans - b.bs.od : null, growth = past === null ? null : eq - past;
+      return { eq, target: cfg.target, ratio: eq / cfg.target, growth, years: growth > 0 && eq < cfg.target ? (cfg.target - eq) / growth : null, reached: !!s.goal };
+    },
+    // 直近12か月の営業利益率（営業利益＝売上−原料−操業費−維持費−研究費−違約金）
+    operatingMargin12(s) {
+      let rev = 0, op = 0; const h = (s.history || []).slice(-12);
+      for (const x of h) { const c = x.costs || {}; rev += x.revenue || 0; op += (x.revenue || 0) - (c.purchase || 0) - (c.opex || 0) - (c.fixed || 0) - (c.research || 0) - (c.penalty || 0); }
+      return rev > 0 ? op / rev : 0;
+    },
+    // スコア：{ speed, equityRatio, margin（各0〜100）, penalty, total, rank, title, years, equity }
+    calcScore(s) {
+      const cfg = this.goalCfg(); if (!cfg) return null;
+      const clamp01 = v => Math.max(0, Math.min(1, v)), years = s.day / DAYS_PER_YEAR, adj = years - ((cfg.speedOffset || {})[s.difficulty] || 0);
+      const speed = 100 * clamp01((cfg.speedWorst - adj) / (cfg.speedWorst - cfg.speedBest));
+      const assets = s.cash + this.inventoryValue(s) + this.assetValue(s), eq = this.equity(s), equityRatio = 100 * clamp01(assets > 0 ? eq / assets : 0);
+      const margin = 100 * clamp01(this.operatingMargin12(s) / cfg.marginFull);
+      const odMonths = (s.history || []).filter(x => x.odDraw > 0).length;
+      const penalty = (s.restructured ? cfg.restructurePenalty : 0) + Math.min(cfg.overdraftPenaltyMax, odMonths * cfg.overdraftPenaltyPerMonth);
+      const W = cfg.weights, total = Math.max(0, Math.min(100, speed * W.speed + equityRatio * W.equity + margin * W.margin - penalty));
+      const rk = cfg.ranks.find(r => total >= r.min) || cfg.ranks[cfg.ranks.length - 1];
+      return { speed, equityRatio, margin, penalty, total, rank: rk.rank, title: rk.title, years, equity: eq };
+    },
+    // 月末に判定：目標に届いたら（初めてだけ）スコアを出して知らせる。続けて遊べる。届いたら true
+    checkGoal(s) {
+      const cfg = this.goalCfg(); if (!cfg || s.goal) return false;
+      if (this.equity(s) < cfg.target) return false;
+      const sc = this.calcScore(s), name = this.companyName(s);
+      s.goal = { day: s.day, years: sc.years, score: Math.round(sc.total * 10) / 10, rank: sc.rank, title: sc.title };
+      this.log(s, `🏆 純資産 ${this.fmtMoney(cfg.target)} に到達！ ランク ${sc.rank}「${sc.title}」・スコア ${s.goal.score}点`);
+      const f = v => v.toFixed(0);
+      s.pendingEvents.push({
+        title: '🏆 目標達成',
+        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、純資産 <b>${this.fmtMoney(cfg.target)}</b> に届いた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
+        goal: { company: name, diff: s.difficulty, years: Math.round(sc.years * 10) / 10, score: s.goal.score, rank: sc.rank, title: sc.title, equity: Math.round(sc.equity), at: Date.now() }
+      });
+      return true;
+    },
     // 開いたノードの数と、ノードの総数（自動で開くものを含む）
     nodeCounts(s) { let n = 0, all = 0; for (const id in this.treeNodes()) { all++; if (this.nodeUnlocked(s, id)) n++; } return { open: n, all }; },
     // 次の目標の文（ヘッダーに出す）：選べるノード → 解放権をためる → 素材を増やす → すべて開いた
     nodeGoal(s) {
       const ids = Object.keys(this.treeNodes()).filter(id => !this.nodeUnlocked(s, id) && !this.nodeDef(id).auto && this.nodeVisible(s, id, 0));
-      if (!ids.length) return Object.keys(this.treeNodes()).every(id => this.nodeUnlocked(s, id)) ? '目標：すべてのノードを開いた。純資産の目標へ' : null;
+      if (!ids.length) { if (!Object.keys(this.treeNodes()).every(id => this.nodeUnlocked(s, id))) return null; const g = this.goalProgress(s); return g && !g.reached ? `目標：純資産 ${this.fmtMoney(g.eq)} / ${this.fmtMoney(g.target)}${g.years ? '（今のペースで約' + g.years.toFixed(0) + '年）' : ''}` : '目標：すべてのノードを開いた'; }
       const sts = ids.map(id => ({ id, st: this.nodeState(s, id) }));
       const c = sts.find(x => x.st.canUnlock); if (c) return `目標：研究タブで「${this.nodeName(c.id)}」を開ける（解放権${c.st.tickets.need}枚）`;
       const sel = sts.find(x => x.st.selectable); if (sel) { const nx = this.ticketSteps()[this.ticketsEarned(s)]; return `目標：解放権をためて「${this.nodeName(sel.id)}」を開く${nx ? '（次は直近12か月の利益 ' + this.fmtMoney(nx) + '）' : ''}`; }
@@ -1787,6 +1831,7 @@
         stop = true;
       }
       if (this.updateTickets(s)) stop = true;
+      if (this.checkGoal(s)) stop = true;
       if (this.checkTiers(s)) stop = true;
       return stop;
     },

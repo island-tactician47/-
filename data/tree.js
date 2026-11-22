@@ -70,3 +70,16 @@ GAME_DATA.tree = {
                  buildings: ['rocketFactory'], recipes: ['rocket'], resources: ['rocket'] },
   }
 };
+// ゴール：純資産（貸借対照表の資本＝現金＋在庫＋設備の評価額−借入）が target に届いたらクリア（期限なし。続けて遊べる）。達成時にスコアとランクを出す。
+// スコア（0〜100）＝ 早さ×weights.speed ＋ 自己資本比率×weights.equity ＋ 営業利益率×weights.margin − 減点。
+//   早さ：創業からの年数（難易度の speedOffset 年ぶん甘くして）が speedBest 年なら100、speedWorst 年以上なら0（その間は直線）
+//   自己資本比率：資本÷資産（0〜100%）／営業利益率：直近12か月の営業利益÷売上（marginFull で100点）
+//   減点：債務の再編を使った（restructurePenalty）、当座貸越の借り増しをした月（月ごとに overdraftPenaltyPerMonth、最大 overdraftPenaltyMax）
+// 値は仮：バランスのボット（tools/selftest_balance.html）と、コロニーの稼ぎを見て調整する。
+GAME_DATA.goal = {
+  target: 1000000000,
+  speedBest: 25, speedWorst: 70, speedOffset: { rich: 0, tight: 5, indebted: 10 },
+  weights: { speed: 0.5, equity: 0.25, margin: 0.25 }, marginFull: 0.30,
+  restructurePenalty: 10, overdraftPenaltyPerMonth: 2, overdraftPenaltyMax: 15,
+  ranks: [{ min: 85, rank: 'S', title: '宇宙企業' }, { min: 70, rank: 'A', title: '世界企業' }, { min: 55, rank: 'B', title: '国内大手' }, { min: 40, rank: 'C', title: '地方の雄' }, { min: 0, rank: 'D', title: '町工場' }]
+};
