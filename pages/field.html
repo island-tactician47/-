@@ -151,7 +151,7 @@ function render(s) {
     ? '<span class="bad">満杯で油井が止まっている！タンクを増やすか港を改修する</span>'
     : `次の出荷まで${ship}日　｜　${daysToFull === Infinity ? '満杯にはならない' : `あと約${Math.floor(daysToFull)}日で満杯${daysToFull < ship ? '<span class="bad">（出荷日に間に合わない）</span>' : ''}`}`);
   const tk = E.canBuild(s, 'crudeTank');
-  $('b-tank').textContent = `原油タンク +10,000bbl（${E.fmtMoney(E.costOf(s, 'crudeTank'))}・${E.buildText(G.buildings.crudeTank.months)}）`;
+  $('b-tank').textContent = `原油タンク +${E.fmtNum(G.buildings.crudeTank.capacity.crude)}bbl（${E.fmtMoney(E.costOf(s, 'crudeTank'))}・${E.buildText(G.buildings.crudeTank.months)}）`;
   $('b-tank').disabled = !tk.ok;
 
   // 鉱区

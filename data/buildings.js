@@ -34,10 +34,10 @@ GAME_DATA.buildings = {
   },
   crudeTank: {
     name: '原油タンク', icon: '⚫', category: 'field',
-    cost: 20000, months: 2,
-    capacity: { crude: 10000 },
+    cost: 60000, months: 2,
+    capacity: { crude: 40000 },
     fixedPerMonth: 40,
-    desc: '原油を10,000bbl貯蔵。満杯になると油井が止まる'
+    desc: '原油を40,000bbl貯蔵（旧10,000）。満杯になると油井が止まる'
   },
   refinery: {
     name: '小規模製油所', icon: '🏭', category: 'refinery',
@@ -65,14 +65,15 @@ GAME_DATA.buildings = {
     cost: 350000, months: 12,
     requiresBuilding: 'refinery',
     throughput: 1000,
+    capacity: { gasoline: 10000, diesel: 10000, naphtha: 10000, heavy: 10000 },   // 増設した塔ごとに製品タンクを内蔵（タンクを別に並べなくても溢れにくい）
     opexPerBbl: 0.18,
     fixedPerMonth: 1200,
-    desc: '原油処理を日量1,000bbl増やす。製油所の完成後に稼働'
+    desc: '原油処理を日量1,000bbl増やす（製品タンク各10,000bbl込み）。製油所の完成後に稼働'
   },
-  tank_gasoline: { name: 'ガソリンタンク', icon: '🟡', category: 'refinery', cost: 12000, months: 2, capacity: { gasoline: 5000 }, fixedPerMonth: 30, desc: '5,000bbl' },
-  tank_diesel:   { name: '軽油タンク',     icon: '🔵', category: 'refinery', cost: 12000, months: 2, capacity: { diesel: 5000 },   fixedPerMonth: 30, desc: '5,000bbl' },
-  tank_naphtha:  { name: 'ナフサタンク',   icon: '🟣', category: 'refinery', cost: 12000, months: 2, capacity: { naphtha: 5000 },  fixedPerMonth: 30, desc: '5,000bbl' },
-  tank_heavy:    { name: '重油タンク',     icon: '⬛', category: 'refinery', cost: 12000, months: 2, capacity: { heavy: 5000 },    fixedPerMonth: 30, desc: '5,000bbl' },
+  tank_gasoline: { name: 'ガソリンタンク', icon: '🟡', category: 'refinery', cost: 36000, months: 2, capacity: { gasoline: 20000 }, fixedPerMonth: 30, desc: '20,000bbl（旧5,000）' },
+  tank_diesel:   { name: '軽油タンク',     icon: '🔵', category: 'refinery', cost: 36000, months: 2, capacity: { diesel: 20000 },   fixedPerMonth: 30, desc: '20,000bbl（旧5,000）' },
+  tank_naphtha:  { name: 'ナフサタンク',   icon: '🟣', category: 'refinery', cost: 36000, months: 2, capacity: { naphtha: 20000 },  fixedPerMonth: 30, desc: '20,000bbl（旧5,000）' },
+  tank_heavy:    { name: '重油タンク',     icon: '⬛', category: 'refinery', cost: 36000, months: 2, capacity: { heavy: 20000 },    fixedPerMonth: 30, desc: '20,000bbl（旧5,000）' },
 
   // ---- 段階2a：倉庫（保管クラスの共用プール。capacity は保管枠） ----
   warehouse_bulk:  { name: '素材倉庫', icon: '📦', category: 'storage', tier: 3, cost: 30000, months: 3, capacity: { bulk: 5000 },  fixedPerMonth: 60,  desc: '原料・素材を5,000枠（1t＝1枠）。同じ種類の品目で共用' },

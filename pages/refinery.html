@@ -121,7 +121,7 @@ function render(s) {
       <div class="bar ${r > 0.97 ? 'full' : ''}"><i style="width:${r * 100}%"></i></div>
       <div class="icons">${done ? icon : ''}${icon.repeat(extra)}${'🚧'.repeat(extraCons)}</div>
       ${daily > 0 ? `<div class="sub">日産${E.fmtNum(daily)}bbl　${fullIn < ship ? `<span class="bad">次の出荷（${ship}日後）までに満杯になる</span>` : `次の出荷まで${ship}日`}${s.hold[k] ? '　<span class="warn">出荷見送り中</span>' : ''}</div>` : ''}
-      <div class="btns" style="margin-top:4px">${btn(s, 'tank_' + k, 'タンク +5,000bbl')}</div></div>`;
+      <div class="btns" style="margin-top:4px">${btn(s, 'tank_' + k, 'タンク +' + E.fmtNum(G.buildings['tank_' + k].capacity[k]) + 'bbl')}</div></div>`;
   }).join(''));
 }
 UI.boot({ page: 'refinery', render });
