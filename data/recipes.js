@@ -18,10 +18,10 @@
 // 扱わないもの（2cで追加）：セメントの燃料（石炭）、ガラスのソーダ灰は省略。紙は2aでは売る以外の使い道がない
 window.GAME_DATA = window.GAME_DATA || {};
 GAME_DATA.recipes = {
-  plastic: { name: 'プラスチック', inputs: { naphtha: 12 }, outputs: { plastic: 1 }, opexPerUnit: 428.5, energyShare: 0.18, speed: 0.33 },
-  rubber: { name: '合成ゴム', inputs: { naphtha: 9 }, outputs: { rubber: 1 }, opexPerUnit: 235.7, energyShare: 0.15, speed: 0.5 },
-  surfactant: { name: '界面活性剤', inputs: { naphtha: 4 }, outputs: { surfactant: 1 }, opexPerUnit: 295.6, energyShare: 0.12, speed: 0.5 },
-  fiber: { name: '合成繊維', inputs: { naphtha: 11 }, outputs: { fiber: 1 }, opexPerUnit: 609.6, energyShare: 0.18, speed: 0.2 },
+  plastic: { name: 'プラスチック', inputs: { naphtha: 12 }, outputs: { plastic: 1 }, opexPerUnit: 435.5, energyShare: 0.18, speed: 0.33 },
+  rubber: { name: '合成ゴム', inputs: { naphtha: 9 }, outputs: { rubber: 1 }, opexPerUnit: 241.0, energyShare: 0.15, speed: 0.5 },
+  surfactant: { name: '界面活性剤', inputs: { naphtha: 4 }, outputs: { surfactant: 1 }, opexPerUnit: 297.9, energyShare: 0.12, speed: 0.5 },
+  fiber: { name: '合成繊維', inputs: { naphtha: 11 }, outputs: { fiber: 1 }, opexPerUnit: 616.0, energyShare: 0.18, speed: 0.2 },
   steel: { name: '鋼材', inputs: { ironore: 1.6, coal: 0.8 }, outputs: { steel: 1 }, opexPerUnit: 68.9, energyShare: 0.22 },
   aluminum: { name: 'アルミ', inputs: { bauxite: 4.4 }, outputs: { aluminum: 1 }, opexPerUnit: 230.3, energyShare: 0.45 },
   copper: { name: '銅', inputs: { copperore: 3.5 }, outputs: { copper: 1 }, opexPerUnit: 27.4, energyShare: 0.3 },
@@ -36,17 +36,17 @@ GAME_DATA.recipes = {
   alloy: { name: '合金', inputs: { steel: 0.85, rareMetal: 0.15 }, outputs: { alloy: 1 }, opexPerUnit: 366.4, energyShare: 0.2, speed: 0.125, tier: 5 },
   silicon: { name: 'シリコン', inputs: { silica: 2.2 }, outputs: { silicon: 1 }, opexPerUnit: 1514.1, energyShare: 0.4, speed: 0.12, tier: 6 },
   lithium: { name: 'リチウム', inputs: { lithiumOre: 6 }, outputs: { lithium: 1 }, opexPerUnit: 2555.7, energyShare: 0.2, speed: 0.105, tier: 6 },
-  ship: { name: '船舶', inputs: { steel: 3000, alloy: 400, heavy: 2000, copper: 60 }, outputs: { ship: 1 }, opexPerUnit: 608861.6, energyShare: 0.05 },
+  ship: { name: '船舶', inputs: { steel: 3000, alloy: 400, heavy: 2000, copper: 60 }, outputs: { ship: 1 }, opexPerUnit: 609455.0, energyShare: 0.05 },
   aircraft: { name: '航空機', inputs: { aluminum: 40, alloy: 40, semiconductor: 2, plastic: 5, copper: 3 }, outputs: { aircraft: 1 }, opexPerUnit: 875493.8, energyShare: 0.05 },
   semiconductor: { name: '半導体', inputs: { silicon: 0.85, copper: 0.002 }, outputs: { semiconductor: 1 }, opexPerUnit: 184.0, energyShare: 0.3 },
   pc: { name: 'PC', inputs: { semiconductor: 0.05, plastic: 0.01, glass: 0.005, aluminum: 0.01 }, outputs: { pc: 1 }, opexPerUnit: 12.2, energyShare: 0.08 },
   ev: { name: '電池・EV', inputs: { steel: 0.8, aluminum: 0.3, rubber: 0.08, lithium: 0.2, semiconductor: 0.05, copper: 0.1 }, outputs: { ev: 1 }, opexPerUnit: 28.2, energyShare: 0.08 },
-  pharmaMat: { name: '医薬原料', inputs: { naphtha: 15 }, outputs: { pharmaMat: 1 }, opexPerUnit: 1623.4, energyShare: 0.1, speed: 0.07 },
+  pharmaMat: { name: '医薬原料', inputs: { naphtha: 15 }, outputs: { pharmaMat: 1 }, opexPerUnit: 1632.1, energyShare: 0.1, speed: 0.07 },
   explosive: { name: '火薬', inputs: { naturalGas: 2 }, outputs: { explosive: 1 }, opexPerUnit: 614.9, energyShare: 0.1, speed: 0.15 },
   pharma: { name: '医薬品', inputs: { pharmaMat: 1.2, glass: 0.4 }, outputs: { pharma: 1 }, opexPerUnit: 238.0, energyShare: 0.1 },
   rocket: { name: 'ロケット', inputs: { alloy: 400, semiconductor: 60, explosive: 300, aluminum: 100 }, outputs: { rocket: 1 }, opexPerUnit: 69841.7, energyShare: 0.05 },
   weapon: { name: '兵器', inputs: { steel: 1.0, alloy: 0.5, semiconductor: 0.05, explosive: 0.4 }, outputs: { weapon: 1 }, opexPerUnit: 77.9, energyShare: 0.07 },
-  colony: { name: '宇宙コロニー', inputs: { paper: 1500, buildmat: 4000, car: 300, detergent: 250, clothing: 1500, pharma: 150, semiconductor: 300, pc: 1000, ev: 200, weapon: 50, rocket: 2, alloy: 1000 }, outputs: { colony: 1 }, opexPerUnit: -121941.3, energyShare: 0.05 }
+  colony: { name: '宇宙コロニー', inputs: { paper: 1500, buildmat: 4000, car: 300, detergent: 250, clothing: 1500, pharma: 150, semiconductor: 300, pc: 1000, ev: 200, weapon: 50, rocket: 2, alloy: 1000 }, outputs: { colony: 1 }, opexPerUnit: 7620307.4, energyShare: 0.05 }
 };
 GAME_DATA.plants = {
   chemPlant: { recipes: ['plastic', 'rubber', 'surfactant', 'fiber'], legacyRecipes: ['pharmaMat', 'explosive'], throughput: 10 },

@@ -14,7 +14,7 @@ window.GAME_DATA = window.GAME_DATA || {};
 GAME_DATA.tree = {
   config: {
     // 解放権：会社全体の直近12か月の利益（名目）が、この額を超えるたびに1枚。一度もらった枚数は減らない
-    ticketSteps: [150000, 200000, 260000, 340000, 440000, 570000, 740000, 960000, 1250000, 1600000, 2100000, 2700000, 3500000, 4600000, 6000000, 7800000, 10000000, 13000000, 17000000, 22000000, 29000000, 37000000],   // 全部のノードを開くのに要る枚数はおよそ22枚（Tier 3 が5・Tier 4 が6・Tier 5 が8・コロニー3）。値は仮：バランスのボットで調整
+    ticketSteps: [150000, 190000, 230000, 290000, 370000, 460000, 570000, 720000, 890000, 1120000, 1400000, 1750000, 2180000, 2730000, 3410000, 4260000, 5330000, 6660000, 8330000, 10410000, 13010000, 16260000],   // 150k から 1.25倍ずつ22段（全部のノードを開くのに要る枚数はおよそ22枚：Tier 3 が5・Tier 4 が6・Tier 5 が8・コロニー3）。値は仮：バランスのボットで調整
     supplyMonths: 3,          // 選択権：直近3か月の実績の平均で、輸入なしで回る余剰を測る
     supplyModules: 0,         // 必要な量：その設備に、増設モジュールを何個付けて全開で回す量か（0＝増設なしの1基。上限は map.js の modules.max）
     supplyFactor: 1.0,        // 必要な量にかける係数（バランス調整用）
@@ -75,10 +75,11 @@ GAME_DATA.tree = {
 //   早さ：創業からの年数（難易度の speedOffset 年ぶん甘くして）が speedBest 年なら100、speedWorst 年以上なら0（その間は直線）
 //   自己資本比率：資本÷資産（0〜100%）／営業利益率：直近12か月の営業利益÷売上（marginFull で100点）
 //   減点：債務の再編を使った（restructurePenalty）、当座貸越の借り増しをした月（月ごとに overdraftPenaltyPerMonth、最大 overdraftPenaltyMax）
-// 値は仮：バランスのボット（tools/selftest_balance.html）と、コロニーの稼ぎを見て調整する。
+// 値の根拠（ボット tools/selftest_balance.html?years=60。人間はボットより速いはず）：コロニーを開いて回すと純資産が年およそ+55M、開かないと+20M ほどで伸びる。
+//   目標20億ドルは、ボットで、コロニーあり＝創業から約65年・コロニーなし＝約115年（約1.8倍）。早さは30年で満点・90年で0点。
 GAME_DATA.goal = {
-  target: 1000000000,
-  speedBest: 25, speedWorst: 70, speedOffset: { rich: 0, tight: 5, indebted: 10 },
+  target: 2000000000,
+  speedBest: 30, speedWorst: 90, speedOffset: { rich: 0, tight: 5, indebted: 10 },
   weights: { speed: 0.5, equity: 0.25, margin: 0.25 }, marginFull: 0.30,
   restructurePenalty: 10, overdraftPenaltyPerMonth: 2, overdraftPenaltyMax: 15,
   ranks: [{ min: 85, rank: 'S', title: '宇宙企業' }, { min: 70, rank: 'A', title: '世界企業' }, { min: 55, rank: 'B', title: '国内大手' }, { min: 40, rank: 'C', title: '地方の雄' }, { min: 0, rank: 'D', title: '町工場' }]

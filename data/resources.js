@@ -13,10 +13,10 @@ window.GAME_DATA = window.GAME_DATA || {};
 GAME_DATA.resources = {
   // ---- 石油（ステップ1以前から。定義は変えない） ----
   crude:    { name: '原油',     unit: 'bbl', kind: 'raw',      tier: 1, canBuy: true, canSell: true, shipVol: 1, basePrice: 2.51, volatility: 0.035, marketDepth: 480000, color: '#6b5b4b' },
-  gasoline: { name: 'ガソリン', unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 5.63, volatility: 0.03,  marketDepth: 160000, color: '#e0a030' },
-  diesel:   { name: '軽油',     unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 4.88, volatility: 0.03,  marketDepth: 160000, color: '#4a90c0' },
-  naphtha:  { name: 'ナフサ',   unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 4.25, volatility: 0.04,  marketDepth: 80000,  color: '#9a6ac0' },
-  heavy:    { name: '重油',     unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 2.25, volatility: 0.04,  marketDepth: 160000, color: '#444444' },
+  gasoline: { name: 'ガソリン', unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 5.04, volatility: 0.03,  marketDepth: 160000, color: '#e0a030' },
+  diesel:   { name: '軽油',     unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 4.37, volatility: 0.03,  marketDepth: 160000, color: '#4a90c0' },
+  naphtha:  { name: 'ナフサ',   unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 3.80, volatility: 0.04,  marketDepth: 80000,  color: '#9a6ac0' },
+  heavy:    { name: '重油',     unit: 'bbl', kind: 'material', tier: 2, canBuy: true, canSell: true, shipVol: 1, basePrice: 2.02, volatility: 0.04,  marketDepth: 160000, color: '#444444' },
 
   // ---- 原料（市場で買うだけ。売れない）。lot＝市場画面の「買う」ボタン1回の量 ----
   coal:      { name: '石炭',       unit: 't', kind: 'raw', tier: 4, canBuy: true, canSell: false, shipVol: 1, storage: 'bulk', basePrice: 4.9,  volatility: 0.03, marketDepth: 1000000, lot: 500, color: '#3a3a3a' },
@@ -66,7 +66,7 @@ GAME_DATA.resources = {
   pharmaMat:     { name: '医薬原料',     unit: 't', kind: 'material', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 2500, volatility: 0.03, marketDepth: 200, color: '#c98fd0' },
   explosive:     { name: '火薬',         unit: 't', kind: 'material', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 1000, volatility: 0.035, marketDepth: 400, color: '#c9663a' },
   pharma:        { name: '医薬品',       unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 6000, volatility: 0.09, marketDepth: 280, color: '#d46a8f' },
-  colony:        { name: '宇宙コロニー', unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 600, basePrice: 30000000, volatility: 0.25, marketDepth: 1, color: '#d8b04a' },
+  colony:        { name: '宇宙コロニー', unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 600, basePrice: 40000000, volatility: 0.25, marketDepth: 1, color: '#d8b04a' },
   rocket:        { name: 'ロケット',     unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 100, basePrice: 2000000, volatility: 0.1, marketDepth: 1, color: '#9a8fd0' },
   weapon:        { name: '兵器',         unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 2400, volatility: 0.08, marketDepth: 900, color: '#6a7a5a' },
   ev:            { name: '電池・EV',     unit: '台',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 3,    storage: 'goods', storeVol: 3,   basePrice: 2500,    volatility: 0.1, marketDepth: 1040, color: '#3aa17e' },
@@ -110,5 +110,5 @@ window.GAME_DATA.contracts = {
 
 // 輸入（市場で買う）の上乗せ：自社で作れる品目（加工設備・油井・鉱山・精製が産出する品目）は、買値に extra を上乗せして割高にする（自社で作るほうが得）。
 // 自社で作る手段が無い品目（ボーキサイト・珪砂・原木・レアメタル・リチウム鉱石など）と exempt の品目（天然ガス＝輸入しか手段が無い）は据え置き（Market の BUY_PREMIUM のまま）。
-// 製油所の製品（ガソリン・軽油・ナフサ・重油）の売値は、原油の買値の上乗せぶん、元より約25%高くしてある（製油所の利益を大きくする）。
+// 製油所の製品（ガソリン・軽油・ナフサ・重油）の売値は、元より約12%高くしてある（原油の買値の上乗せぶん、製油所の利益を大きくする。自社の原油を回すと大きくもうかる）。
 GAME_DATA.importPremium = { extra: 0.25, exempt: ['naturalGas'] };
