@@ -39,7 +39,7 @@ const E = Engine, G = GAME_DATA;
 function renderLab(s) {
   const labs = E.labCount(s), mx = E.researchMaxAccel(s), chk = E.canBuild(s, 'researchLab'), b = G.buildings.researchLab;
   UI.html('lab', `<div class="row"><h3>研究棟 ${labs}棟</h3><span class="sub">基礎の進み×${parseFloat(E.researchBase(s).toFixed(2))}・加速は×${mx}まで</span></div>
-    <div style="margin-top:6px"><button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?build=researchLab'">${b.icon} ${b.name}を建てる（${E.fmtMoney(E.costOf(s, 'researchLab'))}・${b.months}か月）</button>
+    <div style="margin-top:6px"><button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?build=researchLab'">${b.icon} ${b.name}を建てる（${E.fmtMoney(E.costOf(s, 'researchLab'))}・${E.buildText(b.months)}）</button>
     <div class="sub">${b.desc}</div>${chk.ok ? '' : `<div class="sub">${chk.msg}</div>`}</div>`);
 }
 

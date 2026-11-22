@@ -30,9 +30,10 @@
   function layout() {
     zones.length = 0; roads.length = 0; hills.length = 0; blocks.length = 0; routes.length = 0;
     const site = res => Object.keys(G.mineSites).filter(id => G.mineSites[id].res === res).map(id => ({ id, kind: 'mine', res, label: G.mineSites[id].name, n: G.mineSites[id].slots, cell: 3, cols: Math.min(3, G.mineSites[id].slots), ground: GROUND[res] }));
-    const oil = Object.keys(G.leases).map(id => { const L = G.leases[id]; return { id, kind: 'oil', label: L.name, n: L.slots, cell: 2, cols: Math.min(5, Math.ceil(Math.sqrt(L.slots * 0.9))), ground: GROUND.oil }; });
+    const oil = Object.keys(G.leases).filter(id => !G.leases[id].cluster).map(id => { const L = G.leases[id]; return { id, kind: 'oil', label: L.name, n: L.slots, cell: 2, cols: Math.min(5, Math.ceil(Math.sqrt(L.slots * 0.9))), ground: GROUND.oil }; });
     cluster(site('copperore'), 3, 10, 24, 3, 'copperore');
     cluster(oil, 3, 27, 32, 2, 'oil');
+    cluster(Object.keys(G.leases).filter(id => G.leases[id].cluster === 'offshore').map(id => { const L = G.leases[id]; return { id, kind: 'oil', label: L.name, n: L.slots, cell: 2, cols: 5, ground: GROUND.oil }; }), 39, 34, 17, 2, 'oil');
     cluster(site('coal'), 37, 10, 18, 3, 'coal');
     cluster(site('ironore'), 58, 10, 18, 3, 'ironore');
     cluster(site('limestone'), 58, 35, 18, 3, 'limestone');

@@ -410,11 +410,11 @@
       const p = s.plants.find(q => q.id === plantId), chk = this.canBuildModule(s, p); if (!chk.ok) return chk;
       if (!pos) { pos = this.findModuleSpot(s, p); if (!pos) return { ok: false, msg: '隣に置ける場所がない' }; }
       const pc = this.canPlaceModule(s, p, pos.x, pos.y); if (!pc.ok) return pc;
-      const B = D().buildings[p.type], MC = this.moduleCfg(), days = Math.max(3, Math.round(B.months * MC.monthsMul)) * DAYS_PER_MONTH;
+      const B = D().buildings[p.type], MC = this.moduleCfg(), days = this.buildDays(Math.max(3, Math.round(B.months * MC.monthsMul)));
       s.cash -= chk.cost; s.month.construction += chk.cost;
       const key = this.newKey(s, 'module'); s.map.placed[key] = { type: 'module', x: pos.x, y: pos.y, parent: p.key }; if (this.parentRot(s, p)) s.map.placed[key].rot = this.parentRot(s, p);
       s.construction.push({ type: 'module', plantId: p.id, daysLeft: days, totalDays: days, key });
-      this.log(s, `🚧 ${B.name}の増設モジュールの建設を開始（${this.fmtMoney(chk.cost)}、${Math.round(days / DAYS_PER_MONTH)}か月）`);
+      this.log(s, `🚧 ${B.name}の増設モジュールの建設を開始（${this.fmtMoney(chk.cost)}、${this.fmtDuration(days)}）`);
       return { ok: true };
     },
     mapEntities(s) {
@@ -740,6 +740,10 @@
 
     // ---------- 暦 ----------
     year(s) { return D().startYear + Math.floor(s.day / DAYS_PER_YEAR); },
+    // 建築の日数（months × 30日 × buildTimeMul。最低1日）と、その表示（1か月未満は日、以上は0.1か月刻み）
+    buildDays(months) { return Math.max(1, Math.round(months * DAYS_PER_MONTH * (D().buildTimeMul || 1))); },
+    fmtDuration(days) { return days < DAYS_PER_MONTH ? `${days}日` : `${parseFloat((days / DAYS_PER_MONTH).toFixed(1))}か月`; },
+    buildText(months) { return this.fmtDuration(this.buildDays(months)); },
     monthNum(s) { return Math.floor((s.day % DAYS_PER_YEAR) / DAYS_PER_MONTH) + 1; },
     dateStr(s) { return `${this.year(s)}年${this.monthNum(s)}月${(s.day % DAYS_PER_MONTH) + 1}日`; },
     priceIndex(s) { return Market.priceIndex(s); },
@@ -761,7 +765,19 @@
         const b = D().buildings[type];
         if (b && b.capacity && b.capacity[cls]) cap += b.capacity[cls] * s.buildings[type];
       }
-      return cap;
+      return cap + this.plantStore(s, cls);
+    },
+    // 加工設備の付属の置き場（その設備の今のレシピの製品を plantStoreDays 日分。増設モジュール込み）。設備が無ければ 0
+    plantStore(s, cls) {
+      let v = 0;
+      if (!s.plants || !s.plants.length) return 0;
+      const R = D().resources, days = D().plantStoreDays || 0;
+      for (const p of s.plants) {
+        const rec = D().recipes[p.recipe], def = this.plantDef(p); if (!rec || !def) continue;
+        const cap = this.plantCapOf(p);
+        for (const k in rec.outputs) if (R[k] && R[k].storage === cls) v += cap * rec.outputs[k] * (R[k].storeVol || 1) * days;
+      }
+      return v;
     },
     poolUsed(s, cls) {
       let used = 0;
@@ -839,10 +855,10 @@
     },
     buildYard(s, res) {
       const chk = this.canBuildYard(s, res); if (!chk.ok) return chk;
-      const Y = this.yardCfg(), days = Y.months * DAYS_PER_MONTH, rn = D().resources[res].name;
+      const Y = this.yardCfg(), days = this.buildDays(Y.months), rn = D().resources[res].name;
       s.cash -= chk.cost; s.month.construction += chk.cost;
       s.construction.push({ type: 'oreYard', res, lease: null, daysLeft: days, totalDays: days, label: `🗄️ ${rn}の貯鉱場` });
-      this.log(s, `🚧 ${rn}の貯鉱場の建設を開始（${this.fmtMoney(chk.cost)}、${Y.months}か月）`);
+      this.log(s, `🚧 ${rn}の貯鉱場の建設を開始（${this.fmtMoney(chk.cost)}、${this.buildText(Y.months)}）`);
       return { ok: true };
     },
     // 掘れた鉱石が入れる量：貯鉱場の空きだけ（貯鉱場が無ければ0＝掘れた分は捨てる）
@@ -878,10 +894,10 @@
     },
     buildMine(s, id) {
       const chk = this.canBuildMine(s, id); if (!chk.ok) return chk;
-      const b = D().buildings.mine, days = b.months * DAYS_PER_MONTH;
+      const b = D().buildings.mine, days = this.buildDays(b.months);
       s.cash -= chk.cost; s.month.construction += chk.cost;
       s.construction.push({ type: 'mine', site: id, lease: null, daysLeft: days, totalDays: days });
-      this.log(s, `🚧 ${D().resources[this.mineSites()[id].res].name}の鉱山（${this.mineSites()[id].name}）の建設を開始（${this.fmtMoney(chk.cost)}、${b.months}か月）`);
+      this.log(s, `🚧 ${D().resources[this.mineSites()[id].res].name}の鉱山（${this.mineSites()[id].name}）の建設を開始（${this.fmtMoney(chk.cost)}、${this.buildText(b.months)}）`);
       return { ok: true };
     },
 
@@ -966,12 +982,12 @@
       if (pos && !stackKey) { this.ensureMap(s); const pc = this.canPlace(s, type, pos.x, pos.y, null, rot); if (!pc.ok) return pc; }
       const b = D().buildings[type];
       s.cash -= chk.cost; s.month.construction += chk.cost;
-      const days = b.months * DAYS_PER_MONTH;
+      const days = this.buildDays(b.months);
       const entry = { type, lease: lease || null, daysLeft: days, totalDays: days };
       if (stackKey) entry.key = stackKey;
       else if (pos) { entry.key = this.newKey(s, type); s.map.placed[entry.key] = { type, x: pos.x, y: pos.y }; if (rot) s.map.placed[entry.key].rot = rot; }
       s.construction.push(entry);
-      this.log(s, `🚧 ${b.name}${lease ? '（' + D().leases[lease].name + '）' : ''}の建設を開始（${this.fmtMoney(chk.cost)}、${b.months}か月）`);
+      this.log(s, `🚧 ${b.name}${lease ? '（' + D().leases[lease].name + '）' : ''}の建設を開始（${this.fmtMoney(chk.cost)}、${this.buildText(b.months)}）`);
       return { ok: true };
     },
     portUpgradeCost(s) { const n = this.nextPort(s); return n ? Math.round(n.cost * this.priceIndex(s)) : 0; },
@@ -988,9 +1004,9 @@
       if (!chk.ok) return chk;
       const n = this.nextPort(s);
       s.cash -= chk.cost; s.month.construction += chk.cost;
-      const days = n.months * DAYS_PER_MONTH;
+      const days = this.buildDays(n.months);
       s.construction.push({ type: 'port', lease: null, daysLeft: days, totalDays: days, label: `港の改修（${n.name}へ）` });
-      this.log(s, `🚧 港を${n.name}へ改修開始（${this.fmtMoney(chk.cost)}、${n.months}か月）`);
+      this.log(s, `🚧 港を${n.name}へ改修開始（${this.fmtMoney(chk.cost)}、${this.buildText(n.months)}）`);
       return { ok: true };
     },
     buyLease(s, id) {

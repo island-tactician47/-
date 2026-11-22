@@ -9,18 +9,19 @@
 <link rel="stylesheet" href="../css/style.css">
 <style>
   #townwrap { position: relative; margin: 0 -12px; }
-  #town { display: block; width: 100%; height: calc(100vh - 330px); min-height: 300px; max-height: 560px; background: #5b8fb0; touch-action: none; }
+  #town { display: block; width: 100%; height: 420px; background: #5b8fb0; touch-action: none; }
   #viewbtns { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; }
   #viewbtns button { width: 36px; height: 36px; border-radius: 18px; border: 0; background: rgba(43,38,32,.72); color: #f6efe2; font-size: 18px; line-height: 1; }
   #townhint { position: absolute; left: 8px; top: 8px; background: rgba(43,38,32,.72); color: #f6efe2; font-size: 11px; padding: 3px 8px; border-radius: 10px; pointer-events: none; }
-  #sheet .card { margin-top: 8px; }
-  .tbtn { display: block; width: 100%; text-align: left; margin-top: 6px; }
+  #sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: 52%; overflow-y: auto; padding: 0 8px 8px; pointer-events: none; }
+  #sheet .card { margin: 6px 0 0; pointer-events: auto; box-shadow: 0 -2px 10px rgba(0,0,0,.25); }
+  #sheet .btns { gap: 6px; }
+  .tbtn { display: inline-block; width: calc(50% - 4px); text-align: left; margin-top: 6px; vertical-align: top; font-size: 13px; }
 </style>
 </head>
 <body>
 <main>
-  <div id="townwrap"><canvas id="town"></canvas><div id="townhint">ドラッグで移動・ピンチで拡大・タップで選択</div><div id="viewbtns"><button type="button" title="マップを回す（左）" onclick="iso.rotate(-1)">⟲</button><button type="button" title="マップを回す（右）" onclick="iso.rotate(1)">⟳</button></div></div>
-  <div id="sheet"></div>
+  <div id="townwrap"><canvas id="town"></canvas><div id="townhint">ドラッグで移動・ピンチで拡大・タップで選択</div><div id="viewbtns"><button type="button" title="マップを回す" onclick="iso.rotate(1)">⟳</button></div><div id="sheet"></div></div>
 </main>
 
 <script src="../data/resources.js"></script>
@@ -72,7 +73,14 @@ function rotatePlacing(d) {
   if (cursor) iso.ghost = ghostAt(placing, cursor);
   UI.refresh();
 }
-document.addEventListener('keydown', ev => { if (ev.ctrlKey || ev.metaKey || ev.altKey) return; if (ev.key === 'r' || ev.key === 'R') rotatePlacing(ev.shiftKey ? -1 : 1); });
+document.addEventListener('keydown', ev => { if (ev.ctrlKey || ev.metaKey || ev.altKey) return; if (ev.key === 'r' || ev.key === 'R') rotatePlacing(1); });
+// マップの高さ＝画面の残り（ヘッダーの下から下部ナビの上まで）。マップと操作を1画面に収める
+function fitMap() {
+  const cv = $('town'), nav = document.getElementById('nav'), top = cv.getBoundingClientRect().top + window.scrollY, navH = nav ? nav.offsetHeight : 58;
+  const h = Math.max(300, Math.round((window.innerHeight || document.documentElement.clientHeight) - top - navH));
+  if (cv.style.height !== h + 'px') { cv.style.height = h + 'px'; window.dispatchEvent(new Event('resize')); }
+}
+window.addEventListener('resize', fitMap); window.addEventListener('orientationchange', fitMap);
 function startPlacing(type) {
   // 敷地に重ねて建てる設備（研究棟）：すでに敷地があれば、場所を選ばずにそこへ重ねて建てる（増設のたびに建屋が1段階高層になる）
   if (E.stackCfg(type)) E.ensureMap(UI.state);
@@ -119,7 +127,7 @@ function onTap(info) {
 }
 
 function statusOf(s, e) {
-  if (e.building) return `<b class="warn">建設中</b> 残り${e.daysLeft >= 30 ? Math.ceil(e.daysLeft / 30) + 'か月' : e.daysLeft + '日'}`;
+  if (e.building) return `<b class="warn">建設中</b> 残り${E.fmtDuration(e.daysLeft)}`;
   const p = e.plant;
   if (p) { const r = p.last && p.last.reason; return r === 'ok' ? '<b class="good">稼働中</b>' : r === 'input' ? '<b class="bad">原料不足</b>' : r === 'full' ? '<b class="bad">置き場が満杯</b>' : r === 'cash' ? '<b class="bad">資金不足</b>' : '<span class="sub">停止中</span>'; }
   if (e.type === 'refinery' || e.type === 'refineryLarge') return E.refineryOnline(s) ? '<b class="good">稼働中</b>' : '<span class="sub">停止中</span>';
@@ -145,11 +153,11 @@ function renderSheet(s) {
   if (placing) {
     const b = G.buildings[placing], gh = iso.ghost, chk = gh ? E.canPlace(s, placing, gh.x, gh.y, null, E.cleanRot(placing, placingRot)) : { ok: false, msg: 'マップをタップして場所を決める' };
     const cb = E.canBuild(s, placing), full = !E.findSpot(s, placing), rc = E.canReclaim(s);
-    out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}を建てる</h3><span class="sub">${M(E.costOf(s, placing))}・${b.months}か月</span></div>
+    out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}を建てる</h3><span class="sub">${M(E.costOf(s, placing))}・${E.buildText(b.months)}</span></div>
       <div class="sub">マップをタップして場所を決める（緑なら置ける）。足あと ${E.footprintOf(placing, E.cleanRot(placing, placingRot)).join('×')}${E.canRotate(placing) ? '（向きを回せる）' : ''}</div>
       <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">置ける</b>' : `<b class="bad">${chk.msg}</b>`}${cb.ok ? '' : `　<b class="bad">${cb.msg}</b>`}</div>
       ${full ? `<div class="sub bad" style="margin-top:4px">置ける場所がありません。海を埋め立てて用地を広げます（${rc.ok ? M(rc.cost) + '/行' : rc.msg}）。</div>` : ''}
-      <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">建設する</button> ${E.canRotate(placing) ? '<button class="btn small" onclick="rotatePlacing(-1)">⟲</button> <button class="btn small" onclick="rotatePlacing(1)">⟳</button> ' : ''}<button class="btn small" ${rc.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.reclaim(s))">🏗️ 埋め立てる（${M(E.reclaimCost(s))}）</button> <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
+      <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">建設する</button> ${E.canRotate(placing) ? '<button class="btn small" onclick="rotatePlacing(1)">⟳ 回す</button> ' : ''}<button class="btn small" ${rc.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.reclaim(s))">🏗️ 埋め立てる（${M(E.reclaimCost(s))}）</button> <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
   } else if (sel) {
     let e = (iso.ents || []).find(q => q.key === sel);
     if (e && e.type === 'module') e = (iso.ents || []).find(q => q.key === e.parent) || e;   // モジュールを選ぶと本体を見せる
@@ -158,6 +166,10 @@ function renderSheet(s) {
       out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}</h3><span>${statusOf(s, e)}</span></div>
         ${rec ? `<div class="sub">生産：${rec.name}（稼働率 ${Math.round(p.runRate * 100)}%）　日量 ${E.fmtNum(E.plantCapOf(p))}</div>` : ''}
         ${p && !e.building && E.hasModule(p.type) ? (() => { const n = E.moduleCount(s, p), MC = E.moduleCfg(), cb = E.canBuildModule(s, p); return `<div class="row" style="margin-top:6px"><span class="sub">🧱 増設モジュール ${n}/${MC.max}（1個で日量+${Math.round(MC.gain * 100)}%・${M(E.moduleCost(s, p))}）</span><button class="btn small" ${n >= MC.max || !cb.ok ? 'disabled' : ''} onclick="startModule(${p.id})">置く</button></div>`; })() : ''}
+        ${p && !e.building ? (() => { const def = E.plantDef(p), rate = Math.round(p.runRate * 100);
+          const chips = def && def.recipes.length > 1 ? `<div class="chips" style="margin-top:6px">${def.recipes.map(id => E.recipeUnlocked(s, id) ? `<span class="chip ${p.recipe === id ? 'on' : ''}" onclick="UI.act(s=>Engine.setPlantRecipe(s,${p.id},'${id}'))">${G.recipes[id].name}</span>` : `<span class="chip" style="opacity:.45" onclick="UI.toast('${E.recipeLockReason(s, id)}')">🔒 ${G.recipes[id].name}</span>`).join('')}</div>` : '';
+          return `${chips}<div class="row" style="margin-top:6px"><span class="sub">稼働率</span><div class="chips">${[0, 25, 50, 75, 100].map(r => `<span class="chip ${rate === r ? 'on' : ''}" onclick="UI.act(s=>Engine.setPlantRate(s,${p.id},${r / 100}))">${r}%</span>`).join('')}</div></div>
+          <label class="row" style="margin-top:6px"><span class="sub">原料が足りない分を市場から買う</span><input type="checkbox" ${p.autoBuy ? 'checked' : ''} onchange="UI.act(s=>Engine.setPlantAutoBuy(s,${p.id},this.checked))"></label>`; })() : ''}
         <div class="sub">${b.desc || ''}</div>
         <div style="margin-top:6px">${p ? '<a href="factory.html">工場の設定へ</a>　' : e.type === 'refinery' || e.type === 'refineryLarge' || e.type === 'distillation' ? '<a href="refinery.html">製油所へ</a>　' : ''}<button class="btn small" onclick="sel=null;iso.selected=null;UI.refresh()">閉じる</button></div></div>`);
     }
@@ -167,7 +179,7 @@ function renderSheet(s) {
     const types = Object.keys(G.buildings).filter(t => !E.offMap(t) && items.match(G.buildings[t].category) && (!G.buildings[t].tier || E.tierUnlocked(s, G.buildings[t].tier)));
     out.push(`<div class="card"><div class="row"><h3>ここに建てる</h3><span class="sub">タイル ${cursor.x},${cursor.y}</span></div>
       ${UI.chips('town-cat', CATS.map(c => ({ id: c.id, label: c.label })), items.id)}
-      ${types.map(t => { const b = G.buildings[t], chk = E.canBuild(s, t), cant = !chk.ok && !/資金不足/.test(chk.msg || ''); return `<button class="btn tbtn" ${cant ? 'disabled' : ''} onclick="startPlacing('${t}')">${b.icon || ''} ${b.name}　${M(E.costOf(s, t))}・${b.months}か月${cant ? `<div class="sub">${chk.msg}</div>` : (!chk.ok ? `<div class="sub warn">${chk.msg}</div>` : '')}</button>`; }).join('') || '<div class="sub">解放済みの設備はまだない</div>'}</div>`);
+      ${types.map(t => { const b = G.buildings[t], chk = E.canBuild(s, t), cant = !chk.ok && !/資金不足/.test(chk.msg || ''); return `<button class="btn tbtn" ${cant ? 'disabled' : ''} onclick="startPlacing('${t}')">${b.icon || ''} ${b.name}　${M(E.costOf(s, t))}・${E.buildText(b.months)}${cant ? `<div class="sub">${chk.msg}</div>` : (!chk.ok ? `<div class="sub warn">${chk.msg}</div>` : '')}</button>`; }).join('') || '<div class="sub">解放済みの設備はまだない</div>'}</div>`);
   } else {
     const n = (iso.ents || []).length;
     out.push(`<div class="card sub">建物をタップすると詳しく、空き地をタップするとそこに建てられます。${n ? `（建物 ${n}）` : ''}　油井は<a href="field.html">採掘地</a>で建てます。</div>`);
@@ -192,9 +204,10 @@ function render(s) {
     if (mp) startModule(mp);
     if (b || mp) try { history.replaceState(null, '', location.pathname); } catch (e) {}   // 再読み込みで場所選びが再開しないように
   }
-  renderSheet(s);
+  renderSheet(s); fitMap();   // 建設キューなどでマップの位置が動いても、下部ナビの下に隠れないよう高さを合わせ直す
 }
 UI.boot({ page: 'town', render });
+fitMap(); setTimeout(fitMap, 300);
 </script>
 </body>
 </html>

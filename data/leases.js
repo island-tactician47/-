@@ -6,7 +6,8 @@ GAME_DATA.leases = {
   kurosawa:   { name: '黒沢鉱区',   slots: 12, richness: 0.8, estimate: [0.6, 1.2], cost: 25000,  wellCostMul: 1.0, desc: '広いが油層は薄いとの噂' },
   nishiyama:  { name: '西山鉱区',   slots: 10, richness: 1.25, estimate: [0.9, 1.5], cost: 60000, wellCostMul: 1.1, desc: '山あいで掘削がやや割高' },
   higashino:  { name: '東野鉱区',   slots: 15, richness: 1.05, estimate: [0.8, 1.3], cost: 70000, wellCostMul: 1.0, desc: '平野部の大きな鉱区' },
-  okinoshima: { name: '沖ノ島鉱区', slots: 20, richness: 1.6, estimate: [1.1, 2.0], cost: 180000, wellCostMul: 1.6, desc: '浅海の島。掘削費は高いが有望' }
+  okinoshima: { name: '沖ノ島鉱区', slots: 20, richness: 1.6, estimate: [1.1, 2.0], cost: 180000, wellCostMul: 1.6, desc: '浅海の島。掘削費は高いが有望' },
+  tairikudana:{ name: '大陸棚鉱区', slots: 25, richness: 3.0, estimate: [2.0, 4.0], cost: 1500000, wellCostMul: 4.0, cluster: 'offshore', desc: '沖合の大油田。海底掘削で費用は桁違いだが、国内の原油を支える本命' }
 };
 
 // 鉱山の鉱区（原料ごと）。s.mineSites は初めて買うまで作らない。richness＝日量の倍率、estimate＝判明前に見える推定

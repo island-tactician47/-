@@ -60,7 +60,7 @@ $('autobuy').onchange = e => UI.act(s => { s.refinery.autoBuyCrude = e.target.ch
 function btn(s, type, label) {
   const chk = E.canBuild(s, type);
   const b = G.buildings[type];
-  return `<button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?build=${type}'">${label || b.name}（${E.fmtMoney(E.costOf(s, type))}・${b.months}か月）</button>${chk.ok ? '' : `<div class="sub">${chk.msg}</div>`}`;
+  return `<button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?build=${type}'">${label || b.name}（${E.fmtMoney(E.costOf(s, type))}・${E.buildText(b.months)}）</button>${chk.ok ? '' : `<div class="sub">${chk.msg}</div>`}`;
 }
 
 function render(s) {

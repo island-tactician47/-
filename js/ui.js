@@ -1,7 +1,7 @@
 // 全ページ共通のUI：ヘッダー（日付・資金・速度）、下部ナビ、時間のループ、イベント通知、セーブ
 (function () {
   const DAY_MS = 2000;            // 1倍速で1日＝2秒 → 1か月＝約1分
-  const SPEEDS = [0, 1, 2, 4];
+  const SPEEDS = [0, 1, 4, 8, 16];
   const NAV = [
     { href: 'town.html',     icon: '🗺️', label: '町' },
     // alt：このタブの下にある別ページ（開いているときもこのタブを強調する）。採掘地・製油所は工場の石油本部から開く
@@ -33,6 +33,7 @@
       Engine.normalize(state);
       renderFn = opts.render;
       if (state.speed === undefined) state.speed = 0;
+      if (!SPEEDS.includes(state.speed)) state.speed = SPEEDS.find(v => v >= state.speed) || SPEEDS[SPEEDS.length - 1];   // 古いセーブの速度（×2）は近い速度へ
       buildChrome(opts.page);
       offlineCatchUp();
       lastT = performance.now();
@@ -160,7 +161,7 @@
     if (!s.construction.length) { UI.html(q, ''); return; }
     UI.html(q, `<div class="card"><div class="row"><h3>🚧 建設中 ${s.construction.length}件</h3></div>` +
       s.construction.slice().sort((a, b) => a.daysLeft - b.daysLeft).map(c =>
-        `<div class="qrow"><div class="row"><span>${Engine.constructionLabel(c, s)}</span><span class="sub">残り${c.daysLeft >= 30 ? Math.ceil(c.daysLeft / 30) + 'か月' : c.daysLeft + '日'}</span></div>
+        `<div class="qrow"><div class="row"><span>${Engine.constructionLabel(c, s)}</span><span class="sub">残り${Engine.fmtDuration(c.daysLeft)}</span></div>
         <div class="bar"><i style="width:${(1 - c.daysLeft / c.totalDays) * 100}%"></i></div></div>`).join('') + '</div>');
   }
 
@@ -194,8 +195,8 @@
       const days = Math.floor(acc / DAY_MS);
       if (days > 0) {
         acc -= days * DAY_MS;
-        const ran = Engine.advanceDays(state, Math.min(days, 60));
-        if (ran < days || state.pendingEvents.length) { state.speed = 0; acc = 0; }
+        const n = Math.min(days, 60), ran = Engine.advanceDays(state, n);
+        if (ran < n || state.pendingEvents.length) { state.speed = 0; acc = 0; }
         dirty = true;
       }
     }

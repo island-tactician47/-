@@ -62,7 +62,7 @@ const BAD = new Set(['input', 'full', 'cash']);
 // 建設ボタン（説明は小さく下に）
 function buildBtn(s, type) {
   const b = G.buildings[type], chk = E.canBuild(s, type);
-  return `<div style="margin-top:6px"><button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?build=${type}'">${b.icon || ''} ${b.name}（${E.fmtMoney(E.costOf(s, type))}・${b.months}か月）→マップで置く</button>
+  return `<div style="margin-top:6px"><button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?build=${type}'">${b.icon || ''} ${b.name}（${E.fmtMoney(E.costOf(s, type))}・${E.buildText(b.months)}）→マップで置く</button>
     <div class="sub">${b.desc || ''}</div>${chk.ok ? '' : `<div class="sub">${chk.msg}</div>`}</div>`;
 }
 
@@ -189,6 +189,7 @@ function renderPools(s) {
     const items = Object.keys(G.resources).filter(k => G.resources[k].storage === c && s.inventory[k] > 0.001)
       .map(k => `${G.resources[k].name} ${qty(s.inventory[k])}${G.resources[k].unit}`).join('　');
     return `<div style="margin-top:6px"><div class="row"><b>${SC[c].name}</b><span class="num sub">${E.fmtNum(used)} / ${E.fmtNum(cap)} 枠</span></div>
+      ${E.plantStore(s, c) > 0 ? `<div class="sub">うち工場付属 ${E.fmtNum(E.plantStore(s, c))} 枠（設備ごとの製品置き場）</div>` : ''}
       <div class="bar ${r > 0.97 ? 'full' : ''}"><i style="width:${Math.min(100, r * 100)}%"></i></div>
       <div class="sub">${items || '空'}</div></div>`;
   });

@@ -9,11 +9,11 @@ GAME_DATA.buildings = {
     cost: 60000, months: 2,
     needsLeaseSlot: true,
     initialRate: 30,      // 掘りたての日量（bbl/日）×鉱区の豊かさ
-    declinePerYear: 0.08, // 年8%ずつ減衰
-    floorRate: 6,         // ここより下には減らない（ストリッパー井）
+    declinePerYear: 0.04, // 年4%ずつ減衰（旧8%。終盤に全部輸入になりにくいよう緩和）
+    floorRate: 12,        // ここより下には減らない（ストリッパー井。旧6）
     opexPerBbl: 0.6,
     fixedPerMonth: 120,
-    desc: '日量30bbl前後から年8%ずつ減衰。鉱区の空き枠が必要'
+    desc: '日量30bbl前後から年4%ずつ減衰（下限12bbl）。鉱区の空き枠が必要'
   },
   // 鉱山：鉱区（GAME_DATA.mineSites）ごとに掘れる鉱石が決まる。掘った鉱石は貯鉱場（鉱石ごとの専用の置き場）に入り、工場がまず使う（売れない）。
   // rate＝掘りたての日量（t/日）×鉱区の豊かさ。年 declinePerYear ずつ減り、rate×floorFrac が下限。costMul＝建設費の倍率
@@ -130,3 +130,9 @@ GAME_DATA.distillModes = {
   gasoline: { name: 'ガソリン重視', yields: { gasoline: 0.31, naphtha: 0.09, diesel: 0.23, heavy: 0.35 } },
   diesel:   { name: '軽油重視',     yields: { gasoline: 0.20, naphtha: 0.12, diesel: 0.34, heavy: 0.32 } }
 };
+
+// 建築期間の倍率（設備・増設モジュール・鉱山・貯鉱場・港の改修）。months は元の値のまま、日数だけこの倍率で縮める。研究は対象外
+GAME_DATA.buildTimeMul = 1 / 3;
+
+// 加工設備に付属する製品置き場（日数分）。設備を建てただけで、その設備の製品を plantStoreDays 日分は置ける（倉庫が無くても最低限稼働できる）。港の出荷間隔（最長30日）に合わせる
+GAME_DATA.plantStoreDays = 30;

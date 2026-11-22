@@ -67,7 +67,7 @@ function renderPort(s) {
   const body = `<div class="sub">${port.interval}日ごとに最大${E.fmtNum(port.capacity)}出荷枠を一括出荷（月${E.fmtNum(port.capacity * 30 / port.interval)}枠相当。原油1bbl＝1枠）</div>
     ${last ? `<div class="sub" style="margin-top:4px">前回：${E.fmtNum(last.used)} / ${E.fmtNum(last.cap)}枠 → ${E.fmtMoney(last.total)}${last.left > 1 ? `　<span class="bad">積み残し ${E.fmtNum(last.left)}枠</span>` : ''}</div><div class="bar ${last.used >= last.cap - 1 ? 'full' : ''}"><i style="width:${last.used / last.cap * 100}%"></i></div>` : ''}
     ${next ? `<div class="btns" style="margin-top:6px;flex-direction:column;align-items:flex-start">
-      ${upg ? `<span class="sub">🚧 ${next.name}へ改修中</span>` : `<button class="btn sec small" ${chk.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.upgradePort(s))">${next.name}へ改修（${E.fmtMoney(E.portUpgradeCost(s))}・${next.months}か月）</button><span class="sub">${next.desc}</span>`}</div>` : ''}`;
+      ${upg ? `<span class="sub">🚧 ${next.name}へ改修中</span>` : `<button class="btn sec small" ${chk.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.upgradePort(s))">${next.name}へ改修（${E.fmtMoney(E.portUpgradeCost(s))}・${E.buildText(next.months)}）</button><span class="sub">${next.desc}</span>`}</div>` : ''}`;
   UI.html('port', UI.fold('f-port', head, body, false));
 }
 
