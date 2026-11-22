@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="manifest" href="../manifest.json">
+<meta name="theme-color" content="#26221e">
+<title>財務三表 - 工場地帯シミュ</title>
+<link rel="stylesheet" href="../css/style.css">
+<style>
+  .stmt table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+  .stmt td { padding: 3px 4px; border-bottom: 1px solid var(--line); font-size: 13px; }
+  .stmt td:nth-child(2) { text-align: right; white-space: nowrap; }
+  .stmt td:nth-child(3) { text-align: right; white-space: nowrap; color: var(--sub); font-size: 11px; width: 4.5em; }
+  .stmt tr.tot td { font-weight: 700; border-top: 1px solid var(--ink); background: rgba(0,0,0,.03); }
+  .stmt tr.sub2 td:first-child { padding-left: 14px; color: var(--sub); }
+  .stmt tr.sub3 td:first-child { padding-left: 26px; color: var(--sub); }
+  .stmt .hd { display: flex; justify-content: space-between; align-items: baseline; }
+  .note { font-size: 11px; color: var(--sub); margin-top: 4px; }
+</style>
+</head>
+<body>
+<main>
+  <h2>📑 財務三表</h2>
+  <div id="co" class="sub"></div>
+  <div id="ctl"></div>
+  <div id="list"></div>
+  <p class="note">※ 損益計算書は、売上から原料の購入・操業費・維持費・研究費・利息などを引いたもの（法人税は無い）。貸借対照表の設備は、再調達額（建設費×物価指数・減価なし）で評価し、在庫は市場の中値で評価している。キャッシュ・フロー計算書は、現金の動きを営業・投資・財務に分けたもの。<br>古い記録（この機能の前の月）は、貸借対照表の棚卸資産・設備の欄が「—」になる。直近600か月分（50年）まで残る。</p>
+</main>
+
+<script src="../data/resources.js"></script>
+<script src="../data/buildings.js"></script>
+<script src="../data/leases.js"></script>
+<script src="../data/difficulty.js"></script>
+<script src="../data/loans.js"></script>
+<script src="../data/port.js"></script>
+<script src="../data/events.js"></script>
+<script src="../data/eras.js"></script>
+<script src="../data/recipes.js"></script>
+<script src="../data/research.js"></script>
+<script src="../data/segments.js"></script>
+<script src="../data/map.js"></script>
+<script src="../js/save.js"></script>
+<script src="../js/market.js"></script>
+<script src="../js/engine.js"></script>
+<script src="../js/ui.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const E = Engine, M = E.fmtMoney;
+const KINDS = [{ id: 'pl', label: '損益計算書' }, { id: 'bs', label: '貸借対照表' }, { id: 'cf', label: 'キャッシュ・フロー' }];
+const UNITS = [{ id: 'year', label: '年次（決算）' }, { id: 'month', label: '月次' }];
+const m = v => v === null || v === undefined ? '—' : M(v);
+const pct = (a, b) => b > 0 ? (a / b * 100).toFixed(1) + '%' : '—';
+// 前の期（古い方）との比（増減率）。前が0以下・無いときは出さない
+const chg = (cur, prev) => (prev === undefined || prev === null || cur === null || cur === undefined || !(Math.abs(prev) > 1)) ? '' : ((cur - prev) / Math.abs(prev) * 100 >= 0 ? '+' : '') + ((cur - prev) / Math.abs(prev) * 100).toFixed(0) + '%';
+const row = (name, v, prev, cls) => `<tr class="${cls || ''}"><td>${name}</td><td class="${typeof v === 'number' && v < 0 ? 'bad' : ''}">${m(v)}</td><td>${chg(v, prev)}</td></tr>`;
+
+function plTable(p, q) {   // q＝前の期（なければ undefined）
+  const a = p.pl, b = q && q.pl;
+  return `<table>${row('売上高', a.rev, b && b.rev, 'tot')}
+    ${row('売上原価', a.cogs, b && b.cogs)}${row('原料の購入', a.purchase, b && b.purchase, 'sub2')}${row('操業費（採掘・精製・生産）', a.opex, b && b.opex, 'sub2')}
+    ${row('売上総利益', a.gross, b && b.gross, 'tot')}<tr class="sub2"><td>粗利率</td><td>${pct(a.gross, a.rev)}</td><td></td></tr>
+    ${row('販売費及び一般管理費', a.sga, b && b.sga)}${row('設備の維持費', a.fixed, b && b.fixed, 'sub2')}${row('研究開発費', a.research, b && b.research, 'sub2')}${a.penalty ? row('違約金', a.penalty, b && b.penalty, 'sub2') : ''}
+    ${row('営業利益', a.op, b && b.op, 'tot')}<tr class="sub2"><td>営業利益率</td><td>${pct(a.op, a.rev)}</td><td></td></tr>
+    ${row('営業外費用：支払利息', a.interest, b && b.interest)}${a.refund ? row('営業外収益：自家発電の払い戻し', a.refund, b && b.refund) : ''}
+    ${row('経常利益', a.ordinary, b && b.ordinary, 'tot')}${row('当期純利益（税なし）', a.net, b && b.net, 'tot')}</table>`;
+}
+function bsTable(p, q) {
+  const a = p.bs, b = q && q.bs;
+  return `<table>${row('現金及び預金', a.cash, b && b.cash)}${row('棚卸資産（在庫）', a.inv, b && b.inv)}${row('設備（再調達額）', a.fixed, b && b.fixed)}${row('資産合計', a.assets, b && b.assets, 'tot')}
+    ${row('借入金', a.loans === null ? (a.hasBs ? 0 : a.liab) : a.loans, b && (b.loans === null ? b.liab : b.loans))}${row('当座貸越', a.od, b && b.od)}${row('負債合計', a.liab, b && b.liab, 'tot')}
+    ${row('純資産', a.equity, b && b.equity, 'tot')}<tr class="sub2"><td>自己資本比率</td><td>${a.assets > 0 && a.equity !== null ? pct(a.equity, a.assets) : '—'}</td><td></td></tr></table>`;
+}
+function cfTable(p, q) {
+  const a = p.cf, b = q && q.cf;
+  return `<table>${row('営業活動によるキャッシュ・フロー', a.cfo, b && b.cfo, 'tot')}
+    ${row('投資活動によるキャッシュ・フロー', a.cfi, b && b.cfi, 'tot')}${row('設備投資', -a.capex, b && -b.capex, 'sub2')}
+    ${row('財務活動によるキャッシュ・フロー', a.cff, b && b.cff, 'tot')}${row('借入', a.borrowed, b && b.borrowed, 'sub2')}${a.odDraw ? row('当座貸越の借り増し', a.odDraw, b && b.odDraw, 'sub2') : ''}${row('元金の返済', -a.principal, b && -b.principal, 'sub2')}
+    ${row('現金の増減', a.net, b && b.net, 'tot')}${row('現金の期首残高', a.open, b && b.open)}${Math.abs(a.other) > 1 ? row('その他の増減', a.other, b && b.other, 'sub2') : ''}${row('現金の期末残高', a.close, b && b.close, 'tot')}</table>`;
+}
+
+function render(s) {
+  $('co').textContent = '🏢 ' + E.companyName(s);
+  const kind = UI.tab('stmt-kind', 'pl'), unit = UI.tab('stmt-unit', 'year');
+  UI.html('ctl', UI.chips('stmt-kind', KINDS, kind) + UI.chips('stmt-unit', UNITS, unit));
+  const fin = E.financials(s, unit);   // 新しい期から
+  if (!fin.length) { UI.html('list', '<div class="card sub">まだ決算がありません（1か月たつと、月次の記録ができます）。</div>'); return; }
+  const f = kind === 'pl' ? plTable : kind === 'bs' ? bsTable : cfTable;
+  UI.html('list', fin.map((p, i) => `<div class="card stmt"><div class="hd"><h3>${p.label}${p.ongoing ? ' <span class="sub">途中</span>' : ''}</h3><span class="sub">${kind === 'bs' ? '期末' : unit === 'year' ? '通年' : '月間'}${i < fin.length - 1 ? '・前の期比' : ''}</span></div>${f(p, fin[i + 1])}</div>`).join(''));
+}
+UI.boot({ page: 'statements', render });
+</script>
+</body>
+</html>

@@ -8,12 +8,13 @@
     { href: 'factory.html',  icon: '🏗️', label: '工場', alt: ['field.html', 'refinery.html'] },
     { href: 'market.html',   icon: '📈', label: '市場' },
     { href: 'dashboard.html', icon: '📊', label: '経営', show: s => Engine.dashboardVisible(s) },
-    { href: 'finance.html',  icon: '💰', label: '財務' },
+    { href: 'finance.html',  icon: '💰', label: '財務', alt: ['statements.html'] },
     { href: 'research.html', icon: '🔬', label: '研究', show: s => Engine.tierUnlocked(s, 5) }
   ];
   // 右上のメニュー（下のタブに無いページ）
   const MENU = [
     { href: 'field.html',        icon: '🛢️', label: '採掘地（油井・鉱山・貯鉱場）' },
+    { href: 'statements.html',   icon: '📑', label: '財務三表（過去の決算）' },
     { href: 'refinery.html',     icon: '🏭', label: '製油所' },
     { href: '../launcher.html',  icon: '🏠', label: 'ホーム（設定・セーブの引き継ぎ・新規）' },
     { href: 'debug.html',        icon: '🔧', label: 'デバッグ（PC用）' }

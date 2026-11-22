@@ -696,6 +696,33 @@
     currentTier(s) { let t = 2; for (let i = 3; i <= 6; i++) if (this.tierUnlocked(s, i)) t = i; return t; },
     // 資産額：現金−借入＋設備の評価額（建設費×物価指数、減価なし）。在庫は含めない
     netWorth(s) { return s.cash - this.totalDebt(s) + this.assetValue(s); },
+    // 在庫の評価額（市場の中値。売れない原料も同じ基準）
+    inventoryValue(s) { let v = 0; for (const k in s.inventory) { const q = s.inventory[k]; if (q > 0 && D().resources[k]) v += q * Market.priceNoSat(s, k); } return v; },
+    // ---------- 財務三表（損益計算書・貸借対照表・キャッシュ・フロー）。履歴（月次）を年次または月次にまとめる ----------
+    // 戻り値：新しい期から順の配列。各期 { key, label, y, m, n（月数）, ongoing, pl, bs, cf }
+    financials(s, unit) {
+      const hist = s.history || [], groups = [], idx = {};
+      for (const h of hist) { const k = unit === 'month' ? h.y + '-' + h.m : String(h.y); if (!(k in idx)) { idx[k] = groups.length; groups.push({ key: k, y: h.y, m: unit === 'month' ? h.m : null, hs: [] }); } groups[idx[k]].hs.push(h); }
+      const sum = (hs, f) => hs.reduce((a, h) => a + (f(h) || 0), 0), out = [];
+      let prevClose = null;
+      for (const g of groups) {
+        const hs = g.hs, last = hs[hs.length - 1], c = h => h.costs || {};
+        const rev = sum(hs, h => h.revenue), purchase = sum(hs, h => c(h).purchase), opex = sum(hs, h => c(h).opex), fixed = sum(hs, h => c(h).fixed), research = sum(hs, h => c(h).research), penalty = sum(hs, h => c(h).penalty), refund = sum(hs, h => c(h).refund), interest = sum(hs, h => c(h).interest);
+        const cogs = purchase + opex, gross = rev - cogs, sga = fixed + research + penalty, op = gross - sga, ordinary = op - interest + refund;
+        const capex = sum(hs, h => h.capex), borrowed = sum(hs, h => h.borrowed), odDraw = sum(hs, h => h.odDraw), principal = sum(hs, h => h.principal);
+        const cfo = rev - purchase - opex - fixed - research - penalty + refund - interest, cfi = -capex, cff = borrowed + odDraw - principal, net = cfo + cfi + cff;
+        const close = last.cash, open = prevClose === null ? close - net : prevClose;
+        const hasBs = !!last.bs, bs = hasBs ? last.bs : null;
+        const assets = hasBs ? close + bs.inv + bs.fixed : null, liab = hasBs ? bs.loans + bs.od : (last.debt || 0);
+        out.push({ key: g.key, y: g.y, m: g.m, n: hs.length, ongoing: unit !== 'month' && hs.length < 12,
+          label: unit === 'month' ? `${g.y}年${g.m}月` : `${g.y}年${hs.length < 12 ? '（' + hs.length + 'か月）' : ''}`,
+          pl: { rev, purchase, opex, cogs, gross, fixed, research, penalty, sga, op, interest, refund, ordinary, net: ordinary },
+          bs: { cash: close, inv: hasBs ? bs.inv : null, fixed: hasBs ? bs.fixed : null, assets, loans: hasBs ? bs.loans : null, od: hasBs ? bs.od : null, liab, equity: hasBs ? assets - liab : null, hasBs },
+          cf: { cfo, cfi, cff, net, open, close, other: close - (open + net), capex, borrowed, odDraw, principal } });
+        prevClose = close;
+      }
+      return out.reverse();
+    },
     // 設備の評価額（再調達額＝建設費×物価指数、減価なし。港の改修は含めない）
     assetValue(s) {
       const B = D().buildings, idx = this.priceIndex(s);
@@ -1547,7 +1574,7 @@
       if (s.contracts) this.contractMonth(s);   // 違約金は当座貸越の判定より前
       // 資金不足は当座貸越で自動的に埋める
       if (s.cash < 0) {
-        s.overdraft += -s.cash;
+        s.overdraft += -s.cash; m.odDraw = (m.odDraw || 0) + (-s.cash);   // 当座貸越の借り増し（キャッシュ・フローの財務活動に使う）
         this.log(s, `⚠️ 資金不足のため当座貸越 ${this.fmtMoney(-s.cash)}（年利${D().overdraftRate * 100}%）`);
         s.cash = 0;
       } else if (s.overdraft > 0) {
@@ -1563,6 +1590,7 @@
         y: D().startYear + Math.floor(d / DAYS_PER_YEAR), m: Math.floor((d % DAYS_PER_YEAR) / DAYS_PER_MONTH) + 1,
         prices, revenue, cost, profit: revenue - cost, capex: m.construction, principal: m.principal, borrowed: m.borrowed,
         cash: s.cash, debt: this.totalDebt(s),
+        bs: { inv: this.inventoryValue(s), fixed: this.assetValue(s), loans: Object.values(s.loans).reduce((a, l) => a + l.principal, 0), od: s.overdraft || 0 }, odDraw: m.odDraw || 0,   // 財務三表用：棚卸資産・設備の評価額・借入金・当座貸越（月末）／当座貸越の借り増し
         produced: { ...m.produced }, sold: { ...m.sold }, lostCrude: m.lostCrude, refined: m.refined,
         costs: { purchase: m.purchase, opex: m.opex, fixed: m.fixed, interest: m.interest, research: m.research || 0, refund: m.refund || 0, ...(m.penalty ? { penalty: m.penalty } : {}) }, segPL: this.roundSegPL(m.seg)
       });
