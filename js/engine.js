@@ -952,6 +952,7 @@
     },
     // 互換（試験・デバッグ用）：そのティアに入り、旧ティアの番号が t 以下のノードもすべて開く
     unlockTier(s, t) {
+      if (!this.tierDef(t)) return false;
       for (let i = 3; i < t && i <= 6; i++) this._unlockTierOnly(s, i);   // それより前のティアも開く（Tier 2 の素材は旧ティア3と4の条件で開くので、4に入ったときは3も開いている）
       const r = this._unlockTierOnly(s, t);
       if (this.tierDef(t)) for (const id in this.treeNodes()) { const d = this.nodeDef(id); if (!d.auto && d.legacyTier !== undefined && d.legacyTier <= t && !(s.nodes && s.nodes[id])) (s.nodes || (s.nodes = {}))[id] = true; }
