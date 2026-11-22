@@ -255,7 +255,8 @@
       const m = s.map; if (!m.placed) m.placed = {}; if (!m.seq) m.seq = {}; if (!(m.reclaim >= 0)) m.reclaim = 0;
       // マップを広げたとき（mapVer 2）の、旧セーブの位置のずらし：置いた建物・埋め立てた陸のタイルを origin だけ動かす（旧マップの左上が、いまのマップの origin になる）
       if (M && M.origin && (m.mv || 1) < (M.mapVer || 1)) {
-        const ox = M.origin.x, oy = M.origin.y;
+        let sh = 0; for (let v = (m.mv || 1) + 1; v <= (M.mapVer || 1); v++) sh += (M.mapShifts && M.mapShifts[v]) || 0;   // いまの版までに、広げたぶんの合計
+        const ox = sh, oy = sh;
         for (const k in m.placed) { const q = m.placed[k]; if (q && typeof q === 'object' && Number.isFinite(q.x) && Number.isFinite(q.y)) { q.x += ox; q.y += oy; } }
         if (m.fill && typeof m.fill === 'object') { const nf = {}; for (const k in m.fill) { const mm = /^(\d+),(\d+)$/.exec(k); if (mm) nf[(+mm[1] + ox) + ',' + (+mm[2] + oy)] = 1; } m.fill = nf; }
         m.mv = M.mapVer;

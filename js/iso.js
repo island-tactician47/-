@@ -448,7 +448,7 @@
       I.dpr = dpr; I.w = w; I.h = h; canvas.width = Math.round(w * dpr); canvas.height = Math.round(h * dpr);
       if (first) {
         let c = null; try { c = JSON.parse(localStorage.getItem('factorySim.ui.town.cam')); } catch (e) {}
-        const M = GAME_DATA.map; if (c && c.z) I.cam.z = c.z; if (c && Number.isInteger(c.v) && c.v >= 0 && c.v < 4 && M.w === M.h) I.view = c.v; if (c && !(c.m >= (M.mapVer || 1)) && M.origin && Number.isFinite(c.x) && Number.isFinite(c.y)) { c.x += M.origin.x; c.y += M.origin.y; }   // 旧マップの座標で保存されたカメラの中心は、origin だけずらす
+        const M = GAME_DATA.map; if (c && c.z) I.cam.z = c.z; if (c && Number.isInteger(c.v) && c.v >= 0 && c.v < 4 && M.w === M.h) I.view = c.v; if (c && !(c.m >= (M.mapVer || 1)) && M.origin && Number.isFinite(c.x) && Number.isFinite(c.y)) { let sh = 0; for (let v = (Number.isInteger(c.m) ? c.m : 1) + 1; v <= (M.mapVer || 1); v++) sh += (M.mapShifts && M.mapShifts[v]) || 0; c.x += sh; c.y += sh; }   // 旧マップの座標で保存されたカメラの中心は、origin だけずらす
         I.center(c && Number.isFinite(c.x) && Number.isFinite(c.y) ? c.x : M.anchor.x, c && Number.isFinite(c.x) && Number.isFinite(c.y) ? c.y : M.anchor.y);
       }
     }

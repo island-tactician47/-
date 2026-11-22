@@ -135,6 +135,10 @@ function confirmPlacing() {
   const gh = iso.ghost; if (!gh || !placing) return;
   if (placing === 'module') {
     const mk = moveKey, r = UI.act(s => mk ? E.moveModule(s, mk, { x: gh.x, y: gh.y, rot: placingRot }) : E.buildModule(s, placingPlant, { x: gh.x, y: gh.y, rot: placingRot }));
+    if (r && r.ok && !mk) {   // 新しく建てるときは、上限まで続けて置ける（×か「やめる」で終了）。置き直しは1回で終わり
+      const p2 = UI.state.plants.find(q => q.id === placingPlant), cb = p2 ? E.canBuildModule(UI.state, p2) : { ok: false };
+      if (cb.ok) { iso.ghost = null; cursor = null; iso.cursor = null; UI.toast(`増設モジュールを置いた。続けて置ける（あと${E.moduleCfg().max - E.moduleCount(UI.state, p2)}個まで。×で終了）`); UI.refresh(); return; }
+    }
     if (r && r.ok) { placing = null; placingPlant = null; placingRot = 0; moveKey = null; iso.ghost = null; cursor = null; iso.cursor = null; UI.toast(mk ? '増設モジュールを置き直した' : '増設モジュールの建設を開始'); }
     return;
   }
