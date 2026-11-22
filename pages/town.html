@@ -180,7 +180,7 @@ function flowHtml(s, p, key) {
     <div class="sub" style="margin-top:4px"><b>作る（月）</b></div>
     ${f.outs.map(o => row(R[o.k].name, `${fq(o.qty)}${R[o.k].unit}`, o.sellable ? M(o.value) : '売れない')).join('')}
     <div class="sub" style="margin-top:4px"><b>収支（月）</b></div>
-    ${row('売上', '', M(f.revenue))}${row('原料', '', '-' + M(f.inCost))}${row('操業費', '', '-' + M(f.opex))}${row('維持費', '', '-' + M(f.fixed))}
+    ${row('売上', '', M(f.revenue))}${row('原料', '', '-' + M(f.inCost))}${f.fee > 0 ? row('輸入手数料（買った原料の割合ぶん。Tier ' + E.nodeDef(E.nodeOfRecipe(p.recipe)).tier + '）', '', '-' + M(f.fee)) : ''}${row('操業費', '', '-' + M(f.opex))}${row('維持費', '', '-' + M(f.fixed))}
     <div class="row" style="margin-top:2px"><b>利益</b><span class="num">${sgn(f.profit)}</span></div>`;
   return `<div style="margin-top:6px">${UI.fold('town-flow', `📊 月の収支 ${sgn(f.profit)}${stall ? ' <span class="bad">⚠</span>' : ''}`, body, true)}</div>`;
 }

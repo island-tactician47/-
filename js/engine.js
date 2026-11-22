@@ -712,6 +712,18 @@
       if (s.nodes && s.nodes[id]) return true;
       return !!d.auto && d.legacyTier !== undefined && this.tierUnlocked(s, d.legacyTier);
     },
+    // 輸入の罰：レシピの Tier（ノードの Tier）で決まる「全部を輸入したときの利益÷自前の利益」（1＝罰なし）
+    importRatio(recipeId) {
+      const n = this.nodeOfRecipe(recipeId), d = n && this.nodeDef(n), r = d && (this.treeCfg().importRatio || {})[d.tier];
+      return r === undefined ? 1 : r;
+    },
+    // 輸入手数料：boughtValue＝その日、市場から買った原料の価値（買値）。買った割合＝boughtValue÷（その日の入力の買値）。粗利がマイナスなら0
+    importFee(s, p, rec, t, boughtValue) {
+      const r = this.importRatio(p.recipe); if (r >= 1 || !(boughtValue > 0)) return 0;
+      let tot = 0; for (const k in rec.inputs) tot += rec.inputs[k] * t * Market.buyPrice(s, k);
+      const f = tot > 0 ? Math.min(1, boughtValue / tot) : 0, ec = this.recipeEconomics(s, p.recipe), m = ec ? ec.marginOwn : 0;
+      return m > 0 ? (1 - r) * m * t * f : 0;
+    },
     // ---------- ノードの解放：解放権（会社の利益で貯まる）と選択権（輸入なしで回る素材の余剰） ----------
     ticketSteps() { return this.treeCfg().ticketSteps || []; },
     profit12(s) { const h = s.history || []; let v = 0; for (let i = Math.max(0, h.length - 12); i < h.length; i++) v += h[i].profit || 0; return v; },
@@ -1034,7 +1046,8 @@
         revenue += value; outs.push({ k, qty, value, sellable });
       }
       const opex = (rec.opexPerUnit || 0) * idx * M30, fixed = (b.fixedPerMonth || 0) * idx * (1 + nm * (MC.fixedMul || 0));
-      return { rec, ran, t, rated, ins, outs, revenue, inCost, opex, fixed, profit: revenue - inCost - opex - fixed, reason: p.last && p.last.reason, short: p.last && p.last.short };
+      const fee = this.importFee(s, p, rec, M30, ins.reduce((a, i) => a + (i.buy ? i.cost : 0), 0));   // 輸入の罰（Tier 3 以上。買った原料の割合ぶん）
+      return { rec, ran, t, rated, ins, outs, revenue, inCost, opex, fixed, fee, profit: revenue - inCost - fee - opex - fixed, reason: p.last && p.last.reason, short: p.last && p.last.short };
     },
 
     // データの整合性検査。問題の文字列の配列を返す（空なら正常）。selftest と debug で使う
@@ -1535,7 +1548,7 @@
           if (outVol[c] - freeIn > 0) tA = Math.min(tA, (this.poolFree(s, c) + over) / (outVol[c] - freeIn));
         }
         tA = Math.max(0, tA);
-        let t = tA, why = null, roomLim = false;
+        let t = tA, why = null, roomLim = false, importedValue = 0;
         // 2) 自動購入：在庫が足りないぶんを市場から買って上乗せ（出力の置き場の範囲で）
         if (p.autoBuy && want > tA && tA >= Math.min(want, tStock) - 1e-9) {
           let tb = want - tA;
@@ -1555,7 +1568,7 @@
               for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (cost(mid) <= cash) lo = mid; else hi = mid; }
               hi = lo;
             }
-            for (const k of inKeys) { const lack = rec.inputs[k] * hi - s.inventory[k]; if (lack > 1e-12) this.buy(s, k, lack, true, { ignoreSpace: true, seg: pseg }); }
+            for (const k of inKeys) { const lack = rec.inputs[k] * hi - s.inventory[k]; if (lack > 1e-12) { const b0 = s.inventory[k]; this.buy(s, k, lack, true, { ignoreSpace: true, seg: pseg }); importedValue += Math.max(0, s.inventory[k] - b0) * Market.buyPrice(s, k); } }
             t = hi;
             for (const k of inKeys) t = Math.min(t, s.inventory[k] / rec.inputs[k]);
           }
@@ -1583,6 +1596,7 @@
         const c = t * (rec.opexPerUnit || 0) * idx;
         s.month.opex += c; s.cash -= c;
         this.pl(s, pseg, 'opex', c);
+        { const fee = this.importFee(s, p, rec, t, importedValue); if (fee > 0) { s.cash -= fee; s.month.purchase += fee; this.pl(s, pseg, 'purchase', fee); p.last.fee = fee; } }   // 輸入の罰（原料の購入に含める）
         demand += t * (rec.opexPerUnit || 0) * (rec.energyShare || 0) / D().power.gridPrice;
         // 他の本部の素材を自社の在庫から使った分は社内取引（市場の中値。買った分は購入に計上済みなので在庫から使った分だけ）
         for (const k of inKeys) {
