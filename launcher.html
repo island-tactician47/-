@@ -71,7 +71,8 @@
 const $ = id => document.getElementById(id);
 let chosen = 'tight';
 const saved = Save.load();
-if (saved) Engine.normalize(saved);
+let normErr = null;
+if (saved) { try { Engine.normalize(saved); } catch (e) { normErr = e; console.error(e); } }   // 整合の処理で落ちても、画面は出す（セーブの書き出しはできるように）
 
 function renderDiffs() {
   $('diffs').innerHTML = Object.entries(GAME_DATA.difficulties).map(([k, d]) => `
@@ -89,7 +90,7 @@ function renderCont() {
   }
   $('cont').innerHTML = `<h2>続きから</h2>
     <div class="card menu">
-      <a href="pages/factory.html"><span>🏗️</span><div><b>${Engine.dateStr(saved)}</b>（${GAME_DATA.difficulties[saved.difficulty].name}）<div class="sub">🏢 ${Engine.companyName(saved)}</div>
+      <a href="pages/factory.html"><span>🏗️</span><div><b>${Engine.dateStr(saved)}</b>（${GAME_DATA.difficulties[saved.difficulty].name}）<div class="sub">🏢 ${Engine.companyName ? Engine.companyName(saved) : '港町工業株式会社'}</div>
         <div class="sub">資金 ${Engine.fmtMoney(saved.cash)}　借入 ${Engine.fmtMoney(Engine.totalDebt(saved))}　油井 ${saved.wells.length}本</div></div></a>
     </div>
     <div class="card menu">
@@ -173,7 +174,10 @@ function newGame() {
   location.href = 'pages/factory.html';
 }
 
-renderDiffs(); renderCont();
+try { if (normErr) throw normErr; renderDiffs(); renderCont(); } catch (err) {
+  console.error(err);
+  $('cont').innerHTML = '<div class="card"><b>⚠️ 画面の表示に失敗しました</b><div class="sub">ページを読み込み直してください（キャッシュの更新待ちのことがあります）。直らないときは、下の「セーブの引き継ぎ」でセーブをファイルに保存してから、サイトのデータを消して試してください。<br>' + String(err && err.message || err).replace(/[<>&]/g, '') + '</div></div>';
+}
 try { const v = localStorage.getItem('factorySimCompany'); if (v && Engine.cleanCompany(v)) $('cname').value = Engine.cleanCompany(v); } catch (e) {}
 cnamePreview();
 try { if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js'); } catch (e) {}
