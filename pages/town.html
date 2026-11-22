@@ -54,7 +54,8 @@ let sel = null;            // 選んだ建物の key
 let cursor = null;         // タップした空きタイル
 let placing = null;        // 建てる種類（場所を決める途中）。'module' のときは placingPlant の増設モジュール
 let placingPlant = null;   // 増設モジュールを置く加工設備の id
-let placingRot = 0;        // 建てる向き（0〜3。向きを選べない種類は 0 のまま）
+let placingRot = 0;        // 建てる向き（0〜3。向きを選べない種類は 0 のまま。増設モジュールも自由に回せる）
+let moveKey = null;        // 移設・置き直しの対象（key）。null なら新しく建てる
 
 // 建設メニューのカテゴリ（建物の category → 表示）
 const CATS = [
@@ -63,12 +64,18 @@ const CATS = [
   { id: 'corp', label: '🏢 全社', match: c => c === 'power' || c === 'lab' }
 ];
 
-function ghostAt(type, tile) { const rot = E.cleanRot(type, placingRot), [fw, fd] = E.footprintOf(type, rot); return { type, rot, x: tile.x - Math.floor(fw / 2), y: tile.y - Math.floor(fd / 2) }; }
+function ghostAt(type, tile) { const rot = E.cleanRot(type, placingRot), [fw, fd] = E.footprintOf(type, rot); return { type, rot, x: tile.x - Math.floor(fw / 2), y: tile.y - Math.floor(fd / 2), moveKey }; }
 // 増設モジュールの足あと（親と同じ向き。親の種類ごとに大きさが違う）
-function modFoot(p) { return p ? E.footprintOf('module', E.parentRot(UI.state, p), p.type) : [2, 2]; }
+function modFoot(p, rot) { return p ? E.footprintOf('module', rot === undefined ? E.parentRot(UI.state, p) : rot, p.type) : [2, 2]; }
+function modGhost(p, tile) { const [mw, md] = modFoot(p, placingRot); return { type: 'module', plantId: p.id, rot: placingRot, x: tile.x - Math.floor(mw / 2), y: tile.y - Math.floor(md / 2), moveKey }; }
 // 建てる向きを回す（置く場所の中心は動かさない）。d＝+1/−1
 function rotatePlacing(d) {
-  if (!placing || placing === 'module' || !E.canRotate(placing)) return;
+  if (!placing) return;
+  if (placing === 'module') {   // 増設モジュールは、親と独立に4方向へ回せる
+    const p = UI.state.plants.find(q => q.id === placingPlant); if (!p) return;
+    placingRot = (placingRot + d + 4) % 4; if (cursor) iso.ghost = modGhost(p, cursor); UI.refresh(); return;
+  }
+  if (!E.canRotate(placing)) return;
   placingRot = (placingRot + d + 4) % 4;
   if (cursor) iso.ghost = ghostAt(placing, cursor);
   UI.refresh();
@@ -85,36 +92,56 @@ function startPlacing(type) {
   // 敷地に重ねて建てる設備（研究棟）：すでに敷地があれば、場所を選ばずにそこへ重ねて建てる（増設のたびに建屋が1段階高層になる）
   if (E.stackCfg(type)) E.ensureMap(UI.state);
   if (E.stackCfg(type) && E.stackSite(UI.state, type)) { UI.act(s => { const r = E.build(s, type); if (r && r.ok) UI.toast('増築を始めた（建屋が1段階高層になる）'); return r; }); return; }
-  placing = type; sel = null; placingRot = 0;
+  placing = type; sel = null; placingRot = 0; moveKey = null;
   const c = cursor || (iso && iso.unproject(iso.w / 2, iso.h / 2)) || { x: 15, y: 18 };
   const [fw, fd] = E.footprintOf(type), spot = E.findSpot(UI.state, type, { x: Math.floor(c.x) - Math.floor(fw / 2), y: Math.floor(c.y) - Math.floor(fd / 2) });   // 見ている場所に一番近い空き
   const tile = spot ? { x: spot.x + Math.floor(fw / 2), y: spot.y + Math.floor(fd / 2) } : { x: Math.floor(c.x), y: Math.floor(c.y) };
   cursor = tile; iso.ghost = ghostAt(type, tile); iso.cursor = null; iso.selected = null; if (spot && iso) iso.center(spot.x + fw / 2, spot.y + fd / 2);
   UI.refresh();
 }
+// 建物の移設：今の場所と向きから始めて、場所と向きを選び直す（増設モジュールは本体について動く）
+function startMove(key) {
+  const s = UI.state, q = s.map && s.map.placed[key]; if (!q) return;
+  placing = q.type; moveKey = key; sel = null; iso.selected = null; placingRot = q.rot || 0;
+  const [fw, fd] = E.footprintOf(q.type, placingRot); cursor = { x: q.x + Math.floor(fw / 2), y: q.y + Math.floor(fd / 2) };
+  iso.ghost = { type: q.type, rot: placingRot, x: q.x, y: q.y, moveKey }; iso.cursor = null; UI.refresh();
+}
+// 増設モジュールの置き直し
+function startModuleMove(key) {
+  const s = UI.state, q = s.map && s.map.placed[key], p = q && s.plants.find(pp => pp.key === q.parent); if (!p) return;
+  placing = 'module'; placingPlant = p.id; moveKey = key; sel = null; iso.selected = null; placingRot = q.rot || 0;
+  const [mw, md] = modFoot(p, placingRot); cursor = { x: q.x + Math.floor(mw / 2), y: q.y + Math.floor(md / 2) };
+  iso.ghost = { type: 'module', plantId: p.id, rot: placingRot, x: q.x, y: q.y, moveKey }; iso.cursor = null; UI.refresh();
+}
+function demolishSel(key) {
+  const s = UI.state, q = s.map && s.map.placed[key]; if (!q) return;
+  const name = q.type === 'module' ? '増設モジュール' : (G.buildings[q.type] || {}).name, v = E.demolishValue(s, key);
+  if (!confirm(`${name}を撤去します。${M(v)}が戻ります（建設費の${Math.round(((G.relocate || {}).refund || 0.5) * 100)}%）。\nよろしいですか？`)) return;
+  const r = UI.act(s2 => E.demolish(s2, key)); if (r && r.ok) { sel = null; iso.selected = null; UI.toast('撤去しました'); }
+}
 function startModule(plantId) {
   const s = UI.state, p = s.plants.find(q => q.id === plantId); if (!p) return;
-  placing = 'module'; placingPlant = plantId; sel = null; iso.selected = null;
-  const spot = E.findModuleSpot(s, p), [mw, md] = modFoot(p);
-  if (spot) { cursor = { x: spot.x + Math.floor(mw / 2), y: spot.y + Math.floor(md / 2) }; iso.ghost = { type: 'module', plantId, x: spot.x, y: spot.y }; iso.center(spot.x + mw / 2, spot.y + md / 2); }
-  else { cursor = null; iso.ghost = { type: 'module', plantId, x: -9, y: -9 }; }
+  placing = 'module'; placingPlant = plantId; moveKey = null; sel = null; iso.selected = null; placingRot = E.parentRot(s, p);   // 向きの初期値は親と同じ（回せる）
+  const spot = E.findModuleSpot(s, p, placingRot), [mw, md] = modFoot(p, placingRot);
+  if (spot) { cursor = { x: spot.x + Math.floor(mw / 2), y: spot.y + Math.floor(md / 2) }; iso.ghost = { type: 'module', plantId, rot: placingRot, x: spot.x, y: spot.y }; iso.center(spot.x + mw / 2, spot.y + md / 2); }
+  else { cursor = null; iso.ghost = { type: 'module', plantId, rot: placingRot, x: -9, y: -9 }; }
   UI.refresh();
 }
-function cancelPlacing() { placing = null; placingPlant = null; placingRot = 0; iso.ghost = null; UI.refresh(); }
+function cancelPlacing() { placing = null; placingPlant = null; placingRot = 0; moveKey = null; iso.ghost = null; UI.refresh(); }
 function confirmPlacing() {
   const gh = iso.ghost; if (!gh || !placing) return;
   if (placing === 'module') {
-    const r = UI.act(s => E.buildModule(s, placingPlant, { x: gh.x, y: gh.y }));
-    if (r && r.ok) { placing = null; placingPlant = null; iso.ghost = null; cursor = null; iso.cursor = null; UI.toast('増設モジュールの建設を開始'); }
+    const mk = moveKey, r = UI.act(s => mk ? E.moveModule(s, mk, { x: gh.x, y: gh.y, rot: placingRot }) : E.buildModule(s, placingPlant, { x: gh.x, y: gh.y, rot: placingRot }));
+    if (r && r.ok) { placing = null; placingPlant = null; placingRot = 0; moveKey = null; iso.ghost = null; cursor = null; iso.cursor = null; UI.toast(mk ? '増設モジュールを置き直した' : '増設モジュールの建設を開始'); }
     return;
   }
-  const type = placing, r = UI.act(s => E.build(s, type, null, { x: gh.x, y: gh.y, rot: placingRot }));
-  if (r && r.ok) { placing = null; placingRot = 0; iso.ghost = null; cursor = null; iso.cursor = null; UI.toast(`${G.buildings[type].name}の建設を開始`); }
+  const type = placing, mk = moveKey, r = UI.act(s => mk ? E.relocate(s, mk, { x: gh.x, y: gh.y, rot: placingRot }) : E.build(s, type, null, { x: gh.x, y: gh.y, rot: placingRot }));
+  if (r && r.ok) { placing = null; placingRot = 0; moveKey = null; iso.ghost = null; cursor = null; iso.cursor = null; UI.toast(mk ? `${G.buildings[type].name}の移設を開始` : `${G.buildings[type].name}の建設を開始`); }
 }
 
 function onTap(info) {
   const s = UI.state;
-  if (placing === 'module') { const t = info.tile, [mw, md] = modFoot(s.plants.find(q => q.id === placingPlant)); cursor = t; iso.ghost = { type: 'module', plantId: placingPlant, x: t.x - Math.floor(mw / 2), y: t.y - Math.floor(md / 2) }; UI.refresh(); return; }
+  if (placing === 'module') { const p = s.plants.find(q => q.id === placingPlant); if (p) { cursor = info.tile; iso.ghost = modGhost(p, info.tile); } UI.refresh(); return; }
   if (placing) {
     cursor = info.tile; iso.ghost = ghostAt(placing, info.tile); UI.refresh(); return;
   }
@@ -127,6 +154,7 @@ function onTap(info) {
 }
 
 function statusOf(s, e) {
+  if (e.moving) return `<b class="warn">移設中</b> 残り${E.fmtDuration(e.daysLeft)}${e.plant ? '（設備は止まっている）' : ''}`;
   if (e.building) return `<b class="warn">建設中</b> 残り${E.fmtDuration(e.daysLeft)}`;
   const p = e.plant;
   if (p) { const r = p.last && p.last.reason; return r === 'ok' ? '<b class="good">稼働中</b>' : r === 'input' ? '<b class="bad">原料不足</b>' : r === 'full' ? '<b class="bad">置き場が満杯</b>' : r === 'cash' ? '<b class="bad">資金不足</b>' : '<span class="sub">停止中</span>'; }
@@ -141,26 +169,33 @@ function renderSheet(s) {
     const p = s.plants.find(q => q.id === placingPlant), gh = iso.ghost;
     if (!p) { placing = null; iso.ghost = null; }
     else {
-      const b = G.buildings[p.type], MC = E.moduleCfg(), chk = gh ? E.canPlaceModule(s, p, gh.x, gh.y) : { ok: false, msg: 'マップをタップして場所を決める' }, cb = E.canBuildModule(s, p);
-      const add = E.plantCap(E.plantDef(p), G.recipes[p.recipe]) * MC.gain;
-      out.push(`<div class="card"><div class="row"><h3>🧱 ${b.name}の増設モジュール</h3><span class="sub">${cb.cost ? M(cb.cost) : M(E.moduleCost(s, p))}</span></div>
-        <div class="sub">設備に隣接して置く（緑なら置ける）。日量が +${E.fmtNum(add)}${G.resources[Object.keys(G.recipes[p.recipe].outputs)[0]].unit}/日（現在 ${E.fmtNum(E.plantCapOf(p))}）。維持費も増える</div>
+      const b = G.buildings[p.type], MC = E.moduleCfg(), mv = !!moveKey, rot = gh && gh.rot !== undefined ? gh.rot : placingRot;
+      const chk = gh ? (mv ? E.canMoveModule(s, moveKey, { x: gh.x, y: gh.y, rot }) : E.canPlaceModule(s, p, gh.x, gh.y, undefined, rot)) : { ok: false, msg: 'マップをタップして場所を決める' }, cb = mv ? { ok: true } : E.canBuildModule(s, p);
+      const add = E.plantCap(E.plantDef(p), G.recipes[p.recipe]) * MC.gain, fee = mv ? (chk.cost !== undefined ? chk.cost : Math.round(((G.relocate || {}).fee || 0.2) * E.moduleCost(s, p))) : (cb.cost || E.moduleCost(s, p));
+      out.push(`<div class="card"><div class="row"><h3>🧱 ${b.name}の増設モジュール${mv ? 'を置き直す' : ''}</h3><span class="sub">${M(fee)}</span></div>
+        <div class="sub">設備に隣接して置く（緑なら置ける）。向きは回せる。${mv ? '置き直しの費用は建設費の2割。' : `日量が +${E.fmtNum(add)}${G.resources[Object.keys(G.recipes[p.recipe].outputs)[0]].unit}/日（現在 ${E.fmtNum(E.plantCapOf(p))}）。維持費も増える`}</div>
         <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">置ける</b>' : `<b class="bad">${chk.msg}</b>`}${cb.ok ? '' : `　<b class="bad">${cb.msg}</b>`}</div>
-        <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">建設する</button> <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
+        <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">${mv ? '置き直す' : '建設する'}</button> <button class="btn small" onclick="rotatePlacing(1)">⟳ 回す</button> <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
       UI.html('sheet', out.join('')); return;
     }
   }
   if (placing) {
-    const b = G.buildings[placing], gh = iso.ghost, chk = gh ? E.canPlace(s, placing, gh.x, gh.y, null, E.cleanRot(placing, placingRot)) : { ok: false, msg: 'マップをタップして場所を決める' };
-    const cb = E.canBuild(s, placing), full = !E.findSpot(s, placing), rc = E.canReclaim(s);
-    out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}を建てる</h3><span class="sub">${M(E.costOf(s, placing))}・${E.buildText(b.months)}</span></div>
+    const b = G.buildings[placing], gh = iso.ghost, mv = !!moveKey, chk = gh ? (mv ? E.planRelocate(s, moveKey, { x: gh.x, y: gh.y, rot: E.cleanRot(placing, placingRot) }) : E.canPlace(s, placing, gh.x, gh.y, null, E.cleanRot(placing, placingRot))) : { ok: false, msg: 'マップをタップして場所を決める' };
+    const cb = mv ? { ok: true } : E.canBuild(s, placing), full = !mv && !E.findSpot(s, placing), rc = E.canReclaim(s);
+    out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}${mv ? 'を移設する' : 'を建てる'}</h3><span class="sub">${mv ? (chk.cost !== undefined ? M(chk.cost) + '（建設費の2割）' : '') : M(E.costOf(s, placing)) + '・' + E.buildText(b.months)}</span></div>
       <div class="sub">マップをタップして場所を決める（緑なら置ける）。足あと ${E.footprintOf(placing, E.cleanRot(placing, placingRot)).join('×')}${E.canRotate(placing) ? '（向きを回せる）' : ''}</div>
       <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">置ける</b>' : `<b class="bad">${chk.msg}</b>`}${cb.ok ? '' : `　<b class="bad">${cb.msg}</b>`}</div>
       ${full ? `<div class="sub bad" style="margin-top:4px">置ける場所がありません。海を埋め立てて用地を広げます（${rc.ok ? M(rc.cost) + '/行' : rc.msg}）。</div>` : ''}
-      <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">建設する</button> ${E.canRotate(placing) ? '<button class="btn small" onclick="rotatePlacing(1)">⟳ 回す</button> ' : ''}<button class="btn small" ${rc.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.reclaim(s))">🏗️ 埋め立てる（${M(E.reclaimCost(s))}）</button> <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
+      <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">${mv ? '移設する' : '建設する'}</button> ${E.canRotate(placing) ? '<button class="btn small" onclick="rotatePlacing(1)">⟳ 回す</button> ' : ''}${mv ? '' : `<button class="btn small" ${rc.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.reclaim(s))">🏗️ 埋め立てる（${M(E.reclaimCost(s))}）</button>`} <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
   } else if (sel) {
     let e = (iso.ents || []).find(q => q.key === sel);
-    if (e && e.type === 'module') e = (iso.ents || []).find(q => q.key === e.parent) || e;   // モジュールを選ぶと本体を見せる
+    if (e && e.type === 'module') {   // 増設モジュール：置き直しと撤去（本体は親の建物をタップ）
+      const par = (iso.ents || []).find(q => q.key === e.parent), pb = par && G.buildings[par.type], RC = G.relocate || { fee: 0.2, refund: 0.5 }, pp = par && par.plant;
+      out.push(`<div class="card"><div class="row"><h3>🧱 ${pb ? pb.name : ''}の増設モジュール</h3><span>${e.moving || e.building ? '<b class="warn">建設中</b>' : ''}</span></div>
+        <div class="sub">日量 +${Math.round(E.moduleCfg().gain * 100)}%。置き直しは建設費の${Math.round(RC.fee * 100)}%、撤去すると${Math.round(RC.refund * 100)}%が戻る（${pp ? M(E.demolishValue(s, sel)) : ''}）。</div>
+        <div class="btns" style="margin-top:8px">${e.building || (par && (par.moving || par.building)) ? '' : `<button class="btn small" onclick="startModuleMove('${sel}')">🔧 置き直す</button> <button class="btn small" onclick="demolishSel('${sel}')">🗑️ 撤去</button> `}<button class="btn small" onclick="sel=null;iso.selected=null;UI.refresh()">閉じる</button></div></div>`);
+      e = null;
+    }
     if (e && e.type !== 'module') {
       const b = G.buildings[e.type], p = e.plant, rec = p && G.recipes[p.recipe];
       out.push(`<div class="card"><div class="row"><h3>${b.icon || ''} ${b.name}</h3><span>${statusOf(s, e)}</span></div>
@@ -171,7 +206,7 @@ function renderSheet(s) {
           return `${chips}<div class="row" style="margin-top:6px"><span class="sub">稼働率</span><div class="chips">${[0, 25, 50, 75, 100].map(r => `<span class="chip ${rate === r ? 'on' : ''}" onclick="UI.act(s=>Engine.setPlantRate(s,${p.id},${r / 100}))">${r}%</span>`).join('')}</div></div>
           <label class="row" style="margin-top:6px"><span class="sub">原料が足りない分を市場から買う</span><input type="checkbox" ${p.autoBuy ? 'checked' : ''} onchange="UI.act(s=>Engine.setPlantAutoBuy(s,${p.id},this.checked))"></label>`; })() : ''}
         <div class="sub">${b.desc || ''}</div>
-        <div style="margin-top:6px">${p ? '<a href="factory.html">工場の設定へ</a>　' : e.type === 'refinery' || e.type === 'refineryLarge' || e.type === 'distillation' ? '<a href="refinery.html">製油所へ</a>　' : ''}<button class="btn small" onclick="sel=null;iso.selected=null;UI.refresh()">閉じる</button></div></div>`);
+        <div style="margin-top:6px">${p ? '<a href="factory.html">工場の設定へ</a>　' : e.type === 'refinery' || e.type === 'refineryLarge' || e.type === 'distillation' ? '<a href="refinery.html">製油所へ</a>　' : ''}${!e.building && !G.buildings[e.type].needsSite && !E.stackCfg(e.type) && e.type !== '_port' ? `<button class="btn small" onclick="startMove('${sel}')">🔧 移設</button> <button class="btn small" onclick="demolishSel('${sel}')">🗑️ 撤去</button> ` : ''}<button class="btn small" onclick="sel=null;iso.selected=null;UI.refresh()">閉じる</button></div></div>`);
     }
   } else if (cursor) {
     const cat = UI.tab('town-cat', 'factory');
@@ -200,6 +235,11 @@ function render(s) {
     if (qp.get('view')) { iso.resize && iso.resize(); iso.setView(+qp.get('view') || 0); }   // 確認用：?view=0〜3（視点の向き）
     const b = qp.get('build');
     if (b && G.buildings[b] && !E.offMap(b)) startPlacing(b);
+    // 確認用：?sel=plant|module（最初の設備・モジュールを選ぶ）、?move=plant|module（その移設・置き直しを始める）
+    { const ents = E.mapEntities(UI.state), pick = w => ents.find(e => w === 'module' ? e.type === 'module' : (e.plant && !e.building));
+      const sv = qp.get('sel'), mvv = qp.get('move'), tgt = pick(sv || mvv);
+      if (tgt && sv) { sel = tgt.key; iso.selected = sel; }
+      if (tgt && mvv) { if (mvv === 'module') startModuleMove(tgt.key); else startMove(tgt.key); } }
     const mp = +(new URLSearchParams(location.search).get('module')) || 0;
     if (mp) startModule(mp);
     if (b || mp) try { history.replaceState(null, '', location.pathname); } catch (e) {}   // 再読み込みで場所選びが再開しないように

@@ -136,3 +136,6 @@ GAME_DATA.buildTimeMul = 1 / 3;
 
 // 加工設備に付属する製品置き場（日数分）。設備を建てただけで、その設備の製品を plantStoreDays 日分は置ける（倉庫が無くても最低限稼働できる）。港の出荷間隔（最長30日）に合わせる
 GAME_DATA.plantStoreDays = 30;
+
+// 移設・撤去：fee＝移設の費用（建設費×この率。増設モジュールもそれぞれ）、refund＝撤去で戻る率、daysMul＝移設の工期（建設の日数×この率。設備は移設中は止まる）
+GAME_DATA.relocate = { fee: 0.2, refund: 0.5, daysMul: 0.3 };

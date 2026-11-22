@@ -363,12 +363,13 @@
     }
     function drawGhost(s, era) {
       const gh = I.ghost, pl = gh.plantId && s.plants.find(q => q.id === gh.plantId);
-      const rot = pl ? E.parentRot(s, pl) : E.cleanRot(gh.type, gh.rot), [fw, fd] = E.footprintOf(gh.type, rot, pl ? pl.type : null);
-      const chk = pl ? E.canPlaceModule(s, pl, gh.x, gh.y) : E.canPlace(s, gh.type, gh.x, gh.y, null, rot), col = chk.ok ? '#6fd08c' : '#e0645a';
+      const rot = pl ? (gh.rot !== undefined ? (((gh.rot | 0) % 4) + 4) % 4 : E.parentRot(s, pl)) : E.cleanRot(gh.type, gh.rot), [fw, fd] = E.footprintOf(gh.type, rot, pl ? pl.type : null);
+      // moveKey：移設（建物・モジュール）。自分の今の場所と重なっても置けないとはしない
+      const chk = pl ? (gh.moveKey ? E.canMoveModule(s, gh.moveKey, { x: gh.x, y: gh.y, rot }) : E.canPlaceModule(s, pl, gh.x, gh.y, undefined, rot)) : (gh.moveKey ? E.planRelocate(s, gh.moveKey, { x: gh.x, y: gh.y, rot }) : E.canPlace(s, gh.type, gh.x, gh.y, null, rot)), col = chk.ok ? '#6fd08c' : '#e0645a';
       const ge = viewOf({ type: gh.type, parentType: pl ? pl.type : null, x: gh.x, y: gh.y, rot, fw, fd, building: false, progress: 1, plant: null, level: gh.type === 'researchLab' ? 1 : undefined });
       outline(ge, col, 2.4);
       drawEntity(ge, { era, t: I.t, running: false }, 0.7);
-      gh.ok = chk.ok; gh.msg = chk.msg;
+      gh.ok = chk.ok; gh.msg = chk.msg; gh.cost = chk.cost; gh.days = chk.days;
     }
     function drawSmoke(dt) {
       for (const src of I.sources) { if (I.parts.length > 220) break; if (Math.random() < dt * 5 * src.s) I.parts.push({ x: src.x, y: src.y, z: src.z, vz: 10 + Math.random() * 6, vx: 0.15 + Math.random() * 0.2, age: 0, life: 2.4 + Math.random() * 1.4, r: 3 * src.s }); }

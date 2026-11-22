@@ -242,11 +242,12 @@
       let relayout = false;
       if (M && m.layoutVer !== M.layoutVer) {
         relayout = true; m.placed = {}; m.seq = {}; m.layoutVer = M.layoutVer;   // 埋め立ての行数（m.reclaim）は保つ
+        s.construction = s.construction.filter(c => c.type !== 'move');   // 置き場所を全部置き直すので、移設中は終わったことにする
         for (const c of s.construction) delete c.key;
         for (const p of s.plants) delete p.key;
       }
       for (const k of Object.keys(m.placed)) { const q = m.placed[k]; if (!q || typeof q !== 'object') { delete m.placed[k]; continue; }
-        const par = q.type === 'module' && q.parent && m.placed[q.parent], r = q.type === 'module' ? (par ? this.cleanRot(par.type, par.rot) : 0) : this.cleanRot(q.type, q.rot);   // 向きを 0〜3 の整数にそろえる（回せない種類は 0、モジュールは親と同じ）
+        const par = q.type === 'module' && q.parent && m.placed[q.parent], r = q.type === 'module' ? (((q.rot | 0) % 4) + 4) % 4 : this.cleanRot(q.type, q.rot);   // 向きを 0〜3 の整数にそろえる（回せない種類は 0、モジュールは親と同じ）
         if (r) q.rot = r; else delete q.rot; }
       for (const c of s.construction) if (c.key && !m.placed[c.key]) delete c.key;   // 地図が壊れていても振り直せるように
       for (const p of s.plants) if (p.key && !m.placed[p.key]) delete p.key;
@@ -261,7 +262,7 @@
           if (sites.length > 1) { const used = new Set(s.construction.map(c => c.key).filter(Boolean)); const keep = sites.find(k => used.has(k)) || sites[0]; for (const k of sites) if (k !== keep && !used.has(k)) delete m.placed[k]; }
         }
         for (const c of s.construction) if (c.type === type && !c.key) { const k = (stack && this.stackSite(s, type)) || this.placeAuto(s, type); if (k) c.key = k; }
-        const busy = new Set(s.construction.map(c => c.key).filter(Boolean));
+        const busy = new Set(s.construction.filter(c => c.type !== 'move').map(c => c.key).filter(Boolean));
         if (stack && (s.buildings[type] || 0) > 0) for (const k of Object.keys(m.placed)) if (m.placed[k].type === type) busy.delete(k);   // 完成した棟があれば、増築中でも敷地は「置き済み」
         const done = Object.keys(m.placed).filter(k => m.placed[k].type === type && !busy.has(k));
         const want = stack ? Math.min(1, s.buildings[type] || 0) : (s.buildings[type] || 0);   // 重ねて建てる設備は敷地を1つだけ
@@ -280,6 +281,7 @@
     // 足あと全体が陸（道路・港・海でない）で、ほかの建物と重ならないか
     canPlace(s, type, x, y, occIn, rot, parentType) {
       const M = this.mapCfg(); if (!M) return { ok: false, msg: 'マップ未対応' };
+      if (!Number.isInteger(x) || !Number.isInteger(y)) return { ok: false, msg: '場所が不正' };
       const [fw, fd] = this.footprintOf(type, type === 'module' ? rot : this.cleanRot(type, rot), parentType), occ = occIn || this.mapOccupancy(s), sf = this.seaFrontCfg(type);
       for (let i = 0; i < fw; i++) for (let j = 0; j < fd; j++) {
         const t = this.terrainAt(s, x + i, y + j);
@@ -296,9 +298,9 @@
       }
       return { ok: true };
     },
-    mapOccupancy(s) {
+    mapOccupancy(s, skip) {   // skip＝除く key の Set（移設中の建物と、そのモジュールを除いて当たりを見る）
       const occ = {};
-      for (const k in (s.map && s.map.placed) || {}) { const p = s.map.placed[k], [fw, fd] = this.placedFootprint(s, p); for (let i = 0; i < fw; i++) for (let j = 0; j < fd; j++) occ[(p.x + i) + ',' + (p.y + j)] = k; }
+      for (const k in (s.map && s.map.placed) || {}) { if (skip && skip.has(k)) continue; const p = s.map.placed[k], [fw, fd] = this.placedFootprint(s, p); for (let i = 0; i < fw; i++) for (let j = 0; j < fd; j++) occ[(p.x + i) + ',' + (p.y + j)] = k; }
       return occ;
     },
     newKey(s, type) { const m = s.map; m.seq[type] = (m.seq[type] || 0) + 1; return type + '#' + m.seq[type]; },
@@ -377,21 +379,21 @@
       for (const k of Object.keys(m.placed)) if (m.placed[k].parent === p.key) rect(k);
       return out;
     },
-    canPlaceModule(s, p, x, y, occ) {
+    canPlaceModule(s, p, x, y, occ, rot, skipMax) {   // rot 省略＝親と同じ向き。skipMax＝置き直し（個数は増えない）
       if (!this.moduleCfg() || !this.plantDef(p) || !this.hasModule(p.type)) return { ok: false, msg: 'モジュールを置けない設備' };
-      if (this.moduleCount(s, p) >= this.moduleCfg().max) return { ok: false, msg: `増設モジュールは最大${this.moduleCfg().max}個` };
+      if (!skipMax && this.moduleCount(s, p) >= this.moduleCfg().max) return { ok: false, msg: `増設モジュールは最大${this.moduleCfg().max}個` };
       this.ensureMap(s);
-      const prot = this.parentRot(s, p), pc = this.canPlace(s, 'module', x, y, occ, prot, p.type); if (!pc.ok) return pc;
+      const prot = rot === undefined ? this.parentRot(s, p) : (((rot | 0) % 4) + 4) % 4, pc = this.canPlace(s, 'module', x, y, occ, prot, p.type); if (!pc.ok) return pc;
       const [w, d] = this.footprintOf('module', prot, p.type), rects = this.plantRects(s, p);
       const touch = rects.some(r => ((x + w === r.x || r.x + r.w === x) && y < r.y + r.d && r.y < y + d) || ((y + d === r.y || r.y + r.d === y) && x < r.x + r.w && r.x < x + w));
       return touch ? { ok: true } : { ok: false, msg: '設備に隣接して置く' };
     },
     // 設備の近くで置ける一番近い場所
-    findModuleSpot(s, p) { this.ensureMap(s); return this.moduleSpot(s, p); },
+    findModuleSpot(s, p, rot) { this.ensureMap(s); return this.moduleSpot(s, p, rot); },
     // 隣に置ける一番近い場所（個数の上限は見ない。置き直しにも使う）
-    moduleSpot(s, p) {
+    moduleSpot(s, p, rot) {
       const M = this.mapCfg(); if (!M) return null; const r0 = this.plantRects(s, p)[0]; if (!r0) return null;
-      const prot = this.parentRot(s, p), occ = this.mapOccupancy(s), [w, d] = this.footprintOf('module', prot, p.type), rects = this.plantRects(s, p); let best = null, bd = Infinity;
+      const prot = rot === undefined ? this.parentRot(s, p) : (((rot | 0) % 4) + 4) % 4, occ = this.mapOccupancy(s), [w, d] = this.footprintOf('module', prot, p.type), rects = this.plantRects(s, p); let best = null, bd = Infinity;
       for (let y = Math.max(0, r0.y - d - 1); y < Math.min(M.h, r0.y + r0.d + d + 2); y++) for (let x = Math.max(0, r0.x - w - 1); x < Math.min(M.w, r0.x + r0.w + w + 2); x++) {
         const dd = Math.abs(x - r0.x) + Math.abs(y - r0.y); if (dd >= bd) continue;
         if (!this.canPlace(s, 'module', x, y, occ, prot, p.type).ok) continue;
@@ -408,13 +410,116 @@
     },
     buildModule(s, plantId, pos) {
       const p = s.plants.find(q => q.id === plantId), chk = this.canBuildModule(s, p); if (!chk.ok) return chk;
+      const mrot = pos && pos.rot !== undefined ? (((pos.rot | 0) % 4) + 4) % 4 : this.parentRot(s, p);   // モジュールの向き（省略＝親と同じ）
       if (!pos) { pos = this.findModuleSpot(s, p); if (!pos) return { ok: false, msg: '隣に置ける場所がない' }; }
-      const pc = this.canPlaceModule(s, p, pos.x, pos.y); if (!pc.ok) return pc;
+      const pc = this.canPlaceModule(s, p, pos.x, pos.y, undefined, mrot); if (!pc.ok) return pc;
       const B = D().buildings[p.type], MC = this.moduleCfg(), days = this.buildDays(Math.max(3, Math.round(B.months * MC.monthsMul)));
       s.cash -= chk.cost; s.month.construction += chk.cost;
-      const key = this.newKey(s, 'module'); s.map.placed[key] = { type: 'module', x: pos.x, y: pos.y, parent: p.key }; if (this.parentRot(s, p)) s.map.placed[key].rot = this.parentRot(s, p);
+      const key = this.newKey(s, 'module'); s.map.placed[key] = { type: 'module', x: pos.x, y: pos.y, parent: p.key }; if (mrot) s.map.placed[key].rot = mrot;
       s.construction.push({ type: 'module', plantId: p.id, daysLeft: days, totalDays: days, key });
       this.log(s, `🚧 ${B.name}の増設モジュールの建設を開始（${this.fmtMoney(chk.cost)}、${this.fmtDuration(days)}）`);
+      return { ok: true };
+    },
+    // ---------- 移設・撤去（完成した建物。建設中・移設中は動かせない。研究棟・造船所の増設などの特殊なもの以外） ----------
+    isMoving(s, key) { return s.construction.some(c => c.type === 'move' && c.key === key); },
+    // 移設の計画（状態は変えない）。pos={x,y,rot}。増設モジュールは、向きを変えなければ相対位置を保って平行移動し、置けなければ隣の空きに置き直す。置けなければ移設できない
+    planRelocate(s, key, pos) {
+      const RC = D().relocate || { fee: 0.2, daysMul: 0.3 };
+      this.ensureMap(s); const m = s.map, q = m.placed[key];
+      if (!q || q.type === 'module') return { ok: false, msg: '移設できない（増設モジュールは「置き直し」）' };
+      if (this.offMap(q.type) || this.stackCfg(q.type)) return { ok: false, msg: 'この建物は移設できない' };
+      const kids = Object.keys(m.placed).filter(k => m.placed[k].parent === key), skip = new Set([key, ...kids]);
+      if (s.construction.some(c => c.key === key || kids.includes(c.key))) return { ok: false, msg: '建設中・移設中（増設モジュールの建設中を含む）は動かせない' };
+      const rot = this.cleanRot(q.type, pos.rot === undefined ? q.rot : pos.rot);
+      if (pos.x === q.x && pos.y === q.y && rot === (q.rot || 0)) return { ok: false, msg: '今の場所と同じ' };
+      const occ = this.mapOccupancy(s, skip), pc = this.canPlace(s, q.type, pos.x, pos.y, occ, rot); if (!pc.ok) return pc;
+      const [fw, fd] = this.footprintOf(q.type, rot), mark = (x, y, w, d) => { for (let i = 0; i < w; i++) for (let j = 0; j < d; j++) occ[(x + i) + ',' + (y + j)] = 1; };
+      mark(pos.x, pos.y, fw, fd);
+      const rects = [{ x: pos.x, y: pos.y, w: fw, d: fd }], moves = [], same = rot === (q.rot || 0), M = this.mapCfg();
+      for (const k of kids) {
+        const c = m.placed[k], crot = c.rot || 0, [w, d] = this.footprintOf('module', crot, q.type);
+        const touches = (x, y) => rects.some(r => ((x + w === r.x || r.x + r.w === x) && y < r.y + r.d && r.y < y + d) || ((y + d === r.y || r.y + r.d === y) && x < r.x + r.w && r.x < x + w));
+        let spot = null;
+        if (same) { const nx = pos.x + (c.x - q.x), ny = pos.y + (c.y - q.y); if (this.canPlace(s, 'module', nx, ny, occ, crot, q.type).ok && touches(nx, ny)) spot = { x: nx, y: ny }; }
+        if (!spot) {
+          const r0 = rects[0]; let bd = Infinity;
+          for (let y = Math.max(0, r0.y - d - 1); y < Math.min(M.h, r0.y + r0.d + d + 2); y++) for (let x = Math.max(0, r0.x - w - 1); x < Math.min(M.w, r0.x + r0.w + w + 2); x++) {
+            const dd = Math.abs(x - r0.x) + Math.abs(y - r0.y); if (dd >= bd) continue;
+            if (this.canPlace(s, 'module', x, y, occ, crot, q.type).ok && touches(x, y)) { spot = { x, y }; bd = dd; }
+          }
+        }
+        if (!spot) return { ok: false, msg: '増設モジュールを置く余地がない（周囲に空きが必要）' };
+        mark(spot.x, spot.y, w, d); rects.push({ x: spot.x, y: spot.y, w, d }); moves.push({ key: k, x: spot.x, y: spot.y });
+      }
+      const p = s.plants.find(pp => pp.key === key);
+      const cost = Math.round(RC.fee * (this.costOf(s, q.type) + (p ? kids.length * this.moduleCost(s, p) : 0)));
+      if (s.cash < cost) return { ok: false, msg: `資金不足（${this.fmtMoney(cost)}）`, cost };
+      return { ok: true, cost, moves, rot, days: Math.max(1, Math.round(this.buildDays(D().buildings[q.type].months) * (RC.daysMul || 0.3))) };
+    },
+    relocate(s, key, pos) {
+      const pl = this.planRelocate(s, key, pos); if (!pl.ok) return pl;
+      const q = s.map.placed[key], B = D().buildings[q.type];
+      q.x = pos.x; q.y = pos.y; if (pl.rot) q.rot = pl.rot; else delete q.rot;
+      for (const mv of pl.moves) { const c = s.map.placed[mv.key]; c.x = mv.x; c.y = mv.y; }
+      s.cash -= pl.cost; s.month.construction += pl.cost;
+      s.construction.push({ type: 'move', key, lease: null, daysLeft: pl.days, totalDays: pl.days, label: `🔧 ${B.name}の移設` });
+      this.log(s, `🔧 ${B.name}の移設を開始（${this.fmtMoney(pl.cost)}、${this.fmtDuration(pl.days)}。設備は移設中は止まる）`);
+      return { ok: true };
+    },
+    // 増設モジュールの置き直し（親に隣接する範囲で、位置と向きを選び直す。費用は移設と同じ率、止まらない）
+    canMoveModule(s, key, pos) {
+      const RC = D().relocate || { fee: 0.2 }; this.ensureMap(s);
+      const q = s.map.placed[key]; if (!q || q.type !== 'module') return { ok: false, msg: 'モジュールではない' };
+      const p = s.plants.find(pp => pp.key === q.parent); if (!p) return { ok: false, msg: '親の設備が無い' };
+      if (!Number.isInteger(pos.x) || !Number.isInteger(pos.y)) return { ok: false, msg: '場所が不正' };
+      if (s.construction.some(c => c.key === key || (c.key === p.key))) return { ok: false, msg: '建設中・移設中は動かせない' };
+      const rot = pos.rot === undefined ? (q.rot || 0) : (((pos.rot | 0) % 4) + 4) % 4;
+      if (pos.x === q.x && pos.y === q.y && rot === (q.rot || 0)) return { ok: false, msg: '今の場所と同じ' };
+      const occ = this.mapOccupancy(s, new Set([key])), r = this.canPlaceModule(s, p, pos.x, pos.y, occ, rot, true); if (!r.ok) return r;
+      // 自分自身を除いた親の足あとに隣接するか（canPlaceModule は自分の旧位置も数えるので、旧位置だけに接する置き方を弾く）
+      const [w, d] = this.footprintOf('module', rot, p.type), rects = this.plantRects(s, p).filter(rr => !(rr.x === q.x && rr.y === q.y));
+      if (!rects.some(rr => ((pos.x + w === rr.x || rr.x + rr.w === pos.x) && pos.y < rr.y + rr.d && rr.y < pos.y + d) || ((pos.y + d === rr.y || rr.y + rr.d === pos.y) && pos.x < rr.x + rr.w && rr.x < pos.x + w))) return { ok: false, msg: '設備に隣接して置く' };
+      const cost = Math.round(RC.fee * this.moduleCost(s, p)); if (s.cash < cost) return { ok: false, msg: `資金不足（${this.fmtMoney(cost)}）`, cost };
+      return { ok: true, cost, rot };
+    },
+    moveModule(s, key, pos) {
+      const chk = this.canMoveModule(s, key, pos); if (!chk.ok) return chk;
+      const q = s.map.placed[key]; q.x = pos.x; q.y = pos.y; if (chk.rot) q.rot = chk.rot; else delete q.rot;
+      s.cash -= chk.cost; s.month.construction += chk.cost;
+      this.log(s, `🔧 増設モジュールを置き直した（${this.fmtMoney(chk.cost)}）`);
+      return { ok: true };
+    },
+    // 撤去：建設費の refund 率が戻る（増設モジュールも）。建設中・移設中は不可。モジュール単体の撤去もできる（日量が減る）
+    demolishValue(s, key) {
+      const RC = D().relocate || { refund: 0.5 }, q = s.map && s.map.placed[key]; if (!q) return 0;
+      if (q.type === 'module') { const p = s.plants.find(pp => pp.key === q.parent); return p ? Math.round(RC.refund * this.moduleCost(s, p)) : 0; }
+      const p = s.plants.find(pp => pp.key === key), kids = Object.keys(s.map.placed).filter(k => s.map.placed[k].parent === key).length;
+      return Math.round(RC.refund * (this.costOf(s, q.type) + (p ? kids * this.moduleCost(s, p) : 0)));
+    },
+    demolish(s, key) {
+      this.ensureMap(s); const m = s.map, q = m.placed[key];
+      if (!q) return { ok: false, msg: '建物が無い' };
+      const kids0 = Object.keys(m.placed).filter(k => m.placed[k].parent === key);
+      if (s.construction.some(c => c.key === key || (q.parent && c.key === q.parent) || kids0.includes(c.key))) return { ok: false, msg: '建設中・移設中（増設モジュールの建設中を含む）は撤去できない' };
+      if (q.type !== 'module') {   // これを前提にする建物（蒸留塔は製油所が前提）が残るなら撤去できない
+        const left = (s.buildings[q.type] || 0) - 1 + s.construction.filter(c => c.type === q.type).length;
+        for (const t2 in D().buildings) { const b2 = D().buildings[t2]; if (b2.requiresBuilding === q.type && left < 1 && ((s.buildings[t2] || 0) > 0 || s.construction.some(c => c.type === t2))) return { ok: false, msg: `${b2.name}があるので、最後の${D().buildings[q.type].name}は撤去できない` }; }
+      }
+      const refund = this.demolishValue(s, key);
+      if (q.type === 'module') {
+        const p = s.plants.find(pp => pp.key === q.parent); if (!p || !(p.modules > 0)) return { ok: false, msg: '撤去できない' };
+        p.modules--; delete m.placed[key]; s.cash += refund; s.month.construction -= refund;
+        this.log(s, `🗑️ ${D().buildings[p.type].name}の増設モジュールを撤去（${this.fmtMoney(refund)}が戻る。日量 ${this.fmtNum(this.plantCapOf(p))}）`);
+        return { ok: true };
+      }
+      if (this.offMap(q.type) || this.stackCfg(q.type)) return { ok: false, msg: 'この建物は撤去できない' };
+      const B = D().buildings[q.type], kids = Object.keys(m.placed).filter(k => m.placed[k].parent === key);
+      for (const k of kids) delete m.placed[k];
+      delete m.placed[key];
+      s.plants = s.plants.filter(pp => pp.key !== key);
+      s.buildings[q.type] = Math.max(0, (s.buildings[q.type] || 0) - 1); if (!s.buildings[q.type]) delete s.buildings[q.type];
+      s.cash += refund; s.month.construction -= refund;   // 返金は設備投資の戻りとして月の集計に反映
+      this.log(s, `🗑️ ${B.name}を撤去（${this.fmtMoney(refund)}が戻る）`);
       return { ok: true };
     },
     mapEntities(s) {
@@ -422,7 +527,7 @@
       const out = [];
       for (const key in s.map.placed) {
         const p = s.map.placed[key], c = s.construction.find(q => q.key === key), [fw, fd] = this.placedFootprint(s, p), stack = this.stackCfg(p.type), lv = stack ? Math.min(stack, s.buildings[p.type] || 0) : 0;
-        out.push({ key, type: p.type, level: stack ? lv : undefined, upgrading: !!(stack && c && lv > 0), parent: p.parent || null, parentType: p.parent && s.map.placed[p.parent] ? s.map.placed[p.parent].type : null, x: p.x, y: p.y, rot: p.rot || 0, fw, fd, building: stack ? (!!c && lv === 0) : !!c, progress: c ? Math.max(0, Math.min(1, 1 - c.daysLeft / (c.totalDays || c.daysLeft || 1))) : 1, daysLeft: c ? c.daysLeft : 0, plant: s.plants.find(q => q.key === key) || null });
+        out.push({ key, type: p.type, level: stack ? lv : undefined, upgrading: !!(stack && c && lv > 0), parent: p.parent || null, parentType: p.parent && s.map.placed[p.parent] ? s.map.placed[p.parent].type : null, x: p.x, y: p.y, rot: p.rot || 0, moving: !!(c && c.type === 'move'), fw, fd, building: stack ? (!!c && lv === 0) : !!c, progress: c ? Math.max(0, Math.min(1, 1 - c.daysLeft / (c.totalDays || c.daysLeft || 1))) : 1, daysLeft: c ? c.daysLeft : 0, plant: s.plants.find(q => q.key === key) || null });
       }
       return out;
     },
@@ -1075,7 +1180,7 @@
       for (const p of s.plants) {
         const def = this.plantDef(p), rec = D().recipes[p.recipe];
         if (!def || !rec) { p.last = { t: 0, reason: 'none' }; continue; }
-        if (!(p.runRate > 0)) { p.last = { t: 0, reason: 'off' }; continue; }
+        if (!(p.runRate > 0) || (p.key && this.isMoving(s, p.key))) { p.last = { t: 0, reason: 'off' }; continue; }
         const inKeys = Object.keys(rec.inputs), outKeys = Object.keys(rec.outputs);
         const pseg = this.segmentOfBuilding(p.type) || 'corp', inv0 = {};
         for (const k of inKeys) inv0[k] = s.inventory[k];   // 自動購入の前の在庫（社内取引と原料不足の判定に使う）
@@ -1240,6 +1345,9 @@
             const L = D().leases[c.lease];
             this.log(s, `🔍 ${L.name}の初号井が完成。油層の豊かさは ${L.richness.toFixed(2)} と判明`);
           }
+        } else if (c.type === 'move') {
+          const q = s.map && s.map.placed[c.key]; this.log(s, `✅ ${q && D().buildings[q.type] ? D().buildings[q.type].name : '設備'}の移設が完了`);
+          continue;
         } else if (c.type === 'oreYard') {
           if (!s.oreYards) s.oreYards = {};
           s.oreYards[c.res] = (s.oreYards[c.res] || 0) + 1;
