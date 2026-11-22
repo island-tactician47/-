@@ -18,7 +18,6 @@ GAME_DATA.tree = {
     supplyMonths: 3,          // 選択権：直近3か月の実績の平均で、輸入なしで回る余剰を測る
     supplyModules: 0,         // 必要な量：その設備に、増設モジュールを何個付けて全開で回す量か（0＝増設なしの1基。上限は map.js の modules.max）
     supplyFactor: 1.0,        // 必要な量にかける係数（バランス調整用）
-    revealDepth: 1,           // ノード画面：選べるノードの「一個次」まで描く（前提がすべて開いているノードまで）
     colonyReveal: { node: 'colony', tier: 5, count: 4 }   // 例外：コロニーは Tier 5 のうち4つが開いたら描く
   },
   nodes: {

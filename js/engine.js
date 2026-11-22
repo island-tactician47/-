@@ -624,16 +624,14 @@
     treeNodes() { return (D().tree && D().tree.nodes) || {}; },
     nodeDef(id) { return this.treeNodes()[id] || null; },
     nodeName(id) { const d = this.nodeDef(id); return d ? d.name : id; },
-    // ノード画面に描くか：開いたノード／前提がすべて開いているノード／その「一個次」（config.revealDepth 段。前提の足りないものが、描かれるノードだけ）。例外：コロニーは Tier 5 のうち count 個が開いたら
-    nodeVisible(s, id, depth) {
+    // ノード画面に描くか：開いたノードと、いま選べる（前提が開き、選択権がある）ノード。その先のノード（前提がまだ・素材の余りが足りないもの）は描かない。例外：コロニーは Tier 5 のうち count 個が開いたら。自動で開くノードは前提がそろえば描く
+    nodeVisible(s, id) {
       const d = this.nodeDef(id); if (!d) return false;
       if (this.nodeUnlocked(s, id)) return true;
-      const cfg = this.treeCfg(), cr = cfg.colonyReveal;
+      const cr = this.treeCfg().colonyReveal;
       if (cr && cr.node === id) { let n = 0; for (const k in this.treeNodes()) if (this.nodeDef(k).tier === cr.tier && this.nodeUnlocked(s, k)) n++; if (n >= cr.count) return true; }
-      const missing = (d.needs || []).filter(n => !this.nodeUnlocked(s, n));
-      if (!missing.length) return true;
-      const dep = depth === undefined ? (cfg.revealDepth || 0) : depth;
-      return dep > 0 && missing.every(m => this.nodeVisible(s, m, dep - 1));
+      if (d.auto) return (d.needs || []).every(n => this.nodeUnlocked(s, n));
+      return this.nodeState(s, id).selectable;
     },
     // ---------- ゴール：純資産（貸借対照表の資本）の目標。達成でスコア。s.goal は達成するまで作らない ----------
     goalCfg() { return D().goal || null; },
@@ -683,7 +681,7 @@
     nodeCounts(s) { let n = 0, all = 0; for (const id in this.treeNodes()) { all++; if (this.nodeUnlocked(s, id)) n++; } return { open: n, all }; },
     // 次の目標の文（ヘッダーに出す）：選べるノード → 解放権をためる → 素材を増やす → すべて開いた
     nodeGoal(s) {
-      const ids = Object.keys(this.treeNodes()).filter(id => !this.nodeUnlocked(s, id) && !this.nodeDef(id).auto && this.nodeVisible(s, id, 0));
+      const ids = Object.keys(this.treeNodes()).filter(id => !this.nodeUnlocked(s, id) && !this.nodeDef(id).auto && (this.nodeDef(id).needs || []).every(n => this.nodeUnlocked(s, n)));   // 前提がそろっているノード
       if (!ids.length) { if (!Object.keys(this.treeNodes()).every(id => this.nodeUnlocked(s, id))) return null; const g = this.goalProgress(s); return g && !g.reached ? `目標：純資産 ${this.fmtMoney(g.eq)} / ${this.fmtMoney(g.target)}${g.years ? '（今のペースで約' + g.years.toFixed(0) + '年）' : ''}` : '目標：すべてのノードを開いた'; }
       const sts = ids.map(id => ({ id, st: this.nodeState(s, id) }));
       const c = sts.find(x => x.st.canUnlock); if (c) return `目標：研究タブで「${this.nodeName(c.id)}」を開ける（解放権${c.st.tickets.need}枚）`;
