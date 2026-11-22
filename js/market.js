@@ -92,12 +92,18 @@
       // 新しいイベントの抽選
       const E = D().events;
       if (rng() < E.monthlyChance) {
-        const candidates = E.list.filter(e => !state.activeEvents.some(a => a.id === e.id));
-        const total = candidates.reduce((a, e) => a + e.weight, 0);
-        let x = rng() * total;
-        for (const e of candidates) {
-          x -= e.weight;
-          if (x <= 0) { this.startEvent(state, e.id); return e; }
+        // その本部の事業をしていないときは、その本部のイベントは起こさない。本部（と景気全般＝segment 無し）を均等に選んでから、その中で重みで選ぶ
+        const ok = e => !state.activeEvents.some(a => a.id === e.id) && (!e.segment || !window.Engine || !Engine.segmentActive || Engine.segmentActive(state, e.segment));
+        const groups = {};
+        for (const e of E.list) if (ok(e)) (groups[e.segment || '*'] = groups[e.segment || '*'] || []).push(e);
+        const keys = Object.keys(groups);
+        if (keys.length) {
+          const g = groups[keys[Math.min(keys.length - 1, Math.floor(rng() * keys.length))]], total = g.reduce((a, e) => a + e.weight, 0);
+          let x = rng() * total;
+          for (const e of g) {
+            x -= e.weight;
+            if (x <= 0) { this.startEvent(state, e.id); return e; }
+          }
         }
       }
       return null;

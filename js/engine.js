@@ -303,6 +303,7 @@
     fillable(s, x, y) {
       const M = this.mapCfg(); if (!M || x < 0 || y < 0 || x >= M.w || y >= M.h) return false;
       if (x >= M.port.x0 && x <= M.port.x1) return false;
+      if (x % M.block === M.block - 1 || y % M.block === M.block - 1) return false;   // 道路の線の上（海の上でも）には建てない
       if (y >= this.coastY(x) + M.reclaimMax) return false;
       return !this.inSeaFront(s, x, y);
     },
@@ -406,7 +407,7 @@
       const prot = rot === undefined ? this.parentRot(s, p) : (((rot | 0) % 4) + 4) % 4, occ = this.mapOccupancy(s), [w, d] = this.footprintOf('module', prot, p.type), rects = this.plantRects(s, p); let best = null, bd = Infinity;
       for (let y = Math.max(0, r0.y - d - 1); y < Math.min(M.h, r0.y + r0.d + d + 2); y++) for (let x = Math.max(0, r0.x - w - 1); x < Math.min(M.w, r0.x + r0.w + w + 2); x++) {
         const dd = Math.abs(x - r0.x) + Math.abs(y - r0.y); if (dd >= bd) continue;
-        if (!this.canPlace(s, 'module', x, y, occ, prot, p.type).ok) continue;
+        { const cp = this.canPlace(s, 'module', x, y, occ, prot, p.type); if (!cp.ok || (cp.fill && cp.fill.length)) continue; }   // 自動の置き場所は陸だけ（埋め立ては、手で場所を選んだときだけ）
         if (rects.some(r => ((x + w === r.x || r.x + r.w === x) && y < r.y + r.d && r.y < y + d) || ((y + d === r.y || r.y + r.d === y) && x < r.x + r.w && r.x < x + w))) { best = { x, y }; bd = dd; }
       }
       return best;
@@ -546,6 +547,13 @@
 
     // ---------- 本部（表示用の分類。data/segments.js） ----------
     segmentIds() { return (D().segmentOrder || []).filter(id => D().segments[id]); },
+    // その本部の事業をしているか（設備・加工設備・鉱山がある）。石油本部は最初から油井がある
+    segmentActive(s, seg) {
+      if (!seg) return true; if (seg === 'oil') return true;
+      for (const type in s.buildings) if ((s.buildings[type] || 0) > 0 && this.segmentOfBuilding(type) === seg) return true;
+      for (const m of s.mines || []) { const S = D().mineSites && D().mineSites[m.site]; if (S && this.segmentOfItem(S.res) === seg) return true; }
+      return false;
+    },
     segmentOfItem(k) { return ((D().segmentOf || {}).resources || {})[k] || null; },
     segmentOfBuilding(type) { return ((D().segmentOf || {}).buildings || {})[type] || null; },
     // 本部名（石油本部は化学プラントを建てたら石化本部に変わる）
@@ -829,6 +837,12 @@
           for (const k in r.inputs) if (!(P[type].throughput * (r.speed || 1) * r.inputs[k] > 1e-6)) out.push(`レシピ ${id} の日量×入力 ${k} が小さすぎる`);
         });
       }
+      // イベント：本部ID・品目が実在する
+      for (const e of (G.events && G.events.list) || []) {
+        if (e.segment && !(G.segments && G.segments[e.segment])) out.push(`イベント ${e.id} の本部 ${e.segment} が segments に無い`);
+        for (const k in e.effects || {}) if (!R[k]) out.push(`イベント ${e.id} の effects に未定義の品目 ${k}`);
+        if (!(e.weight > 0) || !(e.months > 0)) out.push(`イベント ${e.id} の weight / months が不正`);
+      }
       // 電力：energyShare は0以上1未満、燃料は品目で perMWh が正、発電所の建物がある
       for (const id in RC) { const e = RC[id].energyShare; if (e !== undefined && !(e >= 0 && e < 1)) out.push(`レシピ ${id} の energyShare が0以上1未満でない`); }   // 燃料・発電所の存在は selftest_real が検査する
       // 研究：参照の整合
@@ -1035,14 +1049,39 @@
     revenue12(s) { return s.history.slice(-12).reduce((a, h) => a + h.revenue, 0); },
     loanLimit(s, id) { return Math.round(D().loans[id].limit * this.priceIndex(s) / 1000) * 1000; },
     loanAvailable(s, id) {
-      const L = D().loans[id], c = L.cond;
+      const L = D().loans[id]; if (!L) return { ok: false, msg: '不明な融資' };
+      const c = L.cond;
+      if (L.special) return { ok: false, msg: '債務の再編でのみ' };
       if (s.loans[id]) return { ok: false, msg: '返済中（完済すると再び借りられる）' };
+      if (s.restructured && s.day < s.restructured.day + D().restructure.lockMonths * DAYS_PER_MONTH) return { ok: false, msg: `再建中は新しく借りられない（あと${Math.ceil((s.restructured.day + D().restructure.lockMonths * DAYS_PER_MONTH - s.day) / DAYS_PER_MONTH)}か月）` };
       if (c) {
         if (c.wells && s.wells.length < c.wells) return { ok: false, msg: `条件：${L.condText}` };
         if (c.revenue12 && this.revenue12(s) < c.revenue12 * this.priceIndex(s)) return { ok: false, msg: `条件：${L.condText}` };
         if (c.refinery && !this.refineryOnline(s)) return { ok: false, msg: `条件：${L.condText}` };
       }
       return { ok: true };
+    },
+    // ---------- 債務の再編（救済）。s.restructured={day,from} は初めて使うまで作らない。再建融資は s.loans.rebuild ----------
+    debtService(s) { let v = (s.overdraft || 0) * D().overdraftRate / 12; for (const id in s.loans) { const l = s.loans[id], r = D().loans[id].rate; v += l.monthly + l.principal * r / 12; } return v; },
+    restructureState(s) {   // 苦しい状態か、再編できるか
+      const R = D().restructure, debt = this.totalDebt(s), rev = this.revenue12(s), svc = this.debtService(s);
+      if (!(debt > 0)) return { ok: false, distressed: false, msg: '借入が無い' };
+      const room = 0.25 * rev, over = (s.overdraft || 0) > 0 && s.overdraft >= room * 0.8, heavy = rev > 0 ? svc >= R.distressRatio * rev / 12 : svc > 0 && (s.overdraft || 0) > 0;
+      const distressed = over || heavy;
+      if (s.restructured && s.day < s.restructured.day + R.cooldownMonths * DAYS_PER_MONTH) return { ok: false, distressed, msg: `再編は${R.cooldownMonths}か月に1度（あと${Math.ceil((s.restructured.day + R.cooldownMonths * DAYS_PER_MONTH - s.day) / DAYS_PER_MONTH)}か月）`, debt, svc };
+      if (!distressed) return { ok: false, distressed, msg: '返済に余裕がある（苦しくなったら使える）', debt, svc };
+      return { ok: true, distressed, debt, svc, fee: Math.round(debt * R.fee), newMonthly: debt / (R.years * 12) + debt * R.rate / 12 };
+    },
+    restructureDebt(s) {
+      const st = this.restructureState(s); if (!st.ok) return st;
+      const R = D().restructure; let principal = this.totalDebt(s); const fee = Math.round(principal * R.fee);
+      s.loans = {}; s.overdraft = 0;
+      if (s.cash >= fee) s.cash -= fee; else { principal += fee - Math.max(0, s.cash); s.cash = Math.max(0, s.cash - fee); }   // 手数料を払えなければ元本に足す
+      s.month.interest += fee;
+      s.loans.rebuild = { principal, monthly: principal / (R.years * 12) };
+      s.restructured = { day: s.day, from: st.debt };
+      this.log(s, `🆘 債務を再編：借入 ${this.fmtMoney(st.debt)} を${R.name}1本にまとめた（${R.years}年・年利${(R.rate * 100).toFixed(0)}%・手数料 ${this.fmtMoney(fee)}）。月々の返済は ${this.fmtMoney(st.svc)} → ${this.fmtMoney(s.loans.rebuild.monthly + principal * R.rate / 12)}。${R.lockMonths}か月は新しく借りられない`);
+      return { ok: true, fee };
     },
     borrow(s, id, amount) {
       const chk = this.loanAvailable(s, id);

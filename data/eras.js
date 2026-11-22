@@ -11,12 +11,12 @@ window.GAME_DATA = window.GAME_DATA || {};
 GAME_DATA.tiers = {
   1: { name: '採掘期', icon: '🛢️' },
   2: { name: '精製期', icon: '🏭' },
-  3: { name: '化学期', icon: '🧪', cond: { refinery: true, refinedRevenue: 1500000 },
+  3: { name: '化学期', icon: '🧪', cond: { refinery: true, refinedRevenue: 4000000 },
        text: '化学プラントでナフサを加工できる。洗剤・化粧品の工場も建てられる' },
-  4: { name: '多角化期', icon: '⛏️', cond: { netWorth: 3000000 },
+  4: { name: '多角化期', icon: '⛏️', cond: { netWorth: 9000000 },
        text: '鉄鉱石・鋼材・アルミ・ガラスなどの素材と、建材・衣料の工場が使える' },
-  5: { name: '重工業期', icon: '🚗', cond: { produced: { steel: 1000, plastic: 1000, rubber: 1000 } },
+  5: { name: '重工業期', icon: '🚗', cond: { produced: { steel: 25000, plastic: 12000, rubber: 12000 } },
        text: '自動車工場と造船所が建てられる。製鋼所で合金が作れる（船舶の材料）' },
-  6: { name: '先端期', icon: '🚀', cond: { produced: { alloy: 500, car: 2000 } },
+  6: { name: '先端期', icon: '🚀', cond: { produced: { alloy: 5000, car: 12000 } },
        text: '半導体・PC・電池EV・航空機の専用工場が建てられる。非鉄製錬所でシリコンとリチウムが作れる' }
 };

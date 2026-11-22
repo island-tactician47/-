@@ -16,6 +16,7 @@
     <div class="sub" id="debtinfo"></div>
   </div>
   <h2>融資枠</h2>
+  <div id="relief"></div>
   <div id="loans"></div>
 
   <div class="card">
@@ -59,13 +60,19 @@ const E = Engine, G = GAME_DATA, M = v => E.fmtMoney(v);
 
 function borrow(id, f) { UI.act(s => E.borrow(s, id, E.loanLimit(s, id) * f)); }
 function repay(id, a) { UI.act(s => E.repayLoan(s, id, a)); }
+function restructure() { if (!confirm('借入と当座貸越を再建融資にまとめます。手数料がかかり、しばらく新しく借りられません。よろしいですか？')) return; UI.act(s => E.restructureDebt(s)); }
 
 function render(s) {
   $('debt').textContent = M(E.totalDebt(s));
   let pay = 0;
   for (const id in s.loans) pay += s.loans[id].monthly + s.loans[id].principal * G.loans[id].rate / 12;
   UI.html('debtinfo', `毎月の返済（元金＋利息）約${M(pay)}${s.overdraft > 0 ? `<br><span class="bad">当座貸越 ${M(s.overdraft)}（年利${G.overdraftRate * 100}%・資金がプラスになると自動返済）</span>` : ''}<br>直近12か月の売上 ${M(E.revenue12(s))}`);
-  UI.html('loans', Object.entries(G.loans).map(([id, L]) => {
+  { const st = E.restructureState(s), R = G.restructure, rb = s.loans.rebuild;
+    UI.html('relief', rb ? `<div class="card"><div class="row"><h3>🆘 ${R.name}</h3><span class="sub">年利${(R.rate * 100).toFixed(0)}%・${R.years}年</span></div><div class="sub">残高 <b>${M(rb.principal)}</b>　月々 元金${M(rb.monthly)}＋利息。再編のあとは${R.lockMonths}か月、新しく借りられません（完済しても、期間が過ぎるまでは同じ）。</div><div class="btns" style="margin-top:6px"><button class="btn small" onclick="repay('rebuild',50000)">$50k繰上返済</button><button class="btn small" onclick="repay('rebuild',Infinity)">返せるだけ返済</button></div></div>`
+      : st.distressed || (s.overdraft > 0) ? `<div class="card"><div class="row"><h3>🆘 債務の再編（救済）</h3></div><div class="sub">借入と当座貸越をまとめて、メインバンクの再建融資（${R.years}年・年利${(R.rate * 100).toFixed(0)}%）に借り換える。月々の返済が軽くなる代わりに、手数料${(R.fee * 100).toFixed(0)}%がかかり、${R.lockMonths}か月は新しく借りられない。${R.cooldownMonths}か月に1度。</div>
+        ${st.ok ? `<div class="sub" style="margin-top:4px">借入 <b>${M(st.debt)}</b>　月々の返済 ${M(st.svc)} → <b>${M(st.newMonthly)}</b>　手数料 ${M(st.fee)}</div><div class="btns" style="margin-top:6px"><button class="btn small" onclick="restructure()">債務を再編する</button></div>` : `<div class="sub bad" style="margin-top:4px">${st.msg}</div>`}</div>` : '');
+  }
+  UI.html('loans', Object.entries(G.loans).filter(([id, L]) => !L.special).map(([id, L]) => {
     const loan = s.loans[id], av = E.loanAvailable(s, id), lim = E.loanLimit(s, id);
     let body;
     if (loan) {
