@@ -46,7 +46,7 @@ GAME_DATA.recipes = {
   pharma: { name: '医薬品', inputs: { pharmaMat: 1.2, glass: 0.4 }, outputs: { pharma: 1 }, opexPerUnit: 238.0, energyShare: 0.1 },
   rocket: { name: 'ロケット', inputs: { alloy: 400, semiconductor: 60, explosive: 300, aluminum: 100 }, outputs: { rocket: 1 }, opexPerUnit: 69841.7, energyShare: 0.05 },
   weapon: { name: '兵器', inputs: { steel: 1.0, alloy: 0.5, semiconductor: 0.05, explosive: 0.4 }, outputs: { weapon: 1 }, opexPerUnit: 77.9, energyShare: 0.07 },
-  colony: { name: '宇宙コロニー', inputs: { paper: 1500, buildmat: 4000, car: 300, detergent: 250, clothing: 1500, pharma: 150, semiconductor: 300, pc: 1000, ev: 200, weapon: 50, rocket: 2, alloy: 1000 }, outputs: { colony: 1 }, opexPerUnit: 7620307.4, energyShare: 0.05 }
+  colony: { name: '宇宙コロニー', inputs: { paper: 1500, buildmat: 4000, car: 300, detergent: 250, clothing: 1500, pharma: 150, pc: 1000, ev: 200, weapon: 50, rocket: 2, alloy: 1000 }, outputs: { colony: 1 }, opexPerUnit: 9013507.4, energyShare: 0.05 }
 };
 GAME_DATA.plants = {
   chemPlant: { recipes: ['plastic', 'rubber', 'surfactant', 'fiber'], legacyRecipes: ['pharmaMat', 'explosive'], throughput: 10 },

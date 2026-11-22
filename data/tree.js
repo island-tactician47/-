@@ -63,8 +63,8 @@ GAME_DATA.tree = {
                  buildings: ['aircraftFactory'], recipes: ['aircraft'], resources: ['aircraft'] },
     weapon:    { name: '兵器',         icon: '🎖️', tier: 5, legacyTier: 6, tickets: 2, legacyResearch: true, needs: ['steel', 'semi', 'explo'],
                  buildings: ['munitionsFactory'], recipes: ['weapon'], resources: ['weapon'] },
-    // 最後の工場：船と航空機以外のすべての最終製品と合金が材料（半導体を最終製品に数えるかは要確認）
-    colony:    { name: '宇宙コロニー', icon: '🛰️', tier: 6, tickets: 3, needs: ['steel', 'semi', 'pharma', 'pc', 'ev', 'weapon', 'rocket', 'car', 'buildmat', 'detergent', 'clothing', 'paper'],
+    // 最後の工場：船・航空機・半導体以外のすべての最終製品と合金が材料（半導体は数えない。ただし PC・EV・兵器・ロケットの前提なので、結局開く）
+    colony:    { name: '宇宙コロニー', icon: '🛰️', tier: 6, tickets: 3, needs: ['steel', 'pharma', 'pc', 'ev', 'weapon', 'rocket', 'car', 'buildmat', 'detergent', 'clothing', 'paper'],
                  buildings: ['colonyFactory'], recipes: ['colony'], resources: ['colony'] },
     rocket:    { name: 'ロケット',     icon: '🚀', tier: 5, legacyTier: 6, tickets: 2, legacyResearch: true, needs: ['steel', 'semi', 'explo', 'aluminum'],
                  buildings: ['rocketFactory'], recipes: ['rocket'], resources: ['rocket'] },
