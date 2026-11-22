@@ -323,7 +323,7 @@
       const sig = s.plants.length + ':' + s.construction.length + ':' + Object.keys(s.buildings).reduce((a, k) => a + s.buildings[k], 0) + ':' + ((s.map && s.map.reclaim) || 0) + ':' + (s.map ? Object.keys(s.map.placed).length : -1);
       if (sig !== I.sig) { E.ensureMap(s); if (opts.onChanged) opts.onChanged(); I.sig = s.plants.length + ':' + s.construction.length + ':' + Object.keys(s.buildings).reduce((a, k) => a + s.buildings[k], 0) + ':' + ((s.map && s.map.reclaim) || 0) + ':' + Object.keys(s.map.placed).length; }
       // 地形は視点・時代・埋め立てが変わったときだけ描き直す（オフスクリーンに保持）
-      const tkey = [I.view, I.cam.x.toFixed(1), I.cam.y.toFixed(1), I.cam.z.toFixed(3), era, (s.map && s.map.reclaim) || 0, s.map ? Object.keys(s.map.placed).length : 0, I.w, I.h, I.dpr].join('|');
+      const tkey = [I.view, I.cam.x.toFixed(1), I.cam.y.toFixed(1), I.cam.z.toFixed(3), era, (s.map && s.map.reclaim) || 0, s.map ? Object.keys(s.map.placed).reduce((a, k) => a + s.map.placed[k].x * 31 + s.map.placed[k].y * 17 + 1, 0) : 0, I.w, I.h, I.dpr].join('|');
       if (tkey !== I.tkey || !I.off) {
         if (!I.off) I.off = document.createElement('canvas');
         if (I.off.width !== canvas.width || I.off.height !== canvas.height) { I.off.width = canvas.width; I.off.height = canvas.height; }
@@ -334,6 +334,7 @@
       }
       ctx.drawImage(I.off, 0, 0, I.w, I.h);
       I.ents = E.mapEntities(s); I.vents = I.ents.map(viewOf);   // ents＝世界の座標、vents＝回したあとの座標（描画・タップ判定用）
+      drawAmbient(s, era);   // 車・船・灯台は建物より先に描く（手前の建物が重なって隠す）
       const items = I.vents.map(e => ({ e, key: e.x + e.fw / 2 + e.y + e.fd / 2 }));
       const pe = portEntity(s), pv = viewOf({ x: pe.x, y: pe.y, fw: pe.fw, fd: pe.fd }); items.push({ e: pe, key: pv.x + pv.fw / 2 + pv.y + pv.fd / 2 - 1.5 });
       items.sort((a, b) => a.key - b.key);
@@ -343,7 +344,6 @@
         if (I.selected === e.key) outline(e, '#ffe08a', 2.2);
         drawEntity(e, o);
       }
-      drawAmbient(s, era);
       if (I.ghost) drawGhost(s, era);
       else if (I.cursor) { const c = I.cursor; ctx.globalAlpha = 0.6; poly([pt(c.x, c.y, 0.3), pt(c.x + 1, c.y, 0.3), pt(c.x + 1, c.y + 1, 0.3), pt(c.x, c.y + 1, 0.3)], '#ffe08a'); ctx.globalAlpha = 1; }   // 世界の座標で与え、pt が回す（正方形のまま）
       drawSmoke(dt);

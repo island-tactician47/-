@@ -135,7 +135,7 @@
   }
   function working(s, ids) {   // その地帯で今、産出しているか
     let n = 0;
-    for (const id of ids) { const z = zones.find(q => q.id === id); if (!z) continue; if (z.kind === 'oil') n += s.wells.filter(w => w.lease === id).length ? 1 : 0; else if (z.kind === 'mine') { const c = counts(s, z); if (c.n && !c.paused && E.oreRoom(s, z.res) > 0) n += c.n; } }
+    for (const id of ids) { const z = zones.find(q => q.id === id); if (!z) continue; if (z.kind === 'oil') n += s.wells.filter(w => w.lease === id).length && E.capacity(s, 'crude') - s.inventory.crude > 0 ? 1 : 0; else if (z.kind === 'mine') { const c = counts(s, z); if (c.n && !c.paused && E.oreRoom(s, z.res) > 0) n += c.n; } }
     return n;
   }
   function trucks(now) {
@@ -144,7 +144,7 @@
       const n = Math.min(3, working(state, r.ids)); if (!n) continue; any = true;
       let L = 0; for (let i = 0; i + 1 < r.pts.length; i++) L += Math.abs(r.pts[i + 1][0] - r.pts[i][0]) + Math.abs(r.pts[i + 1][1] - r.pts[i][1]);
       for (let k = 0; k < n; k++) for (const dir of [1, -1]) {
-        const d = dir > 0 ? ((now / 1000) * 3 + k * L / n) % L : L - (((now / 1000) * 3 + k * L / n + L / 2) % L), p = posOn(r.pts, d);
+        const d = dir > 0 ? ((now / 1000) * 3 + k * L / n) % L : L - (((now / 1000) * 3 + k * L / n + L / 2) % L), p = posOn(r.pts, d); if (dir < 0) { p.dx = -p.dx; p.dy = -p.dy; }
         const lane = dir > 0 ? 0.32 : -0.32, px = p.x + (p.dy ? lane : 0) * -1 + (p.dy ? 0 : 0), py = p.y + (p.dx ? lane : 0);
         const alongX = !!p.dx, w = alongX ? 0.62 : 0.3, dd = alongX ? 0.3 : 0.62, col = dir > 0 ? (TRUCKCOL[r.res] || '#555') : '#7a7a74';
         box(px - w / 2, py - dd / 2, w, dd, 6, '#d9d6c8', '#a9a69a', '#c0bdb0');   // 荷台
@@ -220,13 +220,13 @@
     const own = zones.filter(z => counts(s, z).owned && z.kind !== 'yard');
     if (own.length) { tx = own.reduce((a, z) => a + z.x + z.w / 2, 0) / own.length; ty = own.reduce((a, z) => a + z.y + z.h / 2, 0) / own.length; }
     if (hub) { tx = (tx + hub.x + hub.w / 2) / 2; ty = (ty + hub.y + hub.h / 2) / 2; }
-    cam.z = (/[?&]fz=([\d.]+)/.exec(location.search) || [0, 0.3])[1] * 1 || 0.3; cam.x = cw / 2 - sx(tx, ty) * cam.z; cam.y = ch / 2 - sy(tx, ty) * cam.z; framed = true;
+    cam.z = Math.max(0.18, Math.min(1.6, (/[?&]fz=([\d.]+)/.exec(location.search) || [0, 0.3])[1] * 1 || 0.3)); cam.x = cw / 2 - sx(tx, ty) * cam.z; cam.y = ch / 2 - sy(tx, ty) * cam.z; framed = true;
   }
 
   function sigOf(s) { return zones.map(z => { const c = counts(s, z); return z.id + ':' + c.n + ':' + c.nb + ':' + (c.owned ? 1 : 0) + (c.paused ? 'p' : ''); }).join('|') + '|' + (sel ? sel.id : '') + '|' + Math.round(cam.x) + ',' + Math.round(cam.y) + ',' + cam.z.toFixed(2) + '|' + cw + 'x' + ch; }
 
   function resize() {
-    const r = canvas.getBoundingClientRect(); dpr = window.devicePixelRatio || 1; cw = Math.round(r.width); ch = Math.round(r.height);
+    const r = canvas.getBoundingClientRect(); dpr = Math.min(2, window.devicePixelRatio || 1); cw = Math.round(r.width); ch = Math.round(r.height);
     if (!cw || !ch) return false; canvas.width = cw * dpr; canvas.height = ch * dpr; return true;
   }
   const FieldMap = {
@@ -240,7 +240,7 @@
       canvas.addEventListener('pointerdown', e => { canvas.setPointerCapture(e.pointerId); pts.set(e.pointerId, pos(e)); moved = 0; last = pos(e); pd = pts.size === 2 ? Math.hypot(...[...pts.values()].reduce((a, p, i) => i ? [a[0] - p.x, a[1] - p.y] : [p.x, p.y], [0, 0])) : 0; });
       canvas.addEventListener('pointermove', e => {
         if (!pts.has(e.pointerId)) return; const p = pos(e); pts.set(e.pointerId, p);
-        if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pd) { const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, nz = Math.max(0.18, Math.min(1.6, cam.z * d / pd)); cam.x = mx - (mx - cam.x) * nz / cam.z; cam.y = my - (my - cam.y) * nz / cam.z; cam.z = nz; } pd = d; moved = 99; draw(); return; }
+        if (pts.size === 2) { const [a, b] = [...pts.values()], d = Math.hypot(a.x - b.x, a.y - b.y); if (pd) { const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2, nz = Math.max(0.18, Math.min(1.6, cam.z * d / pd)); cam.x = mx - (mx - cam.x) * nz / cam.z; cam.y = my - (my - cam.y) * nz / cam.z; cam.z = nz; } pd = d; moved = 99; last = p; draw(); return; }
         const dx = p.x - last.x, dy = p.y - last.y; moved += Math.abs(dx) + Math.abs(dy); if (moved > 6) { cam.x += dx; cam.y += dy; draw(); } last = p;
       });
       const up = e => {
@@ -254,13 +254,13 @@
       canvas.addEventListener('pointerup', up); canvas.addEventListener('pointercancel', e => { pts.delete(e.pointerId); pd = 0; });
       canvas.addEventListener('wheel', e => { e.preventDefault(); const p = pos(e), nz = Math.max(0.18, Math.min(1.6, cam.z * (e.deltaY < 0 ? 1.1 : 0.9))); cam.x = p.x - (p.x - cam.x) * nz / cam.z; cam.y = p.y - (p.y - cam.y) * nz / cam.z; cam.z = nz; draw(); }, { passive: false });
       for (const z of zones) for (const n of [spriteOf(z)]) img(n);
-      let lastAnim = 0; const tick = now => { if (canvas.offsetParent && state && now - lastAnim > 80 && !document.hidden) { lastAnim = now; if (routes.some(r => working(state, r.ids))) draw(); } requestAnimationFrame(tick); };
+      let lastAnim = 0; const tick = now => { if (canvas.offsetParent && state && now - lastAnim > 80 && !document.hidden) { lastAnim = now; const rc = canvas.getBoundingClientRect(); if (Math.round(rc.width) !== cw || Math.round(rc.height) !== ch) { resize(); lastSig = ''; } if (routes.some(r => working(state, r.ids))) draw(); else if (!lastSig) draw(); } requestAnimationFrame(tick); };
       requestAnimationFrame(tick);
     },
     // 表示中に状態が変わったときだけ描き直す
     update(s) {
       state = s; if (!canvas || !canvas.offsetParent) return;
-      if (!cw || !ch) { if (!resize()) return; }
+      { const r = canvas.getBoundingClientRect(); if (!cw || !ch || Math.round(r.width) !== cw || Math.round(r.height) !== ch) { if (!resize()) return; lastSig = ''; } }
       if (!framed) frameOwned(s);
       const sg = sigOf(s); if (sg === lastSig) return; lastSig = sg; draw();
     }

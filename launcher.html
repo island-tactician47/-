@@ -138,8 +138,14 @@ function xferImport(txt) {
   let s; try { s = JSON.parse(txt); } catch (e) { xmsg('読み込めない形式です（JSONではありません）'); return; }
   const pr = Save.problem(s);
   if (pr) { xmsg('このセーブは使えません：' + pr); return; }
+  // 他人のセーブを取り込んでも HTML が動かないように、ログ・出来事の文字から HTML を無害化する（<br> だけ残す）
+  const esc = x => String(x).replace(/<(?!br\s*\/?>)/g, '&lt;');
+  for (const l of s.log) if (l && l.text !== undefined) l.text = esc(l.text);
+  for (const e of s.pendingEvents) if (e) { if (e.title !== undefined) e.title = esc(e.title); if (e.text !== undefined) e.text = esc(e.text); }
+  try { Engine.normalize(JSON.parse(JSON.stringify(s))); } catch (e) { xmsg('このセーブは壊れていて使えません：' + e.message); return; }
+  txt = JSON.stringify(s);
   const info = `${Engine.dateStr(s)}（${GAME_DATA.difficulties[s.difficulty].name}）資金 ${Engine.fmtMoney(s.cash)}`;
-  if (!confirm(`このセーブを読み込みます。\n${info}\n\n今のセーブは置き換わります。よろしいですか？`)) return;
+  if (!confirm(`このセーブを読み込みます。\n${info}\n\n今のセーブは置き換わり、元には戻せません。ほかのタブで開いているゲームは閉じてください。よろしいですか？`)) return;
   try { Save.importText(txt); } catch (e) { xmsg('読み込めませんでした：' + e.message); return; }
   location.reload();
 }
@@ -164,6 +170,7 @@ function newGame() {
 }
 
 renderDiffs(); renderCont();
+try { if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js'); } catch (e) {}
 </script>
 </body>
 </html>

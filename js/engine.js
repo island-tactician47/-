@@ -51,6 +51,7 @@
         if (s.inventory[k] === undefined) s.inventory[k] = 0;
         if (s.hold[k] === undefined) s.hold[k] = false;
       }
+      for (const id in D().leases) if (!s.leases[id] || typeof s.leases[id] !== 'object') s.leases[id] = { owned: false, revealed: false };   // 鉱区が増えても古いセーブを読めるように
       Market.ensure(s);
       if (!s.plants) s.plants = [];
       if (!s.nextPlantId) s.nextPlantId = 1;

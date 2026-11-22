@@ -13,7 +13,8 @@
     if (!isObj(s.market) || !isObj(s.market.level) || !isObj(s.market.sat)) return 'market が無い';
     if (!Array.isArray(s.wells) || !Array.isArray(s.history) || !Array.isArray(s.construction)) return '配列が無い';
     if (typeof s.day !== 'number' || typeof s.cash !== 'number') return 'day / cash が無い';
-    if (!window.GAME_DATA || !GAME_DATA.difficulties[s.difficulty]) return `難易度が不明（${s.difficulty}）`;
+    if (!window.GAME_DATA || !Object.prototype.hasOwnProperty.call(GAME_DATA.difficulties, s.difficulty)) return `難易度が不明（${s.difficulty}）`;
+    if (!isObj(s.settings) || !isObj(s.refinery) || !Array.isArray(s.log) || !Array.isArray(s.pendingEvents)) return 'settings / refinery / log / pendingEvents が無い';
     return null;
   }
   const Save = {
