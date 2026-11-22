@@ -32,6 +32,7 @@
 <script src="../data/port.js"></script>
 <script src="../data/events.js"></script>
 <script src="../data/eras.js"></script>
+<script src="../data/tree.js"></script>
 <script src="../data/recipes.js"></script>
 <script src="../data/research.js"></script>
 <script src="../data/segments.js"></script>
@@ -159,7 +160,7 @@ function segBody(s, o, pl) {
     <tr><td><b>加工設備の合計</b></td><td><b>${M(plantCap)}</b></td><td><b>${M(o.monthly)}</b></td><td><b>${yrs(o.monthly > 0 ? plantCap / (o.monthly * 12) : Infinity)}</b></td></tr>
     ${o.baseValue ? `<tr><td class="sub">採掘・精製（油井・製油所・タンク。粗利の対象外）</td><td class="sub">${M(o.baseValue)}</td><td></td><td></td></tr>` : ''}</table>` : '';
   // 価格チャート（この本部の品目）
-  const items = G.productOrder.filter(k => E.segmentOfItem(k) === o.id && (E.tierUnlocked(s, G.resources[k].tier || 1)));
+  const items = G.productOrder.filter(k => E.segmentOfItem(k) === o.id && E.resourceUnlocked(s, k));
   let pick = UI.tab('dash-' + o.id, items[0]);
   if (!items.includes(pick)) pick = items[0];
   let chart = '';
@@ -182,7 +183,7 @@ function renderSegs(s) {
   }).join('') + (pl.corp ? UI.fold('f-seg-corp', `<span><b>🏢 全社（倉庫・研究・電力など）</b><div class="sub">本部に属さない費用</div></span>`, plTable(s, 'corp', pl) + `<div class="sub" style="margin-top:6px">支払利息（直近${pl.months}か月 ${M(s.history.slice(-pl.months).reduce((a, h) => a + ((h.costs && h.costs.interest) || 0), 0))}）は本部に配分しない。本部の利益の合計−利息−（払い戻しを含めた）全社の費用＝経営の利益</div>`, false) : '') || '<div class="card sub">解放済みの加工がまだない</div>');
   for (const id of visible) {
     const c = $('pc-' + id); if (!c) continue;
-    const pick = UI.tab('dash-' + id, null), items = G.productOrder.filter(k => E.segmentOfItem(k) === id && E.tierUnlocked(s, G.resources[k].tier || 1));
+    const pick = UI.tab('dash-' + id, null), items = G.productOrder.filter(k => E.segmentOfItem(k) === id && E.resourceUnlocked(s, k));
     const k = items.includes(pick) ? pick : items[0];
     const vals = s.history.slice(-36).map(x => x.prices && x.prices[k]).filter(v => v > 0);
     UI.spark(c, vals, '#7a4fa3', { labels: true, fmt: v => v >= 100 ? M(v) : '$' + v.toFixed(2) });

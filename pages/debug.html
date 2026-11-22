@@ -76,6 +76,7 @@
 <script src="../data/port.js"></script>
 <script src="../data/events.js"></script>
 <script src="../data/eras.js"></script>
+<script src="../data/tree.js"></script>
 <script src="../data/recipes.js"></script>
 <script src="../data/research.js"></script>
 <script src="../data/segments.js"></script>
@@ -108,7 +109,7 @@ function render(s) {
   const recRows = [];
   for (const type in G.plants) for (const id of G.plants[type].recipes) {
     const ec = E.recipeEconomics(s, id, type, 1), main = Object.keys(G.recipes[id].outputs)[0], R = G.resources[main];
-    recRows.push(`<tr style="${E.recipeUnlocked(s, id) && (!B[type].tier || E.tierUnlocked(s, B[type].tier)) ? '' : 'opacity:.55'}"><td>${G.recipes[id].name}${G.recipes[id].tier && !E.tierUnlocked(s, G.recipes[id].tier) ? ' 🔒' : ''}</td><td>${B[type].name}</td><td>${ec.perDay >= 10 ? ec.perDay.toFixed(0) : ec.perDay >= 1 ? ec.perDay.toFixed(1) : parseFloat(ec.perDay.toPrecision(2))}${R.unit}</td><td>${(ec.marginBuy / ec.revenue * 100).toFixed(0)}%</td><td class="${ec.monthlyBuy >= 0 ? 'good' : 'bad'}">${money(ec.monthlyBuy)}</td><td>${yr(ec.paybackYearsBuy)}</td><td class="${ec.monthlyBuySat >= 0 ? '' : 'bad'}">${yr(ec.paybackYearsBuySat)}</td></tr>`);
+    recRows.push(`<tr style="${E.recipeUnlocked(s, id) && E.buildingOpen(s, type) ? '' : 'opacity:.55'}"><td>${G.recipes[id].name}${E.recipeUnlocked(s, id) ? '' : ' 🔒'}</td><td>${B[type].name}</td><td>${ec.perDay >= 10 ? ec.perDay.toFixed(0) : ec.perDay >= 1 ? ec.perDay.toFixed(1) : parseFloat(ec.perDay.toPrecision(2))}${R.unit}</td><td>${(ec.marginBuy / ec.revenue * 100).toFixed(0)}%</td><td class="${ec.monthlyBuy >= 0 ? 'good' : 'bad'}">${money(ec.monthlyBuy)}</td><td>${yr(ec.paybackYearsBuy)}</td><td class="${ec.monthlyBuySat >= 0 ? '' : 'bad'}">${yr(ec.paybackYearsBuySat)}</td></tr>`);
   }
   UI.html('recipes', '<tr><th>レシピ</th><th>設備</th><th>日量</th><th>粗利率</th><th>利益/分</th><th>回収(机上)</th><th>回収(飽和込み)</th></tr>' + recRows.join(''));
   const rows = [];

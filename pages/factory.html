@@ -29,6 +29,7 @@
 <script src="../data/port.js"></script>
 <script src="../data/events.js"></script>
 <script src="../data/eras.js"></script>
+<script src="../data/tree.js"></script>
 <script src="../data/recipes.js"></script>
 <script src="../data/research.js"></script>
 <script src="../data/segments.js"></script>
@@ -98,7 +99,7 @@ function segInfo(s) {
 }
 // その本部に、まだ見せる意味があるか（設備がある、または1種でも建てられる）
 function segVisible(s, id, info) {
-  return id === 'oil' || info[id].n > 0 || info[id].types.some(t => !E.buildLockReason(s, t) || (G.buildings[t].tier && E.tierUnlocked(s, G.buildings[t].tier)));
+  return id === 'oil' || info[id].n > 0 || info[id].types.some(t => !E.buildLockReason(s, t) || false);
 }
 
 function renderSegs(s, info) {
@@ -144,7 +145,7 @@ function renderOilBase(s, seg) {
 function renderBuild(s, seg, info) {
   if (seg === HQ) { UI.html('build', ''); return; }
   const types = info[seg].types;
-  const open = types.filter(t => !G.buildings[t].tier || E.tierUnlocked(s, G.buildings[t].tier));   // 研究待ちの設備は、ティアが開いていれば押せない状態で理由つきで出す
+  const open = types.filter(t => E.buildingOpen(s, t));   // 研究待ちの設備は、ティアが開いていれば押せない状態で理由つきで出す
   const locked = types.filter(t => !open.includes(t));
   const cons = s.construction.filter(c => types.includes(c.type));
   const body = open.map(t => buildBtn(s, t)).join('') || '<div class="sub">解放済みの設備はまだない</div>';
@@ -210,7 +211,7 @@ function powerBody(s) {
   for (const p of s.plants) { const rec = G.recipes[p.recipe]; if (rec && p.last) demand += p.last.t * (rec.opexPerUnit || 0) * (rec.energyShare || 0) / PW.gridPrice; }
   const pw = s.power || { fuel: 'heavy', autoBuy: false, gen: 0 }, cap = E.powerCapacity(s);
   const fuels = Object.keys(PW.fuels).map(k => {
-    const r = G.resources[k], ok = E.tierUnlocked(s, r.tier || 1), pe = E.powerEconomics(s, k);
+    const r = G.resources[k], ok = E.resourceUnlocked(s, k), pe = E.powerEconomics(s, k);
     return ok ? `<span class="chip ${pw.fuel === k ? 'on' : ''}" onclick="UI.act(s=>Engine.setPowerFuel(s,'${k}'))">${r.name}（発電1MWhあたり燃料$${pe.fuelCost.toFixed(2)}）</span>`
               : `<span class="chip" style="opacity:.45" onclick="UI.toast('${E.tierName(r.tier)}になると使える')">🔒 ${r.name}</span>`;
   }).join('');
@@ -227,7 +228,7 @@ function powerBody(s) {
 function renderHq(s, seg) {
   if (seg !== HQ) { UI.html('hq', ''); return; }
   const types = Object.keys(G.buildings).filter(t => G.buildings[t].category === 'storage' || G.buildings[t].category === 'power');
-  const open = types.filter(t => !G.buildings[t].tier || E.tierUnlocked(s, G.buildings[t].tier));
+  const open = types.filter(t => E.buildingOpen(s, t));
   const pools = renderPools(s);
   UI.html('hq', UI.fold('f-hq-build', '<span>倉庫・発電所を建てる</span>', open.map(t => buildBtn(s, t)).join('') || '<div class="sub">解放済みの設備はまだない</div>', false)
     + UI.fold('f-hq-power', '<span>⚡ 電力 <span class="sub">' + (E.count(s, 'powerPlant') ? `自家発電 ${E.fmtNum(s.power ? s.power.gen : 0)}MWh/日` : '買電のみ') + '</span></span>', powerBody(s), E.count(s, 'powerPlant') > 0)

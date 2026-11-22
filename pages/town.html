@@ -32,6 +32,7 @@
 <script src="../data/port.js"></script>
 <script src="../data/events.js"></script>
 <script src="../data/eras.js"></script>
+<script src="../data/tree.js"></script>
 <script src="../data/recipes.js"></script>
 <script src="../data/research.js"></script>
 <script src="../data/segments.js"></script>
@@ -234,7 +235,7 @@ function renderSheet(s) {
   } else if (cursor) {
     const cat = UI.tab('town-cat', 'factory');
     const items = CATS.find(c => c.id === cat) || CATS[0];
-    const types = Object.keys(G.buildings).filter(t => !E.offMap(t) && items.match(G.buildings[t].category) && (!G.buildings[t].tier || E.tierUnlocked(s, G.buildings[t].tier)));
+    const types = Object.keys(G.buildings).filter(t => !E.offMap(t) && items.match(G.buildings[t].category) && E.buildingOpen(s, t));
     out.push(`<div class="card"><div class="row"><h3>ここに建てる</h3><span class="sub">タイル ${cursor.x},${cursor.y}</span></div>
       ${UI.chips('town-cat', CATS.map(c => ({ id: c.id, label: c.label })), items.id)}
       ${types.map(t => { const b = G.buildings[t], chk = E.canBuild(s, t), cant = !chk.ok && !/資金不足/.test(chk.msg || ''); return `<button class="btn tbtn" ${cant ? 'disabled' : ''} onclick="startPlacing('${t}')">${b.icon || ''} ${b.name}　${M(E.costOf(s, t))}・${E.buildText(b.months)}${cant ? `<div class="sub">${chk.msg}</div>` : (!chk.ok ? `<div class="sub warn">${chk.msg}</div>` : '')}</button>`; }).join('') || '<div class="sub">解放済みの設備はまだない</div>'}</div>`);

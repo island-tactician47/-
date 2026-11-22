@@ -28,6 +28,7 @@
 <script src="../data/port.js"></script>
 <script src="../data/events.js"></script>
 <script src="../data/eras.js"></script>
+<script src="../data/tree.js"></script>
 <script src="../data/recipes.js"></script>
 <script src="../data/research.js"></script>
 <script src="../data/segments.js"></script>
@@ -49,7 +50,7 @@ function visibleItems(s) {
   return G.productOrder.filter(k => {
     const r = G.resources[k];
     if (k === 'crude' || s.inventory[k] > 0) return true;
-    if (!E.tierUnlocked(s, r.tier || 1)) return false;
+    if (!E.resourceUnlocked(s, k)) return false;
     return r.storage ? E.poolCap(s, r.storage) > 0 || (r.kind === 'raw' && r.canBuy) : E.capacity(s, k) > 0 || (r.kind === 'raw' && r.canBuy);
   });
 }

@@ -579,6 +579,8 @@
     recipeLockReason(s, id) {
       const rec = D().recipes[id]; if (!rec) return '不明なレシピ';
       if (rec.tier && !this.tierUnlocked(s, rec.tier)) return `${this.tierName(rec.tier)}になると選べる`;
+      const n = this.nodeOfRecipe(id);
+      if (n && !this.nodeUnlocked(s, n)) return `「${this.nodeName(n)}」を開くと選べる`;
       if (rec.research && !this.researchDone(s, rec.research)) return `研究「${this.researchName(rec.research)}」が必要`;
       return null;
     },
@@ -586,10 +588,44 @@
     // 設備の建設の解放（ティアと研究）。解放済みなら null、そうでなければ理由
     buildLockReason(s, type) {
       const b = D().buildings[type]; if (!b) return '不明な設備';
-      if (b.tier && !this.tierUnlocked(s, b.tier)) return `${this.tierName(b.tier)}になると建てられる`;
+      const t = this.buildTierLock(s, type);
+      if (t) return t;
       if (b.research && !this.researchDone(s, b.research)) return `研究「${this.researchName(b.research)}」が必要`;
       return null;
     },
+    // ティア（旧）とノードによる解放だけ（研究待ちは含めない）。画面の一覧で、研究待ちの設備を理由つきで出すのに使う
+    buildTierLock(s, type) {
+      const b = D().buildings[type]; if (!b) return '不明な設備';
+      if (b.tier && !this.tierUnlocked(s, b.tier)) return `${this.tierName(b.tier)}になると建てられる`;
+      const n = this.nodeOfBuilding(type);
+      if (n && !this.nodeUnlocked(s, n)) return `「${this.nodeName(n)}」を開くと建てられる`;
+      return null;
+    },
+    buildingOpen(s, type) { return this.buildTierLock(s, type) === null; },
+    // ---------- 技術ツリー（ノード）。データは data/tree.js ----------
+    treeCfg() { return (D().tree && D().tree.config) || {}; },
+    treeNodes() { return (D().tree && D().tree.nodes) || {}; },
+    nodeDef(id) { return this.treeNodes()[id] || null; },
+    nodeName(id) { const d = this.nodeDef(id); return d ? d.name : id; },
+    // 設備・レシピ・品目 → ノード（データから一度だけ作る）
+    _nodeIndex() {
+      const T = D().tree; if (!T) return { b: {}, r: {}, k: {} };
+      if (T._idx) return T._idx;
+      const idx = { b: {}, r: {}, k: {} };
+      for (const id in T.nodes) { const d = T.nodes[id]; for (const x of d.buildings || []) idx.b[x] = id; for (const x of d.recipes || []) idx.r[x] = id; for (const x of d.resources || []) idx.k[x] = id; }
+      Object.defineProperty(T, '_idx', { value: idx, enumerable: false });
+      return idx;
+    },
+    nodeOfBuilding(type) { return this._nodeIndex().b[type] || null; },
+    nodeOfRecipe(id) { return this._nodeIndex().r[id] || null; },
+    nodeOfResource(k) { return this._nodeIndex().k[k] || null; },
+    // ノードが開いているか：s.nodes（開いたノード。最初に開くまで作らない）。移行期は、旧ティアが開いていれば開いている扱い（unlockTier の互換）
+    nodeUnlocked(s, id) {
+      const d = this.nodeDef(id); if (!d) return true;
+      if (s.nodes && s.nodes[id]) return true;
+      return d.legacyTier !== undefined && this.tierUnlocked(s, d.legacyTier);
+    },
+    resourceUnlocked(s, k) { const r = D().resources[k]; if (r && r.tier && !this.tierUnlocked(s, r.tier)) return false; const n = this.nodeOfResource(k); return !n || this.nodeUnlocked(s, n); },
 
     // ---------- 電力・自家発電（段階3b） ----------
     // 自家発電所は、今日の電力需要（加工設備のレシピの energyShare から出る MWh）の範囲で発電し、発電量×送電単価×物価指数を現金で払い戻す
@@ -614,7 +650,7 @@
     setPowerFuel(s, k) {
       const f = D().power.fuels[k], r = D().resources[k];
       if (!f || !r) return { ok: false, msg: 'その燃料は使えない' };
-      if (!this.tierUnlocked(s, r.tier || 1)) return { ok: false, msg: `${this.tierName(r.tier)}になると使える` };
+      if (!this.resourceUnlocked(s, k)) return { ok: false, msg: this.nodeOfResource(k) && !this.nodeUnlocked(s, this.nodeOfResource(k)) ? `「${this.nodeName(this.nodeOfResource(k))}」を開くと使える` : `${this.tierName(r.tier)}になると使える` };
       (s.power || (s.power = { fuel: 'heavy', autoBuy: false, gen: 0 })).fuel = k; return { ok: true };
     },
     setPowerAutoBuy(s, on) { (s.power || (s.power = { fuel: 'heavy', autoBuy: false, gen: 0 })).autoBuy = !!on; return { ok: true }; },
