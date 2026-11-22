@@ -57,18 +57,18 @@ GAME_DATA.resources = {
 
   // ---- 段階2b：製品。船・航空機は自走で出荷するので shipVol は小さい（港の出荷枠をほとんど使わない）。半導体は製品として売れ、PC・航空機・EVの材料にもなる（canBuy:true）。
   //      船・航空機は1単位が大きく、1隻ずつまとめて売れる（shipment は1単位未満を売らない）ので、marketDepth は1回の売却で値崩れしすぎないよう数単位にしている ----
-  ship:          { name: '船舶',         unit: '隻',   kind: 'product', tier: 5, canBuy: false, canSell: true, shipVol: 0.1,  storage: 'goods', storeVol: 300, basePrice: 2500000, volatility: 0.02, marketDepth: 1,    color: '#2f6f8f' },
-  aircraft:      { name: '航空機',       unit: '機',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1,  storage: 'goods', storeVol: 100, basePrice: 1500000, volatility: 0.02, marketDepth: 2,    color: '#8aa9c8' },
-  semiconductor: { name: '半導体',       unit: '千個', kind: 'product', tier: 6, canBuy: true,  canSell: true, shipVol: 0.01, storage: 'goods', storeVol: 0.01, basePrice: 3600,   volatility: 0.04, marketDepth: 520,  color: '#d6a43a' },
-  pc:            { name: 'PC',           unit: '台',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.3,  storage: 'goods', storeVol: 0.3, basePrice: 400,     volatility: 0.03, marketDepth: 4000, color: '#6a8caf' },
+  ship:          { name: '船舶',         unit: '隻',   kind: 'product', tier: 5, canBuy: false, canSell: true, shipVol: 0.1,  storage: 'goods', storeVol: 300, basePrice: 2500000, volatility: 0.1, marketDepth: 1,    color: '#2f6f8f' },
+  aircraft:      { name: '航空機',       unit: '機',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1,  storage: 'goods', storeVol: 100, basePrice: 1500000, volatility: 0.08, marketDepth: 2,    color: '#8aa9c8' },
+  semiconductor: { name: '半導体',       unit: '千個', kind: 'product', tier: 6, canBuy: true,  canSell: true, shipVol: 0.01, storage: 'goods', storeVol: 0.01, basePrice: 3600,   volatility: 0.12, marketDepth: 520,  color: '#d6a43a' },
+  pc:            { name: 'PC',           unit: '台',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.3,  storage: 'goods', storeVol: 0.3, basePrice: 400,     volatility: 0.09, marketDepth: 4000, color: '#6a8caf' },
   // ---- 段階2c（概算。ロケットは船・航空機と同じく1単位が大きく、1基ずつまとめて売れる）----
   naturalGas:    { name: '天然ガス',     unit: 't', kind: 'raw', tier: 6, canBuy: true, canSell: false, shipVol: 1, storage: 'bulk', basePrice: 25, volatility: 0.04, marketDepth: 1000000, lot: 200, color: '#8fb8c9' },
   pharmaMat:     { name: '医薬原料',     unit: 't', kind: 'material', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 2500, volatility: 0.03, marketDepth: 200, color: '#c98fd0' },
   explosive:     { name: '火薬',         unit: 't', kind: 'material', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 1000, volatility: 0.035, marketDepth: 400, color: '#c9663a' },
-  pharma:        { name: '医薬品',       unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 6000, volatility: 0.02, marketDepth: 280, color: '#d46a8f' },
-  rocket:        { name: 'ロケット',     unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 100, basePrice: 2000000, volatility: 0.02, marketDepth: 1, color: '#9a8fd0' },
-  weapon:        { name: '兵器',         unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 2400, volatility: 0.02, marketDepth: 900, color: '#6a7a5a' },
-  ev:            { name: '電池・EV',     unit: '台',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 3,    storage: 'goods', storeVol: 3,   basePrice: 2500,    volatility: 0.025, marketDepth: 1040, color: '#3aa17e' },
+  pharma:        { name: '医薬品',       unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 6000, volatility: 0.09, marketDepth: 280, color: '#d46a8f' },
+  rocket:        { name: 'ロケット',     unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 100, basePrice: 2000000, volatility: 0.1, marketDepth: 1, color: '#9a8fd0' },
+  weapon:        { name: '兵器',         unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 2400, volatility: 0.08, marketDepth: 900, color: '#6a7a5a' },
+  ev:            { name: '電池・EV',     unit: '台',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 3,    storage: 'goods', storeVol: 3,   basePrice: 2500,    volatility: 0.1, marketDepth: 1040, color: '#3aa17e' },
 };
 // 保管クラスの定義（品目の storage と、倉庫の capacity[クラス] で使う。単位は保管枠）
 GAME_DATA.storageClasses = {

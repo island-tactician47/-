@@ -155,12 +155,22 @@
         }
       } else if (r > 985) g.prism(tx + 0.3, ty + 0.3, 0.35, 0.3, 0, 3.2, '#8c8c86');   // 岩
     }
+    // 引き（縮小）の限界。遠くでは、地形を2×2・4×4タイルにまとめ、飾り・車・船・点線を省く（広いマップでも軽く）
+    const MINZ = 0.08;
     function drawTerrain(s, era) {
-      const occ = E.mapOccupancy(s);
+      const occ = E.mapOccupancy(s), zc = I.cam.z, lod = zc < 0.1 ? 4 : zc < 0.16 ? 2 : 1, far = zc < 0.3;
       const M = GAME_DATA.map, eraK = clamp((era - 1) * 0.07, 0, 0.35), landA = mix('#8d9a69', '#8f8d80', eraK + 0.1), landB = mix('#869363', '#8f8d80', eraK + 0.1);
       for (let sum = 0; sum <= M.w + M.h - 2; sum++) for (let vx = Math.max(0, sum - M.h + 1); vx <= Math.min(M.w - 1, sum); vx++) {
         const vy = sum - vx, a = ptv(vx, vy, 0);   // 回したあとの座標のタイルを奥から手前へ
-        if (a[0] < -80 * I.cam.z || a[0] > I.w + 80 * I.cam.z || a[1] < -40 * I.cam.z || a[1] > I.h + 50 * I.cam.z) continue;
+        if (lod > 1 && ((vx % lod) || (vy % lod))) continue;
+        if (a[0] < -80 * zc * lod || a[0] > I.w + 80 * zc * lod || a[1] < -40 * zc || a[1] > I.h + 50 * zc * lod) continue;
+        if (lod > 1) {   // 遠景：lod×lod タイルを1枚の菱形に。道があれば道、港があれば港、全部海なら海、それ以外は陸
+          let cr = 0, cp = 0, cs = 0, n = 0;
+          for (let i = 0; i < lod; i++) for (let j = 0; j < lod; j++) { const q = tiN(vx + i + 0.5, vy + j + 0.5, I.view), tt = E.terrainAt(s, Math.floor(q[0]), Math.floor(q[1])); n++; if (tt === 'road') cr++; else if (tt === 'port') cp++; else if (tt === 'sea' || tt === null) cs++; }
+          const colL = cr ? '#6c6a66' : cp ? '#a09a8b' : cs === n ? '#5d91b1' : cs ? '#c9be94' : '#889565';
+          poly([ptv(vx, vy, 0), ptv(vx + lod, vy, 0), ptv(vx + lod, vy + lod, 0), ptv(vx, vy + lod, 0)], colL, colL);
+          continue;
+        }
         const wq = tiN(vx + 0.5, vy + 0.5, I.view), tx = Math.floor(wq[0]), ty = Math.floor(wq[1]);
         const t = E.terrainAt(s, tx, ty), chk = (tx + ty) & 1;
         let col;
@@ -174,13 +184,13 @@
           if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => E.terrainAt(s, tx + dx, ty + dy) === 'sea')) col = chk ? '#cdc298' : '#c6bb90';   // 砂浜
         }
         poly([ptv(vx, vy, 0), ptv(vx + 1, vy, 0), ptv(vx + 1, vy + 1, 0), ptv(vx, vy + 1, 0)], col, col);
-        if (t === 'road') {
+        if (t === 'road' && !far) {
           const alongX = ty % M.block === M.block - 1 && tx % M.block !== M.block - 1, alongY = tx % M.block === M.block - 1 && ty % M.block !== M.block - 1;
           if (alongX && (tx & 1)) g.line([[tx + 0.3, ty + 0.5, 0.2], [tx + 0.7, ty + 0.5, 0.2]], '#d6d3c8', 1);
           if (alongY && (ty & 1)) g.line([[tx + 0.5, ty + 0.3, 0.2], [tx + 0.5, ty + 0.7, 0.2]], '#d6d3c8', 1);
         }
-        if (t === 'land' && ((tx * 7 + ty * 13) % 11 === 0)) g.prism(tx + 0.4, ty + 0.4, 0.2, 0.2, 0, 1, '#6f9a5a');   // 草むら
-        if (t === 'land' && !I.noDeco) deco(tx, ty, occ, era);
+        if (t === 'land' && !far && ((tx * 7 + ty * 13) % 11 === 0)) g.prism(tx + 0.4, ty + 0.4, 0.2, 0.2, 0, 1, '#6f9a5a');   // 草むら
+        if (t === 'land' && !far && !I.noDeco) deco(tx, ty, occ, era);
       }
       // 陸の縁（海に面した側の崖）
       for (let tx = 0; tx < M.w; tx++) { const cy = E.coastY(tx); const t = E.terrainAt(s, tx, cy - 1); if (t && t !== 'sea') { const a = pt(tx, cy, 0); if (a[0] < -60 || a[0] > I.w + 60 || a[1] < -60 || a[1] > I.h + 60) continue; g.prism(tx, cy - 0.001, 1, 0.001, -4, 0, '#8d7e66'); } }
@@ -289,6 +299,7 @@
     // 車：格子の道路を行き来する。道路でないタイル（港・海）に出たら隠す。船：海をゆっくり横切る。灯台：海岸の東端の空き地
     const CARCOL = ['#c9503a', '#3f6fa0', '#d9c34a', '#e8e4d8', '#4f8a5a', '#2f2f33', '#a05a9a'];
     function drawAmbient(s, era) {
+      if (I.cam.z < 0.2) return;   // 遠景では、車・船・灯台は省く
       const M = GAME_DATA.map, T = I.t;
       const nLines = Math.max(1, Math.floor(M.w / M.block));
       for (let i = 0; i < 12 + 4 * nLines; i++) {   // 道路の線の数に応じて、車を増やす
@@ -421,7 +432,7 @@
     canvas.addEventListener('contextmenu', ev => ev.preventDefault());
     canvas.addEventListener('wheel', ev => { ev.preventDefault(); const [px, py] = local(ev); zoomAt(I.cam.z * (ev.deltaY < 0 ? 1.12 : 0.89), px, py); saveCam(); }, { passive: false });
     function zoomAt(z, px, py) {
-      z = clamp(z, 0.35, 1.8); const w = unprojectV(px, py), old = I.cam.z; I.cam.z = z;   // 回したあとの座標のまま拡大の中心を保つ
+      z = clamp(z, MINZ, 1.8); const w = unprojectV(px, py), old = I.cam.z; I.cam.z = z;   // 回したあとの座標のまま拡大の中心を保つ
       I.cam.x = px - (w.x - w.y) * TW * z; I.cam.y = py - (w.x + w.y) * TH * z; clampCam();
     }
     function clampCam() {
