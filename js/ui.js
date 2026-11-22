@@ -150,7 +150,9 @@
       <div class="goal" id="h-goal"></div>`;
     document.body.prepend(hdr);
     const menu = document.createElement('div'); menu.id = 'menu'; menu.style.display = 'none';
-    menu.innerHTML = MENU.map(m => `<a href="${m.href}"><span>${m.icon}</span>${m.label}</a>`).join('');
+    menu.innerHTML = `<a href="#" id="m-company"><span>🏢</span><b id="m-cname"></b><span class="sub" style="font-size:11px">（変更）</span></a>` + MENU.map(m => `<a href="${m.href}"><span>${m.icon}</span>${m.label}</a>`).join('');
+    const cn = menu.querySelector('#m-cname'); cn.textContent = Engine.companyName(state);
+    menu.querySelector('#m-company').onclick = e => { e.preventDefault(); const cur = Engine.companyBase(state), v = prompt('会社名（〇〇工業株式会社の〇〇の部分。10文字まで）', cur); if (v === null) return; const r = Engine.setCompanyName(state, v); if (r.ok) { cn.textContent = Engine.companyName(state); UI.save(); UI.refresh(); UI.toast('社名を変更しました'); } else UI.toast(r.msg); };
     hdr.appendChild(menu);
     const mb = hdr.querySelector('#h-menu');
     mb.onclick = e => { e.stopPropagation(); menu.style.display = menu.style.display === 'none' ? 'block' : 'none'; };

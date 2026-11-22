@@ -27,6 +27,7 @@
 
   <h2>新しく始める</h2>
   <div id="diffs"></div>
+  <div class="card"><label class="row"><span>会社名<br><span class="sub">〇〇に入る名前（10文字まで）</span></span><span style="display:flex;align-items:center;gap:4px"><input id="cname" type="text" maxlength="10" value="港町" style="width:7em;font-size:16px;padding:4px 6px" oninput="cnamePreview()"><span class="sub">工業株式会社</span></span></label><div class="sub" id="cpreview" style="margin-top:4px"></div></div>
   <button class="btn" style="width:100%" onclick="newGame()">この難易度で創業する</button>
 
   <h2>設定</h2>
@@ -88,7 +89,7 @@ function renderCont() {
   }
   $('cont').innerHTML = `<h2>続きから</h2>
     <div class="card menu">
-      <a href="pages/factory.html"><span>🏗️</span><div><b>${Engine.dateStr(saved)}</b>（${GAME_DATA.difficulties[saved.difficulty].name}）
+      <a href="pages/factory.html"><span>🏗️</span><div><b>${Engine.dateStr(saved)}</b>（${GAME_DATA.difficulties[saved.difficulty].name}）<div class="sub">🏢 ${Engine.companyName(saved)}</div>
         <div class="sub">資金 ${Engine.fmtMoney(saved.cash)}　借入 ${Engine.fmtMoney(Engine.totalDebt(saved))}　油井 ${saved.wells.length}本</div></div></a>
     </div>
     <div class="card menu">
@@ -160,16 +161,21 @@ async function xferPaste() {
   xferImport(txt);
 }
 
+function cnamePreview() { const nm = Engine.cleanCompany($('cname').value) || '港町'; $('cpreview').textContent = nm + '工業株式会社'; }
+try { const v = localStorage.getItem('factorySimCompany'); if (v) document.addEventListener('DOMContentLoaded', () => {}); } catch (e) {}
 function newGame() {
   if (saved && !confirm('いまのセーブデータは消えます。新しく始めますか？')) return;
   const s = Engine.newGame(chosen);
   s.speed = 0;
-  s.pendingEvents.push({ title: '創業', text: `1950年。祖父から北浜鉱区の油井1本と原油タンクを受け継いだ。<br><br>原油はタンクに貯まり、月末に港からまとめて出荷される。油井を増やして稼ぎ、製油所を目指そう。資金が足りなければ財務タブで融資を受けられる。<br><br>上の ▶ で時間が動き出す（1か月≒1分）。` });
+  { const nm = Engine.cleanCompany($('cname').value) || '港町'; s.company = { name: nm }; try { localStorage.setItem('factorySimCompany', nm); } catch (e) {} }
+  s.pendingEvents.push({ title: '創業', text: `1950年。${Engine.companyName(s)}の社長として、祖父から北浜鉱区の油井1本と原油タンクを受け継いだ。<br><br>原油はタンクに貯まり、月末に港からまとめて出荷される。油井を増やして稼ぎ、製油所を目指そう。資金が足りなければ財務タブで融資を受けられる。<br><br>上の ▶ で時間が動き出す（1か月≒1分）。` });
   Save.save(s);
   location.href = 'pages/factory.html';
 }
 
 renderDiffs(); renderCont();
+try { const v = localStorage.getItem('factorySimCompany'); if (v && Engine.cleanCompany(v)) $('cname').value = Engine.cleanCompany(v); } catch (e) {}
+cnamePreview();
 try { if ('serviceWorker' in navigator && /^https?:/.test(location.protocol)) navigator.serviceWorker.register('sw.js'); } catch (e) {}
 </script>
 </body>

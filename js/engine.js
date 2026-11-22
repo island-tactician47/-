@@ -63,6 +63,7 @@
         for (const k in s.oreYards) { const n = s.oreYards[k]; if (!OR[k] || !(n >= 1)) delete s.oreYards[k]; else s.oreYards[k] = Math.min(YM, Math.floor(n)); }
         s.construction = s.construction.filter(c => c.type !== 'oreYard' || OR[c.res]);
       }
+      if (s.company) { const v = this.cleanCompany(s.company.name); if (v) s.company = { name: v }; else delete s.company; }
       if (s.mines || s.mineSites || s.construction.some(c => c.type === 'mine')) {   // 鉱山（データに無い鉱区は外す）
         const MS = this.mineSites();
         s.mines = (Array.isArray(s.mines) ? s.mines : []).filter(m => m && MS[m.site] && isFinite(m.builtDay));
@@ -869,6 +870,11 @@
       return out;
     },
 
+    // 会社名：〇〇工業株式会社（〇〇だけを設定する。s.company={name} は設定するまで作らない。旧セーブは「港町」）
+    companyBase(s) { return (s && s.company && typeof s.company.name === 'string' && s.company.name) || '港町'; },
+    companyName(s) { return this.companyBase(s) + '工業株式会社'; },
+    cleanCompany(n) { return String(n === undefined || n === null ? '' : n).replace(/[<>&"'`\\\s]/g, '').slice(0, 10); },
+    setCompanyName(s, n) { const v = this.cleanCompany(n); if (!v) return { ok: false, msg: '会社名が空です（使えない文字は除かれます）' }; s.company = { name: v }; this.log(s, `🏢 社名を「${this.companyName(s)}」にした`); return { ok: true }; },
     // ---------- 暦 ----------
     year(s) { return D().startYear + Math.floor(s.day / DAYS_PER_YEAR); },
     // 建築の日数（months × 30日 × buildTimeMul。最低1日）と、その表示（1か月未満は日、以上は0.1か月刻み）
@@ -1080,7 +1086,7 @@
       s.month.interest += fee;
       s.loans.rebuild = { principal, monthly: principal / (R.years * 12) };
       s.restructured = { day: s.day, from: st.debt };
-      this.log(s, `🆘 債務を再編：借入 ${this.fmtMoney(st.debt)} を${R.name}1本にまとめた（${R.years}年・年利${(R.rate * 100).toFixed(0)}%・手数料 ${this.fmtMoney(fee)}）。月々の返済は ${this.fmtMoney(st.svc)} → ${this.fmtMoney(s.loans.rebuild.monthly + principal * R.rate / 12)}。${R.lockMonths}か月は新しく借りられない`);
+      this.log(s, `🆘 債務を再編：借入 ${this.fmtMoney(st.debt)} を${R.name}1本にまとめた（${R.years}年・年利${(R.rate * 100).toFixed(1)}%・手数料 ${this.fmtMoney(fee)}）。月々の返済は ${this.fmtMoney(st.svc)} → ${this.fmtMoney(s.loans.rebuild.monthly + principal * R.rate / 12)}。${R.lockMonths}か月は新しく借りられない`);
       return { ok: true, fee };
     },
     borrow(s, id, amount) {
@@ -1094,15 +1100,24 @@
       this.log(s, `🏦 ${L.name}から ${this.fmtMoney(amount)} を借入（年利${(L.rate * 100).toFixed(1)}%・${L.years}年）`);
       return { ok: true };
     },
+    // この先に払う利息の見込み（元金均等：毎月、残りの元金×年利÷12。月々の元金返済は変わらず、残りの期間が短くなる）
+    futureInterest(s, id, principal) {
+      const loan = s.loans[id]; if (!loan) return 0; const P = principal === undefined ? loan.principal : principal, rate = D().loans[id].rate;
+      if (!(P > 0) || !(loan.monthly > 0)) return 0;
+      const n = Math.ceil(P / loan.monthly - 1e-9); let sum = 0;
+      for (let i = 0; i < n; i++) sum += Math.max(0, P - i * loan.monthly) * rate / 12;
+      return sum;
+    },
     repayLoan(s, id, amount) {
       const loan = s.loans[id];
       if (!loan) return { ok: false, msg: '借入なし' };
       amount = Math.min(amount, loan.principal, Math.max(0, s.cash));
       if (amount <= 0) return { ok: false, msg: '返済できる資金がない' };
+      const savedInterest = this.futureInterest(s, id) - this.futureInterest(s, id, loan.principal - amount);
       loan.principal -= amount; s.cash -= amount; s.month.principal += amount;
       if (loan.principal < 1) { delete s.loans[id]; this.log(s, `🏦 ${D().loans[id].name}の借入を完済`); }
-      else this.log(s, `🏦 ${D().loans[id].name}に ${this.fmtMoney(amount)} を繰上返済`);
-      return { ok: true };
+      else this.log(s, `🏦 ${D().loans[id].name}に ${this.fmtMoney(amount)} を繰上返済（この先の利息が約 ${this.fmtMoney(savedInterest)} 減る）`);
+      return { ok: true, savedInterest };
     },
 
     // ---------- 建設 ----------
