@@ -74,16 +74,15 @@ GAME_DATA.tree = {
                  buildings: ['rocketFactory'], recipes: ['rocket'], resources: ['rocket'] },
   }
 };
-// ゴール：純資産（貸借対照表の資本＝現金＋在庫＋設備の評価額−借入）が target に届いたらクリア（期限なし。続けて遊べる）。達成時にスコアとランクを出す。
+// ゴール：年末（12月の決算）に、その年の純利益が「コロニー1基（年1基）を全部自前で作って売ったときの年間利益」の profitMultiplier 倍以上で、コロニーを1基完成させていれば達成（期限なし。続けて遊べる）。達成時にスコアとランクを出す。
 // スコア（0〜100）＝ 早さ×weights.speed ＋ 自己資本比率×weights.equity ＋ 営業利益率×weights.margin − 減点。
 //   早さ：創業からの年数（難易度の speedOffset 年ぶん甘くして）が speedBest 年なら100、speedWorst 年以上なら0（その間は直線）
 //   自己資本比率：資本÷資産（0〜100%）／営業利益率：直近12か月の営業利益÷売上（marginFull で100点）
 //   減点：債務の再編を使った（restructurePenalty）、当座貸越の借り増しをした月（月ごとに overdraftPenaltyPerMonth、最大 overdraftPenaltyMax）
-// 値の根拠（ボット tools/selftest_balance.html?years=60。人間はボットより速いはず）：コロニーを開いて回すと純資産が年およそ+55M、開かないと+20M ほどで伸びる。
-//   目標20億ドルは、ボットで、コロニーあり＝創業から約65年・コロニーなし＝約115年（約1.8倍）。早さは30年で満点・90年で0点。
+// コロニーは、1基の材料を、そのまま市場で売ったときの利益のおよそ2倍の利益になるように、価格・費用を決めた（tools/calibrate_recipes.py）。
 GAME_DATA.goal = {
-  target: 2000000000,
-  speedBest: 30, speedWorst: 90, speedOffset: { rich: 0, tight: 5, indebted: 10 },
+  profitMultiplier: 1.5,   // ゴールの金額＝コロニー1基（年1基）を材料まで全部自前で作って売ったときの年間利益×この倍率（Engine.colonyChainProfit1950）
+  speedBest: 25, speedWorst: 70, speedOffset: { rich: 0, tight: 5, indebted: 10 },
   weights: { speed: 0.5, equity: 0.25, margin: 0.25 }, marginFull: 0.30,
   restructurePenalty: 10, overdraftPenaltyPerMonth: 2, overdraftPenaltyMax: 15,
   ranks: [{ min: 85, rank: 'S', title: '宇宙企業' }, { min: 70, rank: 'A', title: '世界企業' }, { min: 55, rank: 'B', title: '国内大手' }, { min: 40, rank: 'C', title: '地方の雄' }, { min: 0, rank: 'D', title: '町工場' }]

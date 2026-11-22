@@ -218,10 +218,10 @@ function renderDeals(s) {
 
 function renderInvest(s) {
   { const g = E.goalProgress(s);
-    UI.html('goalcard', g ? `<div class="card"><div class="row"><h3>🏆 目標：純資産 ${M(g.target)}</h3><b class="num">${(g.ratio * 100).toFixed(1)}%</b></div>
+    UI.html('goalcard', g ? `<div class="card"><div class="row"><h3>🏆 目標：年末の純利益 ${M(g.target)}</h3><b class="num">${(g.ratio * 100).toFixed(0)}%</b></div>
       <div class="bar"><i style="width:${Math.max(0, Math.min(100, g.ratio * 100))}%"></i></div>
-      <div class="sub">いま ${M(g.eq)}（現金＋在庫＋設備の評価額−借入）${g.reached ? '　<b class="good">達成済み（ランク ' + s.goal.rank + '「' + s.goal.title + '」・' + s.goal.score + '点）</b>' : (g.years ? `　今のペースなら約${g.years.toFixed(0)}年` : '')}</div>
-      ${s.goal ? '' : '<div class="sub">届くとスコア（早さ・自己資本比率・営業利益率）とランクが出る。コロニー工場は必須ではないが、使わないと遠い。</div>'}</div>` : ''); }
+      <div class="sub">直近12か月の純利益 ${M(g.profit12)}　${g.colonyBuilt ? '<b class="good">✔ コロニーを完成させた</b>' : '<b class="bad">・ コロニーをまだ1基も完成させていない</b>'}${g.reached ? '　<b class="good">達成済み（ランク ' + s.goal.rank + '「' + s.goal.title + '」・' + s.goal.score + '点）</b>' : ''}</div>
+      ${s.goal ? '' : '<div class="sub">12月の決算で、その年の純利益が目標以上で、コロニーを1基完成させていれば達成。目標は「コロニー1基（年1基）を材料まで全部自前で作って売ったときの年間利益」の1.5倍。届くとスコア（早さ・自己資本比率・営業利益率）とランクが出る。</div>'}</div>` : ''); }
   UI.html('invest', false ? `<div class="card sub">🔬 研究中：${E.researchName(s.research.active.id)}（月 ${M(E.researchMonthly(s, s.research.active.id))}）</div>` : '');
 }
 

@@ -635,12 +635,34 @@
     // ---------- ゴール：純資産（貸借対照表の資本）の目標。達成でスコア。s.goal は達成するまで作らない ----------
     goalCfg() { return D().goal || null; },
     equity(s) { return s.cash + this.inventoryValue(s) + this.assetValue(s) - this.totalDebt(s); },
-    // 進み具合：{ eq, target, ratio, growth（1年前からの増加。分からなければ null）, years（今のペースで届くまでの年数。届かない見込みは null）, reached }
+    // コロニー1基（1年に1基ぶん）を、材料まで全部自前で作って売ったときの、会社の年間利益（1950年のドル。物価指数は掛けていない）。
+    // 売上（売却手数料・1基の値崩れ込み）−（材料の工場の操業費・維持費・原料）−（コロニー工場の操業費・維持費）。データから計算する（レシピ・価格を変えると、ゴールも付いてくる）
+    colonyChainProfit1950() {
+      const G = D(); if (G._colonyProfit !== undefined) return G._colonyProfit;
+      const R = G.resources, crec = G.recipes && G.recipes.colony, cp = G.plants && G.plants.colonyFactory;
+      let v = 0;
+      if (crec && cp && R.colony) {
+        const made = {}; for (const id in G.recipes) for (const k in G.recipes[id].outputs) made[k] = id;
+        const plantOf = id => Object.keys(G.plants).find(t => G.plants[t].recipes.includes(id)), need = {}, raw = {};
+        const req = (k, q) => { if (made[k]) { need[k] = (need[k] || 0) + q; const rec = G.recipes[made[k]]; for (const i in rec.inputs) req(i, rec.inputs[i] * q); } else raw[k] = (raw[k] || 0) + q; };
+        const n = cp.throughput * 360; for (const k in crec.inputs) req(k, crec.inputs[k] * n);
+        let cost = 0;
+        for (const k in need) { const rec = G.recipes[made[k]], pt = plantOf(made[k]), cap = G.plants[pt].throughput * (rec.speed || 1); cost += need[k] * (rec.opexPerUnit || 0) + need[k] / (cap * 360) * G.buildings[pt].fixedPerMonth * 12; }
+        for (const k in raw) cost += raw[k] * R[k].basePrice;
+        cost += (crec.opexPerUnit || 0) * n + G.buildings.colonyFactory.fixedPerMonth * 12;
+        v = n * R.colony.basePrice * (1 - Market.SELL_FEE) * (1 - 0.075) - cost;
+      }
+      Object.defineProperty(G, '_colonyProfit', { value: v, enumerable: false });
+      return v;
+    },
+    // ゴールの金額：コロニー1基（年1基）の年間利益の profitMultiplier 倍（名目。物価指数で増える）
+    goalTarget(s) { const cfg = this.goalCfg(); return cfg ? cfg.profitMultiplier * this.colonyChainProfit1950() * this.priceIndex(s) : 0; },
+    colonyBuilt(s) { return ((s.stats && s.stats.producedTotal && s.stats.producedTotal.colony) || 0) >= 1; },
+    // 進み具合：{ profit12（直近12か月の純利益）, target, ratio, colonyBuilt（コロニーを1基完成させたか）, eq（純資産。スコア用）, reached }
     goalProgress(s) {
       const cfg = this.goalCfg(); if (!cfg) return null;
-      const eq = this.equity(s), h = s.history || [], b = h.length >= 13 ? h[h.length - 13] : null;
-      const past = b && b.bs ? b.cash + b.bs.inv + b.bs.fixed - b.bs.loans - b.bs.od : null, growth = past === null ? null : eq - past;
-      return { eq, target: cfg.target, ratio: eq / cfg.target, growth, years: growth > 0 && eq < cfg.target ? (cfg.target - eq) / growth : null, reached: !!s.goal };
+      const target = this.goalTarget(s), p12 = this.profit12(s);
+      return { profit12: p12, target, ratio: target > 0 ? p12 / target : 0, colonyBuilt: this.colonyBuilt(s), eq: this.equity(s), reached: !!s.goal };
     },
     // 直近12か月の営業利益率（営業利益＝売上−原料−操業費−維持費−研究費−違約金）
     operatingMargin12(s) {
@@ -661,18 +683,21 @@
       const rk = cfg.ranks.find(r => total >= r.min) || cfg.ranks[cfg.ranks.length - 1];
       return { speed, equityRatio, margin, penalty, total, rank: rk.rank, title: rk.title, years, equity: eq };
     },
-    // 月末に判定：目標に届いたら（初めてだけ）スコアを出して知らせる。続けて遊べる。届いたら true
+    // 年末（12月の決算）に判定：その年の純利益が目標の金額以上で、コロニーを1基完成させていれば達成（初めてだけ。スコアを出して知らせる。続けて遊べる）。届いたら true
     checkGoal(s) {
       const cfg = this.goalCfg(); if (!cfg || s.goal) return false;
-      if (this.equity(s) < cfg.target) return false;
+      const h = s.history || [], last = h[h.length - 1];
+      if (!last || last.m !== 12) return false;
+      let yp = 0; for (const x of h) if (x.y === last.y) yp += x.profit || 0;
+      if (yp < this.goalTarget(s) || !this.colonyBuilt(s)) return false;
       const sc = this.calcScore(s), name = this.companyName(s);
-      s.goal = { day: s.day, years: sc.years, score: Math.round(sc.total * 10) / 10, rank: sc.rank, title: sc.title };
-      this.log(s, `🏆 純資産 ${this.fmtMoney(cfg.target)} に到達！ ランク ${sc.rank}「${sc.title}」・スコア ${s.goal.score}点`);
+      s.goal = { day: s.day, years: sc.years, score: Math.round(sc.total * 10) / 10, rank: sc.rank, title: sc.title, profit: Math.round(yp) };
+      this.log(s, `🏆 目標達成：${last.y}年の純利益 ${this.fmtMoney(yp)}。ランク ${sc.rank}「${sc.title}」・スコア ${s.goal.score}点`);
       const f = v => v.toFixed(0);
       s.pendingEvents.push({
         title: '🏆 目標達成',
-        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、純資産 <b>${this.fmtMoney(cfg.target)}</b> に届いた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
-        goal: { company: name, diff: s.difficulty, years: Math.round(sc.years * 10) / 10, score: s.goal.score, rank: sc.rank, title: sc.title, equity: Math.round(sc.equity), at: Date.now() }
+        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、年間の純利益 <b>${this.fmtMoney(yp)}</b>（コロニー1基の年間利益の${cfg.profitMultiplier}倍）に届き、コロニーを完成させた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
+        goal: { company: name, diff: s.difficulty, years: Math.round(sc.years * 10) / 10, score: s.goal.score, rank: sc.rank, title: sc.title, profit: Math.round(yp), at: Date.now() }
       });
       return true;
     },
@@ -681,7 +706,7 @@
     // 次の目標の文（ヘッダーに出す）：選べるノード → 解放権をためる → 素材を増やす → すべて開いた
     nodeGoal(s) {
       const ids = Object.keys(this.treeNodes()).filter(id => !this.nodeUnlocked(s, id) && !this.nodeDef(id).auto && (this.nodeDef(id).needs || []).every(n => this.nodeUnlocked(s, n)));   // 前提がそろっているノード
-      if (!ids.length) { if (!Object.keys(this.treeNodes()).every(id => this.nodeUnlocked(s, id))) return null; const g = this.goalProgress(s); return g && !g.reached ? `目標：純資産 ${this.fmtMoney(g.eq)} / ${this.fmtMoney(g.target)}${g.years ? '（今のペースで約' + g.years.toFixed(0) + '年）' : ''}` : '目標：すべてのノードを開いた'; }
+      if (!ids.length) { if (!Object.keys(this.treeNodes()).every(id => this.nodeUnlocked(s, id))) return null; const g = this.goalProgress(s); return g && !g.reached ? (g.colonyBuilt ? `目標：年末の純利益 ${this.fmtMoney(g.target)}（いま直近12か月 ${this.fmtMoney(g.profit12)}）` : `目標：コロニーを1基完成させ、年末の純利益 ${this.fmtMoney(g.target)} に届く`) : '目標：すべてのノードを開いた'; }
       const sts = ids.map(id => ({ id, st: this.nodeState(s, id) }));
       const c = sts.find(x => x.st.canUnlock); if (c) return `目標：研究タブで「${this.nodeName(c.id)}」を開ける（解放権${c.st.tickets.need}枚）`;
       const sel = sts.find(x => x.st.selectable); if (sel) { const nx = this.ticketSteps()[this.ticketsEarned(s)]; return `目標：解放権をためて「${this.nodeName(sel.id)}」を開く${nx ? '（次は直近12か月の利益 ' + this.fmtMoney(nx) + '）' : ''}`; }
@@ -1720,7 +1745,7 @@
         } else {
           s.buildings[c.type] = (s.buildings[c.type] || 0) + 1;
           const pd = D().plants && D().plants[c.type];
-          if (pd) s.plants.push({ id: s.nextPlantId++, type: c.type, recipe: pd.recipes[0], runRate: 1, autoBuy: false, ...(c.key ? { key: c.key } : {}) });
+          if (pd) s.plants.push({ id: s.nextPlantId++, type: c.type, recipe: pd.recipes[0], runRate: 1, autoBuy: D().plantAutoBuyDefault !== false, ...(c.key ? { key: c.key } : {}) });
         }
         this.log(s, `✅ ${B[c.type].name}が完成`);
         if (c.type === 'refinery' || c.type === 'refineryLarge') {
