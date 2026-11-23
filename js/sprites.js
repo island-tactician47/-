@@ -37,6 +37,7 @@
     explosivesFactory: { color: '#b8a98a', h: 8, bunker: true, stacks: 1 },
     colonyFactory:    { color: '#dfe4e8', h: 40, glass: true, clean: true },
     offshoreFactory:  { color: '#9fb4c4', h: 22, glass: true },
+    batteryFactory:   { color: '#c8b26a', h: 12 },
     tireFactory:      { color: '#4a4a52', h: 10 },
     cableFactory:     { color: '#9aa0a6', h: 8 },
     fiberFactory:     { color: '#cdd8de', h: 22, glass: true, clean: true },

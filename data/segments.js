@@ -21,7 +21,7 @@ GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 't
   const R = {}, B = {};
   const set = (map, seg, keys) => keys.split(/\s+/).forEach(k => { map[k] = seg; });
   set(R, 'oil', 'crude gasoline diesel naphtha heavy naturalGas niter plastic rubber tire surfactant fiber pharmaMat explosive');
-  set(R, 'metal', 'coal ironore bauxite copperore rareMetal lithiumOre steel aluminum copper alloy lithium cable');
+  set(R, 'metal', 'coal ironore bauxite copperore rareMetal lithiumOre steel aluminum copper alloy lithium cable battery');
   set(R, 'ceramics', 'limestone silica glass cement silicon opticFiber');
   set(R, 'forestry', 'logs lumber paper');
   set(R, 'consumer', 'detergent clothing pharma buildmat');
@@ -31,7 +31,7 @@ GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 't
   set(R, 'mega', 'offshore aiDefense');
   set(R, 'electric', 'motor commGear powerEquip comsat');
   set(B, 'oil', 'oilWell crudeTank refinery refineryLarge distillation tank_gasoline tank_diesel tank_naphtha tank_heavy chemPlant tireFactory fineChemPlant explosivesFactory');
-  set(B, 'metal', 'steelMill aluminumSmelter copperSmelter cableFactory');
+  set(B, 'metal', 'steelMill aluminumSmelter copperSmelter cableFactory batteryFactory');
   set(B, 'ceramics', 'kiln fiberFactory');
   set(B, 'forestry', 'sawmill paperMill');
   set(B, 'consumer', 'detergentFactory garmentFactory pharmaFactory buildmatFactory');

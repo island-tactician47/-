@@ -91,6 +91,7 @@ GAME_DATA.buildings = {
   // 最終製品の専用工場（レシピ固定。他の製品は作れない）
   detergentFactory: { name: '洗剤・化粧品工場', icon: '🧴', category: 'factory', tier: 3, cost: 1500000, months: 18, fixedPerMonth: 6000,  desc: '界面活性剤とプラスチック（容器）から洗剤・化粧品' },
   garmentFactory:   { name: '縫製工場',         icon: '🧵', category: 'factory', tier: 4, cost: 1200000, months: 18, fixedPerMonth: 4800,  desc: '合成繊維から衣料' },
+  batteryFactory:   { name: '電池工場',         icon: '🔋', category: 'factory', tier: 6, cost: 3000000, months: 24, fixedPerMonth: 12000, desc: 'リチウム・アルミ・銅から電池（EV・PCの材料）' },
   tireFactory:      { name: 'タイヤ工場',       icon: '🛞', category: 'factory', tier: 5, cost: 1000000, months: 18, fixedPerMonth: 4000,  desc: '合成ゴムからタイヤ（自動車・EVの材料）' },
   buildmatFactory:  { name: '建材工場',         icon: '🏗️', category: 'factory', tier: 4, cost: 700000,  months: 12, fixedPerMonth: 2800,  desc: '木材・セメント・鋼材から建材' },
   carFactory:       { name: '自動車工場',       icon: '🚗', category: 'factory', tier: 5, cost: 3000000, months: 30, fixedPerMonth: 12000, desc: '鋼材・アルミ・タイヤ・ガラス・プラスチック・銅から自動車' },
@@ -120,7 +121,7 @@ GAME_DATA.buildings = {
   powerEquipFactory: { name: '発電・送電設備工場', icon: '🌬️', category: 'factory', tier: 6, cost: 3500000, months: 30, fixedPerMonth: 14000, desc: 'モーター・電線・鋼材・合金・ガラス・シリコンから、風力・太陽光・送電網の設備を作る（電機ラインのTier 5。AI防衛システムの材料）' },
   commGearFactory:   { name: '通信機器工場', icon: '📡', category: 'factory', tier: 6, cost: 2500000, months: 24, fixedPerMonth: 10000, desc: '光ファイバー・銅・プラスチック・半導体から、ルーターや送受信機などの通信機器を組み立てる（光・通信ラインのTier 4）' },
   satelliteFactory:  { name: '通信衛星工場', icon: '🛰️', category: 'factory', tier: 6, cost: 4000000, months: 36, fixedPerMonth: 16000, desc: '通信機器・半導体・合金から、通信衛星と通信網を組み立てる（光・通信ラインのTier 5。AI防衛システムの材料）' },
-  evFactory:         { name: '電池・EV工場',     icon: '🔋', category: 'factory', tier: 6, cost: 3500000, months: 30, fixedPerMonth: 14000, desc: '鋼材・アルミ・合成ゴム・リチウム・半導体・銅から電池・EV' }
+  evFactory:         { name: '電池・EV工場',     icon: '🔋', category: 'factory', tier: 6, cost: 3500000, months: 30, fixedPerMonth: 14000, desc: '鋼材・アルミ・タイヤ・電池・モーター・半導体から電池・EV' }
 };
 
 

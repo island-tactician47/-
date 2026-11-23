@@ -1,6 +1,6 @@
 // 技術ツリー（ノード）。設計は docs/技術ツリーとゴールの設計.md。file:// で開けるよう代入形式。
 // Tier 1：精製所と素材（製鋼・アルミ・窯業・非鉄・製材）。素材は、同じ条件（旧ティア3：製油所の稼働＋精製品の累計売上）でいっしょに開く（自動）。
-// Tier 2：化学（自動）と、火薬・精密化学・製紙（製材から）・光ファイバー・電線・建材（解放権で開く）。Tier 3：洗剤・衣料・タイヤ。輸入の罰は Tier 2 以上（Tier 1 だけなし）。
+// Tier 2：化学（自動）と、火薬・精密化学・製紙（製材から）・光ファイバー・電線・建材（解放権で開く）。Tier 3：洗剤・衣料・タイヤ・モーター。Tier 4：電池・発電設備ほか。輸入の罰は Tier 2 以上（Tier 1 だけなし）。
 // 時代（ティア）をノードに置き換える：ノードの tier は 1〜6（数字が大きいほど先端）。
 // GAME_DATA.tree.nodes[id] = {
 //   name, icon, tier,
@@ -63,9 +63,9 @@ GAME_DATA.tree = {
                  buildings: ['pharmaFactory'], recipes: ['pharma'], resources: ['pharma'] },
     semi:      { x: 1475, color: '#1d1d1d', name: '半導体',       icon: '💾', tier: 4, legacyTier: 6, tickets: 2, needs: ['kiln', 'copper'],
                  buildings: ['semiconductorFactory'], recipes: ['semiconductor'], resources: ['semiconductor'] },
-    pc:        { x: 975, color: '#66a182', name: 'PC',           icon: '💻', tier: 5, legacyTier: 6, tickets: 2, needs: ['semi', 'chem', 'kiln', 'aluminum'],
+    pc:        { x: 975, color: '#66a182', name: 'PC',           icon: '💻', tier: 5, legacyTier: 6, tickets: 2, needs: ['semi', 'chem', 'kiln', 'aluminum', 'battery'],
                  buildings: ['pcFactory'], recipes: ['pc'], resources: ['pc'] },
-    ev:        { x: 1725, color: '#00798c', name: 'EV・電池',     icon: '🔋', tier: 5, legacyTier: 6, tickets: 2, needs: ['steel', 'aluminum', 'chem', 'copper', 'semi', 'tire'],
+    ev:        { x: 1725, color: '#00798c', name: 'EV・電池',     icon: '🔋', tier: 5, legacyTier: 6, tickets: 2, needs: ['steel', 'aluminum', 'chem', 'copper', 'semi', 'tire', 'motor', 'battery'],
                  buildings: ['evFactory'], recipes: ['ev'], resources: ['ev'] },
     aircraft:  { x: 1975, color: '#edae49', name: '航空機',       icon: '✈️', tier: 5, legacyTier: 6, tickets: 2, needs: ['aluminum', 'steel', 'semi', 'chem', 'copper'],
                  buildings: ['aircraftFactory'], recipes: ['aircraft'], resources: ['aircraft'] },
@@ -78,13 +78,15 @@ GAME_DATA.tree = {
     // 電機ライン（銅）：Tier 3 電線・ケーブル（電線工場）→ Tier 4 モーター・変圧器 → Tier 5 発電・送電設備
     wire:      { x: 600, color: '#b5651d', name: '電線・ケーブル', icon: '🔗', tier: 2, tickets: 1, needs: ['copper'],
                  buildings: ['cableFactory'], recipes: ['cable'], resources: ['cable'] },
-    motor:     { x: 725, color: '#c77b30', name: 'モーター・変圧器', icon: '🔌', tier: 4, tickets: 2, needs: ['wire', 'steel'],
+    motor:     { x: 725, color: '#c77b30', name: 'モーター・変圧器', icon: '🔌', tier: 3, tickets: 2, needs: ['wire', 'steel'],
                  buildings: ['motorFactory'], recipes: ['motor'], resources: ['motor'] },
-    power:     { x: 725, color: '#2f9e44', name: '発電・送電設備', icon: '🌬️', tier: 5, tickets: 2, needs: ['motor', 'kiln'],
+    power:     { x: 725, color: '#2f9e44', name: '発電・送電設備', icon: '🌬️', tier: 4, tickets: 2, needs: ['motor', 'kiln'],
                  buildings: ['powerEquipFactory'], recipes: ['powerEquip'], resources: ['powerEquip'] },
     // 光・通信ライン（ガラス）：Tier 3 光ファイバー（光ファイバー工場）→ Tier 4 通信機器 → Tier 5 通信衛星・通信網
     optic:     { x: 350, color: '#5aa9c9', name: '光ファイバー', icon: '💡', tier: 2, tickets: 1, needs: ['kiln'],
                  buildings: ['fiberFactory'], recipes: ['opticFiber'], resources: ['opticFiber'] },
+    battery:   { x: 1975, color: '#e0b43c', name: '電池', icon: '🔋', tier: 4, tickets: 2, needs: ['copper', 'aluminum', 'semi'],
+                 buildings: ['batteryFactory'], recipes: ['battery'], resources: ['battery'] },
     comm:      { x: 475, color: '#3a8fb7', name: '通信機器', icon: '📡', tier: 4, tickets: 2, needs: ['optic', 'copper', 'semi'],
                  buildings: ['commGearFactory'], recipes: ['commGear'], resources: ['commGear'] },
     sat:       { x: 475, color: '#7b61c4', name: '通信衛星・通信網', icon: '🛰️', tier: 5, tickets: 2, needs: ['comm', 'semi'],
