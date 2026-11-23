@@ -20,7 +20,7 @@ GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 't
 (function () {
   const R = {}, B = {};
   const set = (map, seg, keys) => keys.split(/\s+/).forEach(k => { map[k] = seg; });
-  set(R, 'oil', 'crude gasoline diesel naphtha heavy naturalGas plastic rubber surfactant fiber pharmaMat explosive');
+  set(R, 'oil', 'crude gasoline diesel naphtha heavy naturalGas niter plastic rubber surfactant fiber pharmaMat explosive');
   set(R, 'metal', 'coal ironore bauxite copperore rareMetal lithiumOre steel aluminum copper alloy lithium cable');
   set(R, 'ceramics', 'limestone silica glass cement silicon opticFiber');
   set(R, 'forestry', 'logs lumber paper');

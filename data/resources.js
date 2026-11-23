@@ -63,6 +63,7 @@ GAME_DATA.resources = {
   pc:            { name: 'PC',           unit: '台',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.3,  storage: 'goods', storeVol: 0.3, basePrice: 400,     volatility: 0.09, marketDepth: 4000, color: '#6a8caf' },
   // ---- 段階2c（概算。ロケットは船・航空機と同じく1単位が大きく、1基ずつまとめて売れる）----
   naturalGas:    { name: '天然ガス',     unit: 't', kind: 'raw', tier: 6, canBuy: true, canSell: false, shipVol: 1, storage: 'bulk', basePrice: 25, volatility: 0.04, marketDepth: 1000000, lot: 200, color: '#8fb8c9' },
+  niter:         { name: '硝石',         unit: 't', kind: 'raw', tier: 6, canBuy: true, canSell: false, shipVol: 1, storage: 'bulk', basePrice: 25, volatility: 0.04, marketDepth: 1000000, lot: 200, color: '#d9d2b8' },   // 輸入しか手段が無い。火薬の原料
   pharmaMat:     { name: '医薬原料',     unit: 't', kind: 'material', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 2500, volatility: 0.03, marketDepth: 200, color: '#c98fd0' },
   explosive:     { name: '火薬',         unit: 't', kind: 'material', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 1000, volatility: 0.035, marketDepth: 400, color: '#c9663a' },
   pharma:        { name: '医薬品',       unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 6000, volatility: 0.09, marketDepth: 280, color: '#d46a8f' },
@@ -100,7 +101,7 @@ GAME_DATA.productOrder = ['crude', 'gasoline', 'diesel', 'naphtha', 'heavy',
   'plastic', 'rubber', 'surfactant', 'fiber', 'steel', 'aluminum', 'copper', 'glass', 'cement', 'lumber', 'paper',
   'detergent', 'buildmat', 'clothing', 'car',
   'rareMetal', 'lithiumOre', 'alloy', 'silicon', 'lithium', 'ship', 'aircraft', 'semiconductor', 'pc', 'ev',
-  'naturalGas', 'pharmaMat', 'explosive', 'pharma', 'rocket', 'weapon', 'colony', 'offshore', 'aiDefense', 'cable', 'opticFiber', 'motor', 'commGear', 'powerEquip', 'comsat'];
+  'naturalGas', 'niter', 'pharmaMat', 'explosive', 'pharma', 'rocket', 'weapon', 'colony', 'offshore', 'aiDefense', 'cable', 'opticFiber', 'motor', 'commGear', 'powerEquip', 'comsat'];
 
 // 取引先（契約）：最終製品（買えず、どのレシピの入力にもならない品目）だけ。契約すると毎月ノルマの数量を、市場より高い固定プレミアムで自動納品する
 // （市場の飽和を進めず、売却手数料もかからない）。足りない月は 不足分×単価×penaltyRate の違約金。契約は翌月から、毎月ノルマは自社設備の日量×30×share に更新
@@ -118,6 +119,6 @@ window.GAME_DATA.contracts = {
 };
 
 // 輸入（市場で買う）の上乗せ：自社で作れる品目（加工設備・油井・鉱山・精製が産出する品目）は、買値に extra を上乗せして割高にする（自社で作るほうが得）。
-// 自社で作る手段が無い品目（ボーキサイト・珪砂・原木・レアメタル・リチウム鉱石など）と exempt の品目（天然ガス＝輸入しか手段が無い）は据え置き（Market の BUY_PREMIUM のまま）。
+// 自社で作る手段が無い品目（ボーキサイト・珪砂・原木・レアメタル・リチウム鉱石など）と exempt の品目（天然ガス・硝石＝輸入しか手段が無い）は据え置き（Market の BUY_PREMIUM のまま）。
 // 製油所の製品（ガソリン・軽油・ナフサ・重油）の売値は、元より約12%高くしてある（原油の買値の上乗せぶん、製油所の利益を大きくする。自社の原油を回すと大きくもうかる）。
-GAME_DATA.importPremium = { extra: 0.25, exempt: ['naturalGas'] };
+GAME_DATA.importPremium = { extra: 0.25, exempt: ['naturalGas', 'niter'] };

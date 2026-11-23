@@ -44,7 +44,7 @@ GAME_DATA.recipes = {
   pc: { name: 'PC', inputs: { semiconductor: 0.05, plastic: 0.01, glass: 0.005, aluminum: 0.01 }, outputs: { pc: 1 }, opexPerUnit: 12.2, energyShare: 0.08 },
   ev: { name: '電池・EV', inputs: { steel: 0.8, aluminum: 0.3, rubber: 0.08, lithium: 0.2, semiconductor: 0.05, copper: 0.1 }, outputs: { ev: 1 }, opexPerUnit: 28.2, energyShare: 0.08 },
   pharmaMat: { name: '医薬原料', inputs: { naphtha: 15 }, outputs: { pharmaMat: 1 }, opexPerUnit: 1632.1, energyShare: 0.1, speed: 0.07 },
-  explosive: { name: '火薬', inputs: { naturalGas: 2 }, outputs: { explosive: 1 }, opexPerUnit: 614.9, energyShare: 0.1, speed: 0.15 },
+  explosive: { name: '火薬', inputs: { niter: 2 }, outputs: { explosive: 1 }, opexPerUnit: 614.9, energyShare: 0.1, speed: 0.15 },
   pharma: { name: '医薬品', inputs: { pharmaMat: 1.2, glass: 0.4 }, outputs: { pharma: 1 }, opexPerUnit: 238.0, energyShare: 0.1 },
   rocket: { name: 'ロケット', inputs: { alloy: 400, semiconductor: 60, explosive: 300, aluminum: 100 }, outputs: { rocket: 1 }, opexPerUnit: 69841.7, energyShare: 0.05 },
   weapon: { name: '兵器', inputs: { steel: 1.0, alloy: 0.5, semiconductor: 0.05, explosive: 0.4 }, outputs: { weapon: 1 }, opexPerUnit: 77.9, energyShare: 0.07 },
