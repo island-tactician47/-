@@ -101,6 +101,11 @@ function treeSvg(s, ids) {
     const ax = slot(outs[n], id, n), ay = top(n) + NH, bx = slot(ins[id], n, id), by = top(id), dy = (by - ay) * 0.5, on = E.nodeUnlocked(s, n);
     edges += `<path d="M${ax.toFixed(1)},${ay} C${ax.toFixed(1)},${ay + dy} ${bx.toFixed(1)},${by - dy} ${bx.toFixed(1)},${by}" fill="none" stroke="${E.nodeDef(n).color || '#888'}" stroke-width="3.5" opacity="${on ? 0.9 : 0.35}" ${on ? '' : 'stroke-dasharray="8 6"'}/><path d="M${bx.toFixed(1)},${by} l-6,-11 l12,0 z" fill="${E.nodeDef(n).color || '#888'}" opacity="${on ? 0.9 : 0.35}"/>`;
   }
+  // 同じ Tier の前提（Tier 3 以上。通信機器←半導体、洋上プラットフォーム←PC など）は、段の上を越える弧で描く（Tier 2 の化学→他の素材は描かない）
+  for (const id of ids) for (const n of E.nodeDef(id).needs || []) if (ids.includes(n) && E.nodeDef(n).tier === E.nodeDef(id).tier && E.nodeDef(id).tier >= 3) {
+    const ax = cx(n), bx = cx(id), y = top(id), on = E.nodeUnlocked(s, n), lift = 46 + Math.min(40, Math.abs(ax - bx) / 12), col = E.nodeDef(n).color || '#888';
+    edges += `<path d="M${ax.toFixed(1)},${y} C${ax.toFixed(1)},${y - lift} ${bx.toFixed(1)},${y - lift} ${bx.toFixed(1)},${y - 2}" fill="none" stroke="${col}" stroke-width="3.5" opacity="${on ? 0.9 : 0.35}" ${on ? '' : 'stroke-dasharray="8 6"'}/><path d="M${bx.toFixed(1)},${y} l-6,-11 l12,0 z" fill="${col}" opacity="${on ? 0.9 : 0.35}"/>`;
+  }
   let heads = ''; for (const t of tiers) heads += `<text x="${(8).toFixed(0)}" y="${ry[t] - 10}" font-size="20" font-weight="700" fill="#8a8378">Tier ${t}</text>`;
   for (const id of ids) {
     const d = E.nodeDef(id), st = E.nodeState(s, id), tc = TIERCOL[d.tier] || '#888', x = cx(id) - NW / 2, y = top(id);
