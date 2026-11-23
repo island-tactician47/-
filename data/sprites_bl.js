@@ -3200,44 +3200,44 @@ window.GAME_DATA.spritesBL = {
   ]
  },
  "aiDefenseFactory": {
-  "fw": 9,
-  "fd": 9,
+  "fw": 12,
+  "fd": 12,
   "r": [
    {
     "file": "../assets/bl/aiDefenseFactory_r0.png",
-    "w": 587.0,
-    "h": 290.0,
-    "ax": 293.5,
-    "ay": 155.6,
-    "fw": 9,
-    "fd": 9
+    "w": 779.0,
+    "h": 476.5,
+    "ax": 389.5,
+    "ay": 299.1,
+    "fw": 12,
+    "fd": 12
    },
    {
     "file": "../assets/bl/aiDefenseFactory_r1.png",
-    "w": 587.0,
-    "h": 291.5,
-    "ax": 293.5,
-    "ay": 157.1,
-    "fw": 9,
-    "fd": 9
+    "w": 779.0,
+    "h": 413.5,
+    "ax": 389.5,
+    "ay": 236.1,
+    "fw": 12,
+    "fd": 12
    },
    {
     "file": "../assets/bl/aiDefenseFactory_r2.png",
-    "w": 587.0,
-    "h": 334.0,
-    "ax": 293.5,
-    "ay": 199.6,
-    "fw": 9,
-    "fd": 9
+    "w": 779.0,
+    "h": 414.0,
+    "ax": 389.5,
+    "ay": 236.6,
+    "fw": 12,
+    "fd": 12
    },
    {
     "file": "../assets/bl/aiDefenseFactory_r3.png",
-    "w": 587.0,
-    "h": 308.0,
-    "ax": 293.5,
-    "ay": 173.6,
-    "fw": 9,
-    "fd": 9
+    "w": 779.0,
+    "h": 448.5,
+    "ax": 389.5,
+    "ay": 271.1,
+    "fw": 12,
+    "fd": 12
    }
   ]
  },

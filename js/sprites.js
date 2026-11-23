@@ -43,7 +43,7 @@
     powerEquipFactory: { color: '#a9b8ad', h: 16 },
     commGearFactory:  { color: '#b7c9d6', h: 26, glass: true },
     satelliteFactory: { color: '#e3e8ec', h: 22, glass: true, clean: true },
-    aiDefenseFactory: { color: '#7d8a9a', h: 16, bunker: true, glass: true }
+    aiDefenseFactory: { color: '#7d8a9a', h: 34, bunker: true, glass: true }
   };
   const TANKCOL = { crudeTank: '#7a5a3a', tank_gasoline: '#e0b84a', tank_diesel: '#4f86b8', tank_naphtha: '#9a6fb8', tank_heavy: '#4a4540' };
 

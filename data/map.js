@@ -37,7 +37,7 @@ window.GAME_DATA.map = {
     steelMill: [12, 12], aluminumSmelter: [6, 6], copperSmelter: [4, 4], kiln: [4, 4], sawmill: [4, 4], paperMill: [4, 4],
     detergentFactory: [4, 4], garmentFactory: [4, 4], buildmatFactory: [6, 6],
     carFactory: [7, 5], shipyard: [5, 8], aircraftFactory: [6, 5], semiconductorFactory: [6, 6], pcFactory: [7, 6], evFactory: [8, 8], pharmaFactory: [6, 5],
-    rocketFactory: [6, 6], munitionsFactory: [7, 8], fineChemPlant: [6, 5], explosivesFactory: [6, 6], colonyFactory: [12, 12], offshoreFactory: [10, 10], cableFactory: [6, 5], fiberFactory: [5, 5], motorFactory: [7, 6], powerEquipFactory: [9, 8], commGearFactory: [6, 6], satelliteFactory: [8, 8], aiDefenseFactory: [9, 9],   // NT に無い型（手続き描画 js/sprites2.js）は小さめ
+    rocketFactory: [6, 6], munitionsFactory: [7, 8], fineChemPlant: [6, 5], explosivesFactory: [6, 6], colonyFactory: [12, 12], offshoreFactory: [10, 10], cableFactory: [6, 5], fiberFactory: [5, 5], motorFactory: [7, 6], powerEquipFactory: [9, 8], commGearFactory: [6, 6], satelliteFactory: [8, 8], aiDefenseFactory: [12, 12],   // NT に無い型（手続き描画 js/sprites2.js）は小さめ
     powerPlant: [8, 8], researchLab: [4, 4], warehouse_bulk: [4, 4], warehouse_goods: [4, 4]
   }
 };
