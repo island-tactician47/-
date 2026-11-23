@@ -13,7 +13,7 @@ GAME_DATA.segments = {
   transport: { name: '輸送機本部', icon: '🚗', group: 'product' },
   advanced:  { name: '先端・防衛本部', icon: '💾', group: 'product' },
   space:     { name: '宇宙事業', icon: '🛰️', group: 'product' },
-  mega:      { name: '大型プロジェクト', icon: '🏗️', group: 'product' }   // コロニー工場だけ。ゴール（コロニー由来の利益の割合）のために、損益を分けて数える
+  mega:      { name: '大型プロジェクト', icon: '🏗️', group: 'product' }   // 洋上プラットフォーム・超音速旅客機・AI防衛システムの工場（コロニーの仲間）   // コロニー工場だけ。損益を分けて数える
 };
 GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 'transport', 'advanced', 'space', 'mega'];
 (function () {

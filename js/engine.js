@@ -709,7 +709,8 @@
     nodeCounts(s) { let n = 0, all = 0; for (const id in this.treeNodes()) { all++; if (this.nodeUnlocked(s, id)) n++; } return { open: n, all }; },
     // 次の目標の文（ヘッダーに出す）：選べるノード → 解放権をためる → 素材を増やす → すべて開いた
     nodeGoal(s) {
-      const ids = Object.keys(this.treeNodes()).filter(id => !this.nodeUnlocked(s, id) && !this.nodeDef(id).auto && (this.nodeDef(id).needs || []).every(n => this.nodeUnlocked(s, n)));   // 前提がそろっているノード
+      const fin = this.colonyBuilt(s) ? (this.treeCfg().finalProducts || []) : [];   // 最終プロジェクトを1つ完成させたら、ほかの最終プロジェクトのノードは目標に出さない
+      const ids = Object.keys(this.treeNodes()).filter(id => !this.nodeUnlocked(s, id) && !this.nodeDef(id).auto && !fin.includes(id) && (this.nodeDef(id).needs || []).every(n => this.nodeUnlocked(s, n)));   // 前提がそろっているノード
       if (!ids.length) { const g = this.goalProgress(s); return g && !g.reached ? (g.colonyBuilt ? `目標：年末の純利益 ${this.fmtMoney(g.target)}（いま直近12か月 ${this.fmtMoney(g.profit12)}）` : `目標：最終プロジェクト（コロニーなど）を1基完成させ、年末の純利益 ${this.fmtMoney(g.target)} に届く`) : '目標：すべてのノードを開いた'; }
       const sts = ids.map(id => ({ id, st: this.nodeState(s, id) }));
       const c = sts.find(x => x.st.canUnlock); if (c) return `目標：研究タブで「${this.nodeName(c.id)}」を開ける（解放権${c.st.tickets.need}枚）`;
@@ -1837,9 +1838,9 @@
       const cfg = D().tax; if (!cfg) return 0;
       const d = s.day - 1; if (Math.floor((d % DAYS_PER_YEAR) / DAYS_PER_MONTH) !== 11) return 0;
       const y = D().startYear + Math.floor(d / DAYS_PER_YEAR);
-      let pretax = pre, capex = s.month.construction || 0;
+      let pretax = pre, capex = s.month.construction || 0;   // 設備投資（撤去の返金で引かれた分は含む。年の合計が負なら0として扱う）
       for (const x of s.history || []) if (x.y === y) { pretax += (x.profit || 0) + ((x.costs && x.costs.tax) || 0); capex += x.capex || 0; }
-      const loss = (s.tax && s.tax.loss) || 0, base = Math.max(0, pretax - capex * (cfg.capexDeduct === undefined ? 1 : cfg.capexDeduct));
+      const loss = (s.tax && s.tax.loss) || 0, base = Math.max(0, pretax - Math.max(0, capex) * (cfg.capexDeduct === undefined ? 1 : cfg.capexDeduct));
       const tax = cfg.rate * Math.max(0, base - loss - cfg.exempt * this.priceIndex(s));
       const left = pretax < 0 ? loss - pretax : Math.max(0, loss - base);
       if (left > 0 || s.tax) s.tax = { loss: left };

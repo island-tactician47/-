@@ -107,7 +107,7 @@
       const E = D().events;
       if (rng() < E.monthlyChance) {
         // その本部の事業をしていないときは、その本部のイベントは起こさない。本部（と景気全般＝segment 無し）を均等に選んでから、その中で重みで選ぶ
-        const ok = e => !state.activeEvents.some(a => a.id === e.id) && (!e.segment || !window.Engine || !Engine.segmentActive || Engine.segmentActive(state, e.segment));
+        const ok = e => !state.activeEvents.some(a => a.id === e.id) && (!e.segment || !window.Engine || !Engine.segmentActive || Engine.segmentActive(state, e.segment)) && (!e.building || !window.Engine || Engine.count(state, e.building) > 0);   // building＝その工場を持っているときだけ起こす
         const groups = {};
         for (const e of E.list) if (ok(e)) (groups[e.segment || '*'] = groups[e.segment || '*'] || []).push(e);
         const keys = Object.keys(groups);
