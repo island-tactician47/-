@@ -631,8 +631,8 @@
     nodeVisible(s, id) {
       const d = this.nodeDef(id); if (!d) return false;
       if (this.nodeUnlocked(s, id)) return true;
-      const cr = this.treeCfg().colonyReveal;
-      if (cr && cr.node === id) { let n = 0; for (const k in this.treeNodes()) if (this.nodeDef(k).tier === cr.tier && this.nodeUnlocked(s, k)) n++; if (n >= cr.count) return true; }
+      const cr = this.treeCfg().finalReveal;   // 例外：コロニーとAI防衛システムは、Tier 5 のうち count 個が開いたら描く
+      if (cr && cr.nodes.includes(id)) { let n = 0; for (const k in this.treeNodes()) if (this.nodeDef(k).tier === cr.tier && this.nodeUnlocked(s, k)) n++; if (n >= cr.count) return true; }
       return (d.needs || []).every(n => this.nodeUnlocked(s, n));
     },
     // ---------- ゴール：純資産（貸借対照表の資本）の目標。達成でスコア。s.goal は達成するまで作らない ----------

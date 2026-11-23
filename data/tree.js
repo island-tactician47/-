@@ -9,7 +9,7 @@
 //   tickets：解放権の枚数（Tier 3+）。auto：自動で開く（Tier 1〜2。旧ティアの条件で開く）
 //   supply：{ building, recipe }（選択権の量の基準：その設備を、増設モジュールをすべて付けて全開で回す量の入力）。省略時は buildings[0] とそのレシピ
 //   legacyResearch：旧セーブでは研究が済んでいたときだけ開いた（旧ティアの到達では開かない）。移行の判定に使う
-//   colony：最後のノード（Tier 5 のうち4つが開くまで画面に描かない。config.colonyReveal）
+//   colony・aiDefense：最後のノード（Tier 5 のうち4つが開くまで画面に描かない。config.finalReveal）
 //   x・color：技術ツリーの図での横の位置（図の幅 約2200 の中の中心）と、このノードから出る線の色
 // }
 window.GAME_DATA = window.GAME_DATA || {};
@@ -24,7 +24,7 @@ GAME_DATA.tree = {
     supplyModules: 0,         // 必要な量：その設備に、増設モジュールを何個付けて全開で回す量か（0＝増設なしの1基。上限は map.js の modules.max）
     supplyFactor: 1.0,        // 必要な量にかける係数（バランス調整用）
     finalProducts: ['colony', 'offshore', 'aiDefense'],   // 最終プロジェクトの品目（材料に船・航空機を使わない等のデータ検査の対象）。ゴールの条件に要るのは goal.projects（コロニーとAI防衛システムを1基ずつ）
-    colonyReveal: { node: 'colony', tier: 5, count: 4 }   // 例外：コロニーは Tier 5 のうち4つが開いたら描く
+    finalReveal: { nodes: ['colony', 'aiDefense'], tier: 5, count: 4 }   // 例外：コロニーとAI防衛システムは Tier 5 のうち4つが開いたら描く（前提がまだでも）
   },
   nodes: {
     refinery:  { x: 1300, color: '#6b7b8c', name: '精製所',       icon: '🏭', tier: 1, legacyTier: 2, auto: true, needs: [] },

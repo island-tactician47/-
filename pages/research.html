@@ -142,7 +142,7 @@ function render(s) {
     const tiers = {}; for (const id of ids) (tiers[E.nodeDef(id).tier] = tiers[E.nodeDef(id).tier] || []).push(id);
     UI.html('tree', Object.keys(tiers).sort((a, b) => a - b).map(t => `<div class="tier-h"><h3>Tier ${t}</h3><span class="sub">${tiers[t].filter(id => E.nodeUnlocked(s, id)).length}／${tiers[t].length}</span></div>` + tiers[t].map(id => { const st = E.nodeState(s, id); return `<div class="card node ${st.unlocked ? 'u' : st.canUnlock ? 'c' : st.selectable ? 's' : 'l'}">${nodeCard(s, id)}</div>`; }).join('')).join(''));
   }
-  UI.html('foot', (view === 'tree' ? '図：実線＝前提が開いている／点線＝前提がまだ。図は上下左右にスクロールできる。ノードをタップすると下に詳しく出る。' : '') + (hidden > 0 ? `見えているのは、開いたノードと、前提がそろったノード（選択権がなくても表示はする）。まだ見えていない産業が ${hidden} 個ある（前提のノードをすべて開くと現れる。宇宙コロニーは、Tier 5 のうち4つを開くと現れる）。` : 'すべてのノードが見えている。'));
+  UI.html('foot', (view === 'tree' ? '図：実線＝前提が開いている／点線＝前提がまだ。図は上下左右にスクロールできる。ノードをタップすると下に詳しく出る。' : '') + (hidden > 0 ? `見えているのは、開いたノードと、前提がそろったノード（選択権がなくても表示はする）。まだ見えていない産業が ${hidden} 個ある（前提のノードをすべて開くと現れる。宇宙コロニーとAI防衛システムは、Tier 5 のうち4つを開くと現れる）。` : 'すべてのノードが見えている。'));
 }
 function pick(id) { const d = E.nodeDef(id); if (!confirm(`「${d.name}」を開きます（解放権${d.tickets}枚を使う）。よろしいですか？`)) return; UI.act(s => E.selectNode(s, id)); }
 UI.boot({ page: 'research', render });
