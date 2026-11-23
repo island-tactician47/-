@@ -21,12 +21,12 @@ window.GAME_DATA.map = {
   reclaimCostPerTile: 4000,   // 埋め立て：海の上に設備を置くとき、海のマスごとにかかる費用（物価指数で増える）。置いた足あとが陸地になる（s.map.fill）。海岸線から reclaimMax 行まで、港の前と造船所の開口部の前は海のまま
   reclaimCostPerRow: 240000, reclaimMax: 12,   // 旧方式（海岸線を全幅で1行広げる）。古いセーブと自動配置の用地の確保でだけ使う   // 埋め立て：海岸線を1行（全幅）広げる費用（物価指数で増える）と上限行数。港の前は海のまま
   // 増設モジュール：加工設備1基につき最大 max 個。1個で基準の日量が gain 倍ぶん増える。建設費・工期・維持費は元の設備の costMul・monthsMul・fixedMul 倍（新設より少しだけ得にして、土地を食わない・設備数の上限を超えられる分の利点とつり合わせる）
-  modules: { exclude: { shipyard: 1, colonyFactory: 1, aiDefenseFactory: 1 }, max: 3, gain: 1.0, costMul: 0.9, monthsMul: 0.7, fixedMul: 0.9 },
+  modules: { exclude: { shipyard: 1, colonyFactory: 1, aiDefenseFactory: 1, offshoreFactory: 1 }, max: 3, gain: 1.0, costMul: 0.9, monthsMul: 0.7, fixedMul: 0.9 },
   // 増設モジュールの足あとは、設置相手の設備ごとに違う（親の増築として絵を作ってある）。ここに無い親は footprint.module。造船所は増設なし
   moduleFootprint: {
     chemPlant: [3, 3], steelMill: [3, 4], aluminumSmelter: [2, 4], kiln: [2, 3], sawmill: [2, 2], paperMill: [2, 3],
     detergentFactory: [3, 2], garmentFactory: [2, 2], buildmatFactory: [3, 3], carFactory: [3, 3], aircraftFactory: [3, 3], semiconductorFactory: [2, 3], copperSmelter: [2, 3], pcFactory: [3, 2], evFactory: [3, 3], pharmaFactory: [2, 2], rocketFactory: [2, 3], munitionsFactory: [3, 3], fineChemPlant: [3, 3], explosivesFactory: [3, 3],
-    offshoreFactory: [3, 3], cableFactory: [2, 2], fiberFactory: [2, 2], motorFactory: [2, 3], powerEquipFactory: [3, 3], commGearFactory: [2, 2], satelliteFactory: [3, 3]
+    cableFactory: [2, 2], fiberFactory: [2, 2], motorFactory: [2, 3], powerEquipFactory: [3, 3], commGearFactory: [2, 2], satelliteFactory: [3, 3]
   },
   // 向きを選べない種類（絵が4方向そろっていないもの。そろったら外す）。造船所（海側が決まっている）と研究棟（敷地に重ねる）は engine.canRotate が別に判定する
   noRotate: {},

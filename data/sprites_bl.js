@@ -3206,18 +3206,18 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/aiDefenseFactory_r0.png",
     "w": 779.0,
-    "h": 582.5,
+    "h": 585.5,
     "ax": 389.5,
-    "ay": 405.1,
+    "ay": 408.1,
     "fw": 12,
     "fd": 12
    },
    {
     "file": "../assets/bl/aiDefenseFactory_r1.png",
     "w": 779.0,
-    "h": 456.5,
+    "h": 458.5,
     "ax": 389.5,
-    "ay": 279.1,
+    "ay": 281.1,
     "fw": 12,
     "fd": 12
    },
@@ -3233,9 +3233,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/aiDefenseFactory_r3.png",
     "w": 779.0,
-    "h": 519.5,
+    "h": 525.0,
     "ax": 389.5,
-    "ay": 342.1,
+    "ay": 347.6,
     "fw": 12,
     "fd": 12
    }
@@ -3490,48 +3490,6 @@ window.GAME_DATA.spritesBL = {
     "ay": 152.6,
     "fw": 5,
     "fd": 5
-   }
-  ]
- },
- "module_offshoreFactory": {
-  "fw": 3,
-  "fd": 3,
-  "r": [
-   {
-    "file": "../assets/bl/module_offshoreFactory_r0.png",
-    "w": 203.0,
-    "h": 124.0,
-    "ax": 101.5,
-    "ay": 75.6,
-    "fw": 3,
-    "fd": 3
-   },
-   {
-    "file": "../assets/bl/module_offshoreFactory_r1.png",
-    "w": 203.0,
-    "h": 106.5,
-    "ax": 101.5,
-    "ay": 58.1,
-    "fw": 3,
-    "fd": 3
-   },
-   {
-    "file": "../assets/bl/module_offshoreFactory_r2.png",
-    "w": 203.0,
-    "h": 124.0,
-    "ax": 101.5,
-    "ay": 75.6,
-    "fw": 3,
-    "fd": 3
-   },
-   {
-    "file": "../assets/bl/module_offshoreFactory_r3.png",
-    "w": 203.0,
-    "h": 100.5,
-    "ax": 101.5,
-    "ay": 52.1,
-    "fw": 3,
-    "fd": 3
    }
   ]
  },
