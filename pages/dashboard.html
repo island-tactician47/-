@@ -97,7 +97,7 @@ function collect(s) {
   for (const k in s.oreYards || {}) { const o = out[E.segmentOfItem(k)]; if (o) { const w = s.oreYards[k] * G.buildings.mine.yard.cost * idx; o.baseValue = (o.baseValue || 0) + w; o.assetValue += w; } }
   for (const m of s.mines || []) { const o = out[E.segmentOfItem(G.mineSites[m.site].res)]; if (o) { const w = E.mineCost(s, m.site) / E.priceIndex(s) * idx; o.baseValue = (o.baseValue || 0) + w; o.assetValue += w; } }
   if (out.oil) { const w = s.wells.length * G.buildings.oilWell.cost * idx; out.oil.baseValue = (out.oil.baseValue || 0) + w; out.oil.assetValue += w; }
-  for (const p of s.plants) {
+  for (const p of E.sortPlants(s.plants)) {
     const o = out[E.segmentOfBuilding(p.type)], b = G.buildings[p.type], ec = E.recipeEconomics(s, p.recipe, p.type, p.runRate, p.modules || 0);
     if (!o || !b || !ec) continue;
     o.plants.push(p);

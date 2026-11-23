@@ -158,7 +158,7 @@ function renderBuild(s, seg, info) {
 // 設備カードの枠は plant の並びが変わったときだけ作り直し、中身は領域ごとに更新する（開閉は UI.fold が保つ）
 function renderPlants(s, seg, info) {
   if (seg === HQ) { $('plants').innerHTML = ''; builtFor = null; return; }
-  const mine = s.plants.filter(p => E.segmentOfBuilding(p.type) === seg);
+  const mine = E.sortPlants(s.plants).filter(p => E.segmentOfBuilding(p.type) === seg);   // 工場の種類順（同じ種類は建てた順）
   const key = seg + ':' + mine.map(p => p.id + ':' + p.type).join('|');
   if (builtFor !== key) {
     builtFor = key;

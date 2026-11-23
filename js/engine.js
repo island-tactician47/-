@@ -760,6 +760,47 @@
       const f = tot > 0 ? Math.min(1, boughtValue / tot) : 0, ec = this.recipeEconomics(s, p.recipe), m = ec ? ec.marginOwn : 0;
       return m > 0 ? (1 - r) * m * t * f - (premium || 0) : 0;
     },
+    // ---------- ブループリント（配置の保存と貼り付け）：選んだ建物（増設モジュールは含めない）の相対配置を保存し、空いた場所へまとめて建てる ----------
+    // keys＝マップ上の建物の key の配列。戻り値＝{ items:[{type, dx, dy, rot}], w, d }（左上の建物の角を原点とした相対位置。足あとの全体の幅・奥行き）。建てられる種類が無ければ null
+    blueprintFromKeys(s, keys) {
+      const pl = (s.map && s.map.placed) || {}, items = []; let x0 = Infinity, y0 = Infinity;
+      for (const k of keys) { const q = pl[k], b = q && D().buildings[q.type]; if (!q || q.type === 'module' || !b || b.retired || this.offMap(q.type)) continue; items.push({ type: q.type, x: q.x, y: q.y, rot: q.rot || 0 }); x0 = Math.min(x0, q.x); y0 = Math.min(y0, q.y); }
+      if (!items.length) return null;
+      let w = 0, d = 0;
+      for (const it of items) { const [fw, fd] = this.footprintOf(it.type, this.cleanRot(it.type, it.rot)); it.dx = it.x - x0; it.dy = it.y - y0; w = Math.max(w, it.dx + fw); d = Math.max(d, it.dy + fd); delete it.x; delete it.y; }
+      return { items, w, d };
+    },
+    // 左上を (ox, oy) にして貼り付けられるか：{ ok, msg（最初の理由）, items:[{ok, msg}]、cost（建設費＋埋め立て）}。全部置けて資金が足りるときだけ ok
+    blueprintCheck(s, bp, ox, oy) {
+      const res = { ok: true, items: [], cost: 0, msg: null }; let fill = 0;
+      this.ensureMap(s); const occ = this.mapOccupancy(s), need = {};
+      for (const it of bp.items) need[it.type] = (need[it.type] || 0) + 1;
+      for (const it of bp.items) {
+        const b = D().buildings[it.type]; let r = null;
+        if (!b || b.retired) r = { ok: false, msg: '今は建てられない種類' };
+        else {
+          const cb = this.canBuild(s, it.type);
+          if (!cb.ok && !/資金不足/.test(cb.msg || '')) r = { ok: false, msg: `${b.name}：${cb.msg}` };
+          else if (b.maxCount && this.count(s, it.type) + this.constructing(s, it.type) + need[it.type] > b.maxCount) r = { ok: false, msg: `${b.name}は最大${b.maxCount}棟` };
+        }
+        if (!r) { const c = this.canPlace(s, it.type, ox + it.dx, oy + it.dy, occ, it.rot); if (c.ok) { r = { ok: true }; res.cost += this.costOf(s, it.type); fill += (c.fill || []).length; } else r = { ok: false, msg: `${b.name}：${c.msg}` }; }
+        res.items.push(r);
+        if (!r.ok) { res.ok = false; if (!res.msg) res.msg = r.msg; }
+      }
+      res.cost += this.fillCost(s, fill);
+      if (res.ok && s.cash < res.cost) { res.ok = false; res.msg = `資金不足（${this.fmtMoney(res.cost)}）`; }
+      return res;
+    },
+    // 貼り付けて、まとめて建設を始める（全部置けるときだけ。建設費は建てるときに払う）。戻り値＝{ ok, n（建てた数）, cost, msg }
+    blueprintBuild(s, bp, ox, oy) {
+      const chk = this.blueprintCheck(s, bp, ox, oy); if (!chk.ok) return { ok: false, msg: chk.msg };
+      let n = 0;
+      for (const it of bp.items) { const r = this.build(s, it.type, null, { x: ox + it.dx, y: oy + it.dy, rot: it.rot }); if (r && r.ok) n++; else return { ok: false, msg: (r && r.msg) || '建てられなかった', n }; }
+      this.log(s, `📐 ブループリントを貼り付けた（${n}件の建設を開始）`);
+      return { ok: true, n, cost: chk.cost };
+    },
+    // 画面用：加工設備を、工場の種類順（data/buildings.js の定義の順）に、同じ種類のなかは建てた順（id）に並べたコピー。建てた順そのままでは、同じ種類が散らばるため
+    sortPlants(plants) { const order = {}; Object.keys(D().buildings).forEach((k, i) => { order[k] = i; }); return plants.slice().sort((a, b) => ((order[a.type] === undefined ? 1e6 : order[a.type]) - (order[b.type] === undefined ? 1e6 : order[b.type])) || a.id - b.id); },
     // 画面用：この設備の輸入の状況。{ ratio（自前に対する利益の比率）, cap（輸入で動かせる上限・日量）, used（同じレシピの設備の合計）, share（動かした量のうち輸入の割合）, profitShare（いまの利益が自前の何割か）, hit（上限に達しているか） }。罰のない工場は null
     importInfo(s, p) {
       const r = this.importRatio(p.recipe); if (r >= 1) return null;

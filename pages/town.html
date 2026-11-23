@@ -57,6 +57,38 @@ let placing = null;        // 建てる種類（場所を決める途中）。'm
 let placingPlant = null;   // 増設モジュールを置く加工設備の id
 let placingRot = 0;        // 建てる向き（0〜3。向きを選べない種類は 0 のまま。増設モジュールも自由に回せる）
 let moveKey = null;        // 移設・置き直しの対象（key）。null なら新しく建てる
+// ブループリント（配置の保存と貼り付け）。bpMode: null｜'menu'（一覧）｜'select'（建物を選んでいる）｜'paste'（貼り付ける場所を決めている）
+let bpMode = null, bpKeys = new Set(), bpCur = null, bpAt = null;
+const BPKEY = 'factorySim.blueprints.v1';
+function bpLoad() { try { const a = JSON.parse(localStorage.getItem(BPKEY) || '[]'); return Array.isArray(a) ? a.filter(b => b && Array.isArray(b.items) && b.items.length) : []; } catch (e) { return []; } }
+function bpStore(list) { try { localStorage.setItem(BPKEY, JSON.stringify(list.slice(0, 30))); } catch (e) {} }
+function bpClear() { bpMode = null; bpKeys = new Set(); bpCur = null; bpAt = null; if (iso) { iso.multi = null; iso.ghosts = null; } }
+function bpOpen() { sel = null; cursor = null; placing = null; iso.selected = null; iso.cursor = null; iso.ghost = null; bpMode = 'menu'; UI.refresh(); }
+function bpStartSelect() { bpClear(); bpMode = 'select'; bpKeys = new Set(); iso.multi = bpKeys; UI.refresh(); }
+function bpSelectedBlueprint() { return E.blueprintFromKeys(UI.state, [...bpKeys]); }
+function bpSave() {
+  const bp = bpSelectedBlueprint(); if (!bp) { UI.toast('建物を1つ以上選んでください'); return; }
+  const list = bpLoad(), name = (prompt('ブループリントの名前', '配置' + (list.length + 1)) || '').trim(); if (!name) return;
+  list.unshift({ name, items: bp.items, w: bp.w, d: bp.d, at: Date.now() }); bpStore(list); bpClear(); bpMode = 'menu'; UI.toast(`保存しました（${bp.items.length}件）`); UI.refresh();
+}
+function bpDelete(i) { const list = bpLoad(); if (!list[i] || !confirm(`「${list[i].name}」を削除します。よろしいですか？`)) return; list.splice(i, 1); bpStore(list); UI.refresh(); }
+function bpStartPaste(i) {
+  const bp = bpLoad()[i]; if (!bp) return;
+  bpClear(); bpMode = 'paste'; bpCur = bp;
+  const c = cursor || (iso && iso.unproject(iso.w / 2, iso.h / 2)) || { x: 15, y: 18 };
+  bpAt = { x: Math.floor(c.x), y: Math.floor(c.y) }; bpUpdateGhosts(); if (iso) iso.center(bpAt.x, bpAt.y); UI.refresh();
+}
+function bpOrigin() { return { ox: bpAt.x - Math.floor(bpCur.w / 2), oy: bpAt.y - Math.floor(bpCur.d / 2) }; }
+function bpUpdateGhosts() {
+  if (!bpCur || !bpAt) { iso.ghosts = null; return; }
+  const { ox, oy } = bpOrigin(), chk = E.blueprintCheck(UI.state, bpCur, ox, oy);
+  iso.ghosts = bpCur.items.map((it, i) => ({ type: it.type, x: ox + it.dx, y: oy + it.dy, rot: it.rot, ok: chk.items[i] && chk.items[i].ok }));
+}
+function bpConfirm() {
+  if (!bpCur || !bpAt) return; const { ox, oy } = bpOrigin(), bp = bpCur;
+  const r = UI.act(s => E.blueprintBuild(s, bp, ox, oy));
+  if (r && r.ok) { UI.toast(`「${bp.name}」を貼り付けた（${r.n}件の建設を開始）`); bpClear(); UI.refresh(); }
+}
 
 // 建設メニューのカテゴリ（建物の category → 表示）
 const CATS = [
@@ -129,7 +161,7 @@ function startModule(plantId) {
   UI.refresh();
 }
 // メニューを閉じる（×）：建設・置き直しの途中ならやめる。そうでなければ、選んでいる建物・タイルの選択を外す
-function closeSheet() { if (placing) { cancelPlacing(); return; } sel = null; cursor = null; if (iso) { iso.selected = null; iso.cursor = null; } UI.refresh(); }
+function closeSheet() { if (bpMode) { bpClear(); UI.refresh(); return; } if (placing) { cancelPlacing(); return; } sel = null; cursor = null; if (iso) { iso.selected = null; iso.cursor = null; } UI.refresh(); }
 function cancelPlacing() { placing = null; placingPlant = null; placingRot = 0; moveKey = null; iso.ghost = null; UI.refresh(); }
 function confirmPlacing() {
   const gh = iso.ghost; if (!gh || !placing) return;
@@ -148,6 +180,12 @@ function confirmPlacing() {
 
 function onTap(info) {
   const s = UI.state;
+  if (bpMode === 'select') {   // 建物をタップして、選ぶ／外す（増設モジュール・港は選ばない）
+    const e = info.ent;
+    if (e && e.type !== 'module' && e.type !== '_port') { if (bpKeys.has(e.key)) bpKeys.delete(e.key); else bpKeys.add(e.key); iso.multi = bpKeys; }
+    UI.refresh(); return;
+  }
+  if (bpMode === 'paste') { bpAt = { x: info.tile.x, y: info.tile.y }; bpUpdateGhosts(); UI.refresh(); return; }
   if (placing === 'module') { const p = s.plants.find(q => q.id === placingPlant); if (p) { cursor = info.tile; iso.ghost = modGhost(p, info.tile); } UI.refresh(); return; }
   if (placing) {
     cursor = info.tile; iso.ghost = ghostAt(placing, info.tile); UI.refresh(); return;
@@ -192,6 +230,30 @@ function flowHtml(s, p, key) {
 
 function renderSheet(s) {
   const out = [];
+  if (bpMode) {
+    const cost = items => items.reduce((a, it) => a + E.costOf(s, it.type), 0);
+    if (bpMode === 'menu') {
+      const list = bpLoad();
+      out.push(`<div class="card"><div class="row"><h3>📐 ブループリント</h3><button type="button" class="xbtn" onclick="closeSheet()" aria-label="閉じる">×</button></div>
+        <div class="sub">建物の配置を、名前をつけて保存し、空いた場所へまとめて建てる。増設モジュールは含まない。向きは保存したまま。この端末のブラウザに残る。</div>
+        ${list.map((b, i) => `<div class="row" style="margin-top:6px"><span><b>${b.name}</b> <span class="sub">${b.items.length}件・約${M(cost(b.items))}</span></span><span><button class="btn small" onclick="bpStartPaste(${i})">貼り付け</button> <button class="btn small" onclick="bpDelete(${i})">🗑️</button></span></div>`).join('') || '<div class="sub" style="margin-top:6px">まだ保存したものはない</div>'}
+        <div class="btns" style="margin-top:8px"><button class="btn" onclick="bpStartSelect()">＋ 建物を選んで保存</button> <button class="btn small" onclick="closeSheet()">閉じる</button></div></div>`);
+    } else if (bpMode === 'select') {
+      const bp = bpSelectedBlueprint(), n = bp ? bp.items.length : 0;
+      out.push(`<div class="card"><div class="row"><h3>📐 建物を選ぶ</h3><button type="button" class="xbtn" onclick="closeSheet()" aria-label="閉じる">×</button></div>
+        <div class="sub">保存したい建物をタップして選ぶ（水色の枠。もう一度タップで外す）。増設モジュールは選べない。</div>
+        <div style="margin-top:6px">選んだ建物：<b>${n}件</b>${bp ? `　建設費の合計 約${M(cost(bp.items))}　範囲 ${bp.w}×${bp.d}` : ''}</div>
+        <div class="btns" style="margin-top:8px"><button class="btn" ${n ? '' : 'disabled'} onclick="bpSave()">保存する</button> <button class="btn small" onclick="bpOpen()">一覧へ</button> <button class="btn small" onclick="closeSheet()">やめる</button></div></div>`);
+    } else if (bpMode === 'paste' && bpCur) {
+      bpUpdateGhosts();
+      const { ox, oy } = bpOrigin(), chk = E.blueprintCheck(s, bpCur, ox, oy), bad = chk.items.filter(i => !i.ok).length;
+      out.push(`<div class="card"><div class="row"><h3>📐 ${bpCur.name}を貼り付ける</h3><span style="display:flex;align-items:center"><span class="sub">${bpCur.items.length}件・${M(chk.cost)}</span><button type="button" class="xbtn" onclick="closeSheet()" aria-label="閉じる">×</button></span></div>
+        <div class="sub">マップをタップして場所を決める（緑なら置ける・赤は置けない）。全部置けて資金が足りるときだけ建てられる。</div>
+        <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">全部置ける</b>' : `<b class="bad">${bad ? bad + '件が置けない：' : ''}${chk.msg}</b>`}</div>
+        <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok ? '' : 'disabled'} onclick="bpConfirm()">建設する</button> <button class="btn small" onclick="bpOpen()">一覧へ</button> <button class="btn small" onclick="closeSheet()">やめる</button></div></div>`);
+    }
+    UI.html('sheet', out.join('')); return;
+  }
   if (placing === 'module') {
     const p = s.plants.find(q => q.id === placingPlant), gh = iso.ghost;
     if (!p) { placing = null; iso.ghost = null; }
@@ -248,7 +310,7 @@ function renderSheet(s) {
       ${types.map(t => { const b = G.buildings[t], chk = E.canBuild(s, t), cant = !chk.ok && !/資金不足/.test(chk.msg || ''); return `<button class="btn tbtn" ${cant ? 'disabled' : ''} onclick="startPlacing('${t}')">${b.icon || ''} ${b.name}　${M(E.costOf(s, t))}・${E.buildText(b.months)}${cant ? `<div class="sub">${chk.msg}</div>` : (!chk.ok ? `<div class="sub warn">${chk.msg}</div>` : '')}</button>`; }).join('') || '<div class="sub">解放済みの設備はまだない</div>'}</div>`);
   } else {
     const n = (iso.ents || []).length;
-    out.push(`<div class="card sub">建物をタップすると詳しく、空き地をタップするとそこに建てられます。${n ? `（建物 ${n}）` : ''}　油井は<a href="field.html">採掘地</a>で建てます。</div>`);
+    out.push(`<div class="card sub">建物をタップすると詳しく、空き地をタップするとそこに建てられます。${n ? `（建物 ${n}）` : ''}　油井は<a href="field.html">採掘地</a>で建てます。<div class="btns" style="margin-top:6px"><button class="btn small" onclick="bpOpen()">📐 ブループリント</button></div></div>`);
   }
   UI.html('sheet', out.join(''));
 }
@@ -271,6 +333,10 @@ function render(s) {
       const sv = qp.get('sel'), mvv = qp.get('move'), tgt = pick(sv || mvv);
       if (tgt && sv) { sel = tgt.key; iso.selected = sel; }
       if (tgt && mvv) { if (mvv === 'module') startModuleMove(tgt.key); else startMove(tgt.key); } }
+    // 確認用：?bp=menu（ブループリントの一覧）／?bp=select（建物を3つ選んだ状態）／?bp=paste（建物3つを保存して、貼り付けの見本を出す）
+    { const bm = qp.get('bp'); if (bm === 'menu') bpOpen();
+      else if (bm === 'select' || bm === 'paste') { bpStartSelect(); for (const e of E.mapEntities(UI.state).filter(e => e.type !== 'module' && e.type !== '_port').slice(0, 3)) bpKeys.add(e.key); iso.multi = bpKeys;
+        if (bm === 'paste') { const bp = bpSelectedBlueprint(); if (bp) { bpClear(); bpMode = 'paste'; bpCur = Object.assign({ name: '見本' }, bp); const c = iso.unproject(iso.w / 2, iso.h / 2) || { x: 15, y: 18 }; bpAt = { x: Math.floor(c.x) + 6, y: Math.floor(c.y) + 6 }; bpUpdateGhosts(); } } UI.refresh(); } }
     const mp = +(new URLSearchParams(location.search).get('module')) || 0;
     if (mp) startModule(mp);
     if (b || mp) try { history.replaceState(null, '', location.pathname); } catch (e) {}   // 再読み込みで場所選びが再開しないように

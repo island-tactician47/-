@@ -355,8 +355,10 @@
         if (e.type === '_port') { drawPort(e, s); continue; }
         const o = { era, t: I.t, running: running(s, e) };
         if (I.selected === e.key) outline(e, '#ffe08a', 2.2);
+        else if (I.multi && I.multi.has(e.key)) outline(e, '#7fd0ff', 2.2);   // ブループリントで選んでいる建物
         drawEntity(e, o);
       }
+      if (I.ghosts) drawGhostGroup(s, era);   // ブループリントの貼り付けの見本（緑＝置ける・赤＝置けない）
       if (I.ghost) drawGhost(s, era);
       else if (I.cursor) { const c = I.cursor; ctx.globalAlpha = 0.6; poly([pt(c.x, c.y, 0.3), pt(c.x + 1, c.y, 0.3), pt(c.x + 1, c.y + 1, 0.3), pt(c.x, c.y + 1, 0.3)], '#ffe08a'); ctx.globalAlpha = 1; }   // 世界の座標で与え、pt が回す（正方形のまま）
       drawSmoke(dt);
@@ -372,6 +374,14 @@
       const pts = [ptv(e.x, e.y, 0.5), ptv(e.x + e.fw, e.y, 0.5), ptv(e.x + e.fw, e.y + e.fd, 0.5), ptv(e.x, e.y + e.fd, 0.5)];   // e は viewOf 済み
       ctx.beginPath(); pts.forEach((p, i) => i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])); ctx.closePath();
       ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.stroke(); ctx.globalAlpha = 0.25; ctx.fillStyle = col; ctx.fill(); ctx.globalAlpha = 1;
+    }
+    function drawGhostGroup(s, era) {
+      for (const g of I.ghosts) {
+        const rot = E.cleanRot(g.type, g.rot), [fw, fd] = E.footprintOf(g.type, rot);
+        const ge = viewOf({ type: g.type, parentType: null, x: g.x, y: g.y, rot, fw, fd, building: false, progress: 1, plant: null });
+        outline(ge, g.ok ? '#6ee07a' : '#ff6b5e', 2.2);
+        drawEntity(ge, { era, t: I.t, running: false }, 0.6);
+      }
     }
     function drawGhost(s, era) {
       const gh = I.ghost, pl = gh.plantId && s.plants.find(q => q.id === gh.plantId);
