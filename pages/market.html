@@ -100,6 +100,7 @@ function render(s) {
   UI.html('detail', `<div class="row"><h3>${R.name}</h3><span><b class="num">${E.fmtPrice(p)}</b> <span class="sub">/${R.unit}</span></span></div>
     <canvas class="chart" id="priceChart"></canvas>
     <div class="row sub num"><span>在庫 ${E.fmtNum(s.inventory[pick])} / ${E.fmtNum(E.capacity(s, pick))}${R.unit}　≒${E.fmtMoney(s.inventory[pick] * p)}</span><span>${ch === null ? '' : `先月比 <span class="${ch >= 0 ? 'good' : 'bad'}">${ch >= 0 ? '+' : ''}${ch.toFixed(1)}%</span>`}</span></div>
+    ${R.demandSteps ? `<div class="row sub num"><span>直近${R.demandDays}日の販売 ${Market.demandCount(s, pick).toFixed(1)}${R.unit}</span><span>次の1${R.unit}は <b>${Math.round(Market.demandMul(s, pick) * 100)}%</b>（満額は ${R.demandSteps.slice(0, 4).map(v => Math.round(v * 100) + '%').join('→')}…）</span></div>` : ''}
     ${R.canSell === false ? '' : `<label class="row" style="margin-top:6px"><span>出荷を見送って貯める<br><span class="sub">相場が戻るのを待つときに</span></span><input type="checkbox" ${s.hold[pick] ? 'checked' : ''} onchange="toggleHold('${pick}')"></label>`}
     ${R.kind === 'raw' && R.canBuy ? `<div class="btns" style="margin-top:6px"><button class="btn sec small" onclick="UI.act(s=>Engine.buy(s,'${pick}',${lot}))">${R.name}を${lot.toLocaleString()}${R.unit}買う</button></div>` : ''}`);
   const hist = s.history.slice(-36).map(h => h.prices[pick]).filter(v => v !== undefined);
