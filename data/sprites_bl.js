@@ -3240,5 +3240,173 @@ window.GAME_DATA.spritesBL = {
     "fd": 9
    }
   ]
+ },
+ "motorFactory": {
+  "fw": 7,
+  "fd": 6,
+  "r": [
+   {
+    "file": "../assets/bl/motorFactory_r0.png",
+    "w": 427.0,
+    "h": 242.5,
+    "ax": 213.5,
+    "ay": 144.1,
+    "fw": 7,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/motorFactory_r1.png",
+    "w": 427.0,
+    "h": 225.5,
+    "ax": 213.5,
+    "ay": 127.1,
+    "fw": 6,
+    "fd": 7
+   },
+   {
+    "file": "../assets/bl/motorFactory_r2.png",
+    "w": 427.0,
+    "h": 275.0,
+    "ax": 213.5,
+    "ay": 176.6,
+    "fw": 7,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/motorFactory_r3.png",
+    "w": 427.0,
+    "h": 262.0,
+    "ax": 213.5,
+    "ay": 163.6,
+    "fw": 6,
+    "fd": 7
+   }
+  ]
+ },
+ "powerEquipFactory": {
+  "fw": 9,
+  "fd": 8,
+  "r": [
+   {
+    "file": "../assets/bl/powerEquipFactory_r0.png",
+    "w": 555.0,
+    "h": 313.0,
+    "ax": 277.5,
+    "ay": 186.1,
+    "fw": 9,
+    "fd": 8
+   },
+   {
+    "file": "../assets/bl/powerEquipFactory_r1.png",
+    "w": 555.0,
+    "h": 301.5,
+    "ax": 277.5,
+    "ay": 174.6,
+    "fw": 8,
+    "fd": 9
+   },
+   {
+    "file": "../assets/bl/powerEquipFactory_r2.png",
+    "w": 555.0,
+    "h": 337.0,
+    "ax": 277.5,
+    "ay": 210.1,
+    "fw": 9,
+    "fd": 8
+   },
+   {
+    "file": "../assets/bl/powerEquipFactory_r3.png",
+    "w": 555.0,
+    "h": 302.5,
+    "ax": 277.5,
+    "ay": 175.6,
+    "fw": 8,
+    "fd": 9
+   }
+  ]
+ },
+ "commGearFactory": {
+  "fw": 6,
+  "fd": 6,
+  "r": [
+   {
+    "file": "../assets/bl/commGearFactory_r0.png",
+    "w": 395.0,
+    "h": 314.0,
+    "ax": 197.5,
+    "ay": 222.6,
+    "fw": 6,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/commGearFactory_r1.png",
+    "w": 395.0,
+    "h": 271.0,
+    "ax": 197.5,
+    "ay": 179.6,
+    "fw": 6,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/commGearFactory_r2.png",
+    "w": 395.0,
+    "h": 222.5,
+    "ax": 197.5,
+    "ay": 131.1,
+    "fw": 6,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/commGearFactory_r3.png",
+    "w": 395.0,
+    "h": 265.0,
+    "ax": 197.5,
+    "ay": 173.6,
+    "fw": 6,
+    "fd": 6
+   }
+  ]
+ },
+ "satelliteFactory": {
+  "fw": 8,
+  "fd": 8,
+  "r": [
+   {
+    "file": "../assets/bl/satelliteFactory_r0.png",
+    "w": 523.0,
+    "h": 294.5,
+    "ax": 261.5,
+    "ay": 174.6,
+    "fw": 8,
+    "fd": 8
+   },
+   {
+    "file": "../assets/bl/satelliteFactory_r1.png",
+    "w": 523.0,
+    "h": 254.0,
+    "ax": 261.5,
+    "ay": 134.1,
+    "fw": 8,
+    "fd": 8
+   },
+   {
+    "file": "../assets/bl/satelliteFactory_r2.png",
+    "w": 523.0,
+    "h": 268.5,
+    "ax": 261.5,
+    "ay": 148.6,
+    "fw": 8,
+    "fd": 8
+   },
+   {
+    "file": "../assets/bl/satelliteFactory_r3.png",
+    "w": 523.0,
+    "h": 275.5,
+    "ax": 261.5,
+    "ay": 155.6,
+    "fw": 8,
+    "fd": 8
+   }
+  ]
  }
 };

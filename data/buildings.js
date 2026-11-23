@@ -113,6 +113,10 @@ GAME_DATA.buildings = {
   colonyFactory:     { name: '宇宙コロニー工場', icon: '🛰️', category: 'factory', tier: 6, cost: 10000000, months: 48, fixedPerMonth: 40000, desc: '船と航空機以外のすべての最終製品と合金から、葉巻型の宇宙コロニーを組み立てる（増設モジュールなし。まとめて高く売れるが、年に1基ほど。相場は特に荒い）' },
   offshoreFactory:   { name: '洋上プラットフォーム工場', icon: '🛢️', category: 'factory', tier: 6, cost: 5000000, months: 36, fixedPerMonth: 20000, desc: 'セメント・ガラス・PC・鋼材・合金から、洋上の資源基地・発電所を組み立てる（増設モジュールなし。まとめて高く売れるが、年に2基ほど。安定した相場）' },
   aiDefenseFactory:  { name: 'AI防衛システム工場', icon: '🛡️', category: 'factory', tier: 6, cost: 9000000, months: 48, fixedPerMonth: 36000, desc: '半導体・兵器・ロケット・火薬・PC・合金から、AI防衛システムを組み立てる（増設モジュールなし。まとめて高く売れるが、年に1式ほど。戦争のイベントで相場が荒れる）' },
+  motorFactory:      { name: 'モーター・変圧器工場', icon: '🔌', category: 'factory', tier: 6, cost: 2000000, months: 24, fixedPerMonth: 8000, desc: '電線・鋼材・銅から、モーターと変圧器を作る（電機ラインのTier 4）' },
+  powerEquipFactory: { name: '発電・送電設備工場', icon: '🌬️', category: 'factory', tier: 6, cost: 3500000, months: 30, fixedPerMonth: 14000, desc: 'モーター・電線・鋼材・合金・ガラス・シリコンから、風力・太陽光・送電網の設備を作る（電機ラインのTier 5。AI防衛システムの材料）' },
+  commGearFactory:   { name: '通信機器工場', icon: '📡', category: 'factory', tier: 6, cost: 2500000, months: 24, fixedPerMonth: 10000, desc: '光ファイバー・銅・プラスチック・半導体から、通信機器を作る（光・通信ラインのTier 4）' },
+  satelliteFactory:  { name: '通信衛星工場', icon: '🛰️', category: 'factory', tier: 6, cost: 4000000, months: 36, fixedPerMonth: 16000, desc: '通信機器・半導体・合金から、通信衛星と通信網を組み立てる（光・通信ラインのTier 5。AI防衛システムの材料）' },
   evFactory:         { name: '電池・EV工場',     icon: '🔋', category: 'factory', tier: 6, cost: 3500000, months: 30, fixedPerMonth: 14000, desc: '鋼材・アルミ・合成ゴム・リチウム・半導体・銅から電池・EV' }
 };
 

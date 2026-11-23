@@ -21,7 +21,7 @@ window.GAME_DATA.map = {
   reclaimCostPerTile: 4000,   // 埋め立て：海の上に設備を置くとき、海のマスごとにかかる費用（物価指数で増える）。置いた足あとが陸地になる（s.map.fill）。海岸線から reclaimMax 行まで、港の前と造船所の開口部の前は海のまま
   reclaimCostPerRow: 240000, reclaimMax: 12,   // 旧方式（海岸線を全幅で1行広げる）。古いセーブと自動配置の用地の確保でだけ使う   // 埋め立て：海岸線を1行（全幅）広げる費用（物価指数で増える）と上限行数。港の前は海のまま
   // 増設モジュール：加工設備1基につき最大 max 個。1個で基準の日量が gain 倍ぶん増える。建設費・工期・維持費は元の設備の costMul・monthsMul・fixedMul 倍（新設より少しだけ得にして、土地を食わない・設備数の上限を超えられる分の利点とつり合わせる）
-  modules: { exclude: { shipyard: 1, colonyFactory: 1, offshoreFactory: 1, aiDefenseFactory: 1 }, max: 3, gain: 1.0, costMul: 0.9, monthsMul: 0.7, fixedMul: 0.9 },
+  modules: { exclude: { shipyard: 1, colonyFactory: 1, offshoreFactory: 1, aiDefenseFactory: 1, motorFactory: 1, powerEquipFactory: 1, commGearFactory: 1, satelliteFactory: 1 }, max: 3, gain: 1.0, costMul: 0.9, monthsMul: 0.7, fixedMul: 0.9 },
   // 増設モジュールの足あとは、設置相手の設備ごとに違う（親の増築として絵を作ってある）。ここに無い親は footprint.module。造船所は増設なし
   moduleFootprint: {
     chemPlant: [3, 3], steelMill: [3, 4], aluminumSmelter: [2, 4], kiln: [2, 3], sawmill: [2, 2], paperMill: [2, 3],
@@ -37,7 +37,7 @@ window.GAME_DATA.map = {
     steelMill: [12, 12], aluminumSmelter: [6, 6], copperSmelter: [4, 4], kiln: [4, 4], sawmill: [4, 4], paperMill: [4, 4],
     detergentFactory: [4, 4], garmentFactory: [4, 4], buildmatFactory: [6, 6],
     carFactory: [7, 5], shipyard: [5, 8], aircraftFactory: [6, 5], semiconductorFactory: [6, 6], pcFactory: [7, 6], evFactory: [8, 8], pharmaFactory: [6, 5],
-    rocketFactory: [6, 6], munitionsFactory: [7, 8], fineChemPlant: [6, 5], explosivesFactory: [6, 6], colonyFactory: [12, 12], offshoreFactory: [10, 10], aiDefenseFactory: [9, 9],   // NT に無い型（手続き描画 js/sprites2.js）は小さめ
+    rocketFactory: [6, 6], munitionsFactory: [7, 8], fineChemPlant: [6, 5], explosivesFactory: [6, 6], colonyFactory: [12, 12], offshoreFactory: [10, 10], motorFactory: [7, 6], powerEquipFactory: [9, 8], commGearFactory: [6, 6], satelliteFactory: [8, 8], aiDefenseFactory: [9, 9],   // NT に無い型（手続き描画 js/sprites2.js）は小さめ
     powerPlant: [8, 8], researchLab: [4, 4], warehouse_bulk: [4, 4], warehouse_goods: [4, 4]
   }
 };

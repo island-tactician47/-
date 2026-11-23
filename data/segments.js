@@ -13,21 +13,23 @@ GAME_DATA.segments = {
   transport: { name: '輸送機本部', icon: '🚗', group: 'product' },
   advanced:  { name: '先端・防衛本部', icon: '💾', group: 'product' },
   space:     { name: '宇宙事業', icon: '🛰️', group: 'product' },
-  mega:      { name: '大型プロジェクト', icon: '🏗️', group: 'product' }   // 洋上プラットフォーム・超音速旅客機・AI防衛システムの工場（コロニーの仲間）   // コロニー工場だけ。損益を分けて数える
+  mega:      { name: '大型プロジェクト', icon: '🏗️', group: 'product' },
+  electric:  { name: '電機・通信本部', icon: '🔌', group: 'product' }   // 洋上プラットフォーム・超音速旅客機・AI防衛システムの工場（コロニーの仲間）   // コロニー工場だけ。損益を分けて数える
 };
-GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 'transport', 'advanced', 'space', 'mega'];
+GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 'transport', 'advanced', 'space', 'mega', 'electric'];
 (function () {
   const R = {}, B = {};
   const set = (map, seg, keys) => keys.split(/\s+/).forEach(k => { map[k] = seg; });
   set(R, 'oil', 'crude gasoline diesel naphtha heavy naturalGas plastic rubber surfactant fiber pharmaMat explosive');
-  set(R, 'metal', 'coal ironore bauxite copperore rareMetal lithiumOre steel aluminum copper alloy lithium');
-  set(R, 'ceramics', 'limestone silica glass cement silicon');
+  set(R, 'metal', 'coal ironore bauxite copperore rareMetal lithiumOre steel aluminum copper alloy lithium cable');
+  set(R, 'ceramics', 'limestone silica glass cement silicon opticFiber');
   set(R, 'forestry', 'logs lumber paper');
   set(R, 'consumer', 'detergent clothing pharma buildmat');
   set(R, 'transport', 'car ship aircraft ev');
   set(R, 'advanced', 'semiconductor pc rocket weapon');
   set(R, 'space', 'colony');
   set(R, 'mega', 'offshore aiDefense');
+  set(R, 'electric', 'motor commGear powerEquip comsat');
   set(B, 'oil', 'oilWell crudeTank refinery refineryLarge distillation tank_gasoline tank_diesel tank_naphtha tank_heavy chemPlant fineChemPlant explosivesFactory');
   set(B, 'metal', 'steelMill aluminumSmelter copperSmelter');
   set(B, 'ceramics', 'kiln');
@@ -37,5 +39,6 @@ GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 't
   set(B, 'advanced', 'semiconductorFactory pcFactory rocketFactory munitionsFactory');
   set(B, 'space', 'colonyFactory');
   set(B, 'mega', 'offshoreFactory aiDefenseFactory');
+  set(B, 'electric', 'motorFactory powerEquipFactory commGearFactory satelliteFactory');
   GAME_DATA.segmentOf = { resources: R, buildings: B };   // 倉庫・研究棟は本部に属さない（全社）
 })();

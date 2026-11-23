@@ -658,8 +658,9 @@
       Object.defineProperty(G._chain, key, { value: v, enumerable: false });
       return v;
     },
-    // ゴールの金額：コロニー1基（年1基）の年間利益の profitMultiplier 倍（名目。物価指数で増える）
-    goalTarget(s) { const cfg = this.goalCfg(); return cfg ? cfg.profitMultiplier * this.colonyChainProfit1950() * this.priceIndex(s) : 0; },
+    // ゴールの金額：コロニーとAI防衛システム（goal.projects）の、各1基の年間利益の和の profitMultiplier 倍（名目。物価指数で増える）
+    goalBase1950() { const cfg = this.goalCfg(); return cfg ? (cfg.projects || ['colony']).reduce((a, k) => a + this.chainProfit1950(k), 0) : 0; },
+    goalTarget(s) { const cfg = this.goalCfg(); return cfg ? cfg.profitMultiplier * this.goalBase1950() * this.priceIndex(s) : 0; },
     // 最終プロジェクト（コロニー・洋上プラットフォーム・超音速旅客機・AI防衛システム）のどれかを、1基でも完成させたか（tree.js の finalProducts）
     colonyBuilt(s) { const pt = (s.stats && s.stats.producedTotal) || {}; return (this.treeCfg().finalProducts || ['colony']).some(k => (pt[k] || 0) >= 1); },
     // 進み具合：{ profit12（直近12か月の純利益）, target, ratio, colonyBuilt（コロニーを1基完成させたか）, eq（純資産。スコア用）, reached }
@@ -700,7 +701,7 @@
       const f = v => v.toFixed(0);
       s.pendingEvents.push({
         title: '🏆 目標達成', modal: true,
-        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、年間の純利益 <b>${this.fmtMoney(yp)}</b>（コロニー1基の年間利益の${cfg.profitMultiplier}倍）に届き、最終プロジェクトを完成させた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
+        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、年間の純利益 <b>${this.fmtMoney(yp)}</b>（コロニーとAI防衛システムの年間利益の和の${cfg.profitMultiplier}倍）に届き、最終プロジェクトを完成させた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
         goal: { company: name, diff: s.difficulty, years: Math.round(sc.years * 10) / 10, score: s.goal.score, rank: sc.rank, title: sc.title, profit: Math.round(yp), at: Date.now() }
       });
       return true;

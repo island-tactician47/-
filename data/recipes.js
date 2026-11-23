@@ -50,14 +50,20 @@ GAME_DATA.recipes = {
   weapon: { name: '兵器', inputs: { steel: 1.0, alloy: 0.5, semiconductor: 0.05, explosive: 0.4 }, outputs: { weapon: 1 }, opexPerUnit: 77.9, energyShare: 0.07 },
   colony: { name: '宇宙コロニー', inputs: { paper: 1500, buildmat: 4000, car: 300, detergent: 250, clothing: 1500, pharma: 150, pc: 1000, ev: 200, weapon: 50, rocket: 2, alloy: 1000 }, outputs: { colony: 1 }, opexPerUnit: 5727935.3, energyShare: 0.05 },
   offshore: { name: '洋上プラットフォーム', inputs: { steel: 5000, alloy: 1500, cement: 20000, glass: 1000, pc: 500 }, outputs: { offshore: 1 }, opexPerUnit: 1833756.0, energyShare: 0.06 },
-  aiDefense: { name: 'AI防衛システム', inputs: { semiconductor: 2000, weapon: 100, rocket: 1, explosive: 500, pc: 800, alloy: 600 }, outputs: { aiDefense: 1 }, opexPerUnit: 5495201.9, energyShare: 0.07 }
+  aiDefense: { name: 'AI防衛システム', inputs: { semiconductor: 1500, weapon: 100, rocket: 1, pc: 500, powerEquip: 250, comsat: 6 }, outputs: { aiDefense: 1 }, opexPerUnit: 9126201.9, energyShare: 0.07 },
+  cable: { name: '電線・ケーブル', inputs: { copper: 0.8, aluminum: 0.3 }, outputs: { cable: 1 }, opexPerUnit: 208.8, energyShare: 0.3, speed: 0.44 },
+  motor: { name: 'モーター・変圧器', inputs: { cable: 1.0, steel: 2.0, copper: 0.3 }, outputs: { motor: 1 }, opexPerUnit: 594.7, energyShare: 0.08 },
+  powerEquip: { name: '発電・送電設備', inputs: { motor: 1.0, cable: 0.5, steel: 4.0, alloy: 0.4, glass: 0.5, silicon: 0.3 }, outputs: { powerEquip: 1 }, opexPerUnit: 2642.0, energyShare: 0.08 },
+  opticFiber: { name: '光学ガラス・光ファイバー', inputs: { glass: 1.0, silica: 0.25 }, outputs: { opticFiber: 1 }, opexPerUnit: 226.0, energyShare: 0.3, speed: 0.36 },
+  commGear: { name: '通信機器', inputs: { opticFiber: 1.0, copper: 0.5, plastic: 0.4, semiconductor: 0.1 }, outputs: { commGear: 1 }, opexPerUnit: 819.5, energyShare: 0.08 },
+  comsat: { name: '通信衛星・通信網', inputs: { commGear: 40, semiconductor: 14, alloy: 10 }, outputs: { comsat: 1 }, opexPerUnit: 33876.6, energyShare: 0.06 }
 };
 GAME_DATA.plants = {
   chemPlant: { recipes: ['plastic', 'rubber', 'surfactant', 'fiber'], legacyRecipes: ['pharmaMat', 'explosive'], throughput: 10 },
   steelMill: { recipes: ['steel', 'alloy'], throughput: 25 },
   aluminumSmelter: { recipes: ['aluminum'], throughput: 7 },
-  copperSmelter: { recipes: ['copper', 'lithium'], throughput: 3.6 },
-  kiln: { recipes: ['glass', 'cement', 'silicon'], throughput: 5 },
+  copperSmelter: { recipes: ['copper', 'lithium', 'cable'], throughput: 3.6 },
+  kiln: { recipes: ['glass', 'cement', 'silicon', 'opticFiber'], throughput: 5 },
   sawmill: { recipes: ['lumber'], throughput: 10 },
   paperMill: { recipes: ['paper'], throughput: 13 },
   detergentFactory: { recipes: ['detergent'], throughput: 2.5 },
@@ -76,5 +82,9 @@ GAME_DATA.plants = {
   explosivesFactory: { recipes: ['explosive'], throughput: 10 },
   colonyFactory: { recipes: ['colony'], throughput: 0.0028 },
   offshoreFactory: { recipes: ['offshore'], throughput: 0.0056 },
+  motorFactory: { recipes: ['motor'], throughput: 1.4 },
+  powerEquipFactory: { recipes: ['powerEquip'], throughput: 0.64 },
+  commGearFactory: { recipes: ['commGear'], throughput: 1.55 },
+  satelliteFactory: { recipes: ['comsat'], throughput: 0.021 },
   aiDefenseFactory: { recipes: ['aiDefense'], throughput: 0.0028 }
 };

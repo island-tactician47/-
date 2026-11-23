@@ -16,7 +16,7 @@ window.GAME_DATA = window.GAME_DATA || {};
 GAME_DATA.tree = {
   config: {
     // 解放権：会社全体の直近12か月の利益（名目）が、この額を超えるたびに1枚。一度もらった枚数は減らない
-    ticketSteps: [150000, 190000, 230000, 290000, 370000, 460000, 570000, 720000, 890000, 1120000, 1400000, 1750000, 2180000, 2730000, 3410000, 4260000, 5330000, 6660000, 8330000, 10410000, 13010000, 16260000],   // 150k から 1.25倍ずつ22段（全部のノードを開くのに要る枚数はおよそ22枚：Tier 3 が5・Tier 4 が6・Tier 5 が8・コロニー3）。値は仮：バランスのボットで調整
+    ticketSteps: [150000, 190000, 230000, 290000, 370000, 460000, 570000, 720000, 890000, 1120000, 1400000, 1750000, 2180000, 2730000, 3410000, 4260000, 5330000, 6660000, 8330000, 10410000, 13010000, 16260000, 18700000, 21500000, 24730000, 28440000, 32700000, 37610000, 43250000, 49740000, 57200000, 65780000, 75650000, 87000000],   // 150k から 1.25倍ずつ22段（全部のノードを開くのに要る枚数はおよそ22枚：Tier 3 が5・Tier 4 が6・Tier 5 が8・コロニー3）。値は仮：バランスのボットで調整
     // 輸入の罰：加工設備が原料を市場から買った（自動購入）とき、その製品のノードの Tier が3以上なら、買った原料の価値の割合ぶんだけ手数料を引く。
     //   手数料＝(1−比)×その工場の粗利（原料を自社の在庫で賄ったときの、売上−原料−操業費）×生産量×買った割合。全部を輸入すると、利益が自前のときの「比」になる。Tier 1〜2 は罰なし
     importRatio: { 3: 0.5, 4: 0.3, 5: 0.3, 6: 0.8 },
@@ -72,9 +72,23 @@ GAME_DATA.tree = {
     colony:    { x: 790, color: '#c28a1e', name: '宇宙コロニー', icon: '🛰️', tier: 6, tickets: 3, needs: ['steel', 'pharma', 'pc', 'ev', 'weapon', 'rocket', 'car', 'buildmat', 'detergent', 'clothing', 'paper'],
                  buildings: ['colonyFactory'], recipes: ['colony'], resources: ['colony'] },
     // 最終プロジェクト（コロニーの仲間）：船・航空機・半導体を、1つずつ主役にする。前提がそろえば現れる（選べるのは、素材の余りがそろったとき）
+    // 電機ライン（銅）：Tier 3 電線・ケーブル → Tier 4 モーター・変圧器 → Tier 5 発電・送電設備。Tier 3 は非鉄製錬所の追加レシピ（建物なし。選択権は supply で）
+    wire:      { x: 520, color: '#b5651d', name: '電線・ケーブル', icon: '🔗', tier: 3, tickets: 1, needs: ['copper'], supply: { building: 'copperSmelter', recipe: 'cable' },
+                 buildings: [], recipes: ['cable'], resources: ['cable'] },
+    motor:     { x: 250, color: '#c77b30', name: 'モーター・変圧器', icon: '🔌', tier: 4, tickets: 2, needs: ['wire', 'steel'],
+                 buildings: ['motorFactory'], recipes: ['motor'], resources: ['motor'] },
+    power:     { x: 1870, color: '#2f9e44', name: '発電・送電設備', icon: '🌬️', tier: 5, tickets: 2, needs: ['motor', 'kiln'],
+                 buildings: ['powerEquipFactory'], recipes: ['powerEquip'], resources: ['powerEquip'] },
+    // 光・通信ライン（ガラス）：Tier 3 光学ガラス・光ファイバー → Tier 4 通信機器 → Tier 5 通信衛星・通信網。Tier 3 は窯業工場の追加レシピ
+    optic:     { x: 760, color: '#5aa9c9', name: '光ファイバー', icon: '💡', tier: 3, tickets: 1, needs: ['kiln'], supply: { building: 'kiln', recipe: 'opticFiber' },
+                 buildings: [], recipes: ['opticFiber'], resources: ['opticFiber'] },
+    comm:      { x: 1500, color: '#3a8fb7', name: '通信機器', icon: '📡', tier: 4, tickets: 2, needs: ['optic', 'copper', 'semi'],
+                 buildings: ['commGearFactory'], recipes: ['commGear'], resources: ['commGear'] },
+    sat:       { x: 2140, color: '#7b61c4', name: '通信衛星・通信網', icon: '🛰️', tier: 5, tickets: 2, needs: ['comm', 'semi'],
+                 buildings: ['satelliteFactory'], recipes: ['comsat'], resources: ['comsat'] },
     offshore:  { x: 1600, color: '#4a7f9a', name: '洋上プラットフォーム', icon: '🛢️', tier: 5, tickets: 2, needs: ['steel', 'kiln', 'pc'],
                  buildings: ['offshoreFactory'], recipes: ['offshore'], resources: ['offshore'] },
-    aiDefense: { x: 1060, color: '#5a6a8a', name: 'AI防衛システム', icon: '🛡️', tier: 6, tickets: 3, needs: ['semi', 'weapon', 'rocket', 'pc', 'explo'],
+    aiDefense: { x: 1060, color: '#5a6a8a', name: 'AI防衛システム', icon: '🛡️', tier: 6, tickets: 4, needs: ['semi', 'weapon', 'rocket', 'pc', 'power', 'sat'],
                  buildings: ['aiDefenseFactory'], recipes: ['aiDefense'], resources: ['aiDefense'] },
     rocket:    { x: 1330, color: '#d1495b', name: 'ロケット',     icon: '🚀', tier: 5, legacyTier: 6, tickets: 2, legacyResearch: true, needs: ['steel', 'semi', 'explo', 'aluminum'],
                  buildings: ['rocketFactory'], recipes: ['rocket'], resources: ['rocket'] },
@@ -87,7 +101,8 @@ GAME_DATA.tree = {
 //   減点：債務の再編を使った（restructurePenalty）、当座貸越の借り増しをした月（月ごとに overdraftPenaltyPerMonth、最大 overdraftPenaltyMax）
 // コロニーは、1基の材料を、そのまま市場で売ったときの利益のおよそ2倍の利益になるように、価格・費用を決めた（tools/calibrate_recipes.py）。
 GAME_DATA.goal = {
-  profitMultiplier: 7,   // ゴールの金額＝コロニー1基（年1基）を材料まで全部自前で作って売ったときの年間利益×この倍率（Engine.colonyChainProfit1950）
+  projects: ['colony', 'aiDefense'],   // ゴールの金額の基準にする最終プロジェクト
+  profitMultiplier: 6,   // ゴールの金額＝（projects の各1基を材料まで全部自前で作って売ったときの年間利益の和）×この倍率（Engine.chainProfit1950）
   speedBest: 25, speedWorst: 70, speedOffset: { rich: 0, tight: 5, indebted: 10 },
   weights: { speed: 0.5, equity: 0.25, margin: 0.25 }, marginFull: 0.30,
   restructurePenalty: 10, overdraftPenaltyPerMonth: 2, overdraftPenaltyMax: 15,

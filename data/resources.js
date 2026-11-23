@@ -68,7 +68,14 @@ GAME_DATA.resources = {
   pharma:        { name: '医薬品',       unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 6000, volatility: 0.09, marketDepth: 280, color: '#d46a8f' },
   colony:        { name: '宇宙コロニー', unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 600, basePrice: 25000000, volatility: 0.25, marketDepth: 20, color: '#d8b04a' },
   offshore:      { name: '洋上プラットフォーム', unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 500, basePrice: 6000000, volatility: 0.12, marketDepth: 20, color: '#4a7f9a' },
-  aiDefense:     { name: 'AI防衛システム', unit: '式', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 200, basePrice: 22000000, volatility: 0.35, marketDepth: 20, color: '#5a6a8a' },
+  aiDefense:     { name: 'AI防衛システム', unit: '式', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 200, basePrice: 30000000, volatility: 0.35, marketDepth: 20, color: '#5a6a8a' },
+  // ---- 電機ライン（銅）と光・通信ライン（ガラス）：Tier 3→4→5 の独立した2本。Tier 5 の発電・送電設備と通信衛星・通信網は、AI防衛システムの材料になる
+  cable:         { name: '電線・ケーブル', unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 1100, volatility: 0.04, marketDepth: 3000, color: '#b5651d' },
+  opticFiber:    { name: '光学ガラス・光ファイバー', unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 700, volatility: 0.05, marketDepth: 2500, color: '#7fc4de' },
+  motor:         { name: 'モーター・変圧器', unit: 't', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 3500, volatility: 0.07, marketDepth: 1200, color: '#c77b30' },
+  commGear:      { name: '通信機器', unit: 't', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 4000, volatility: 0.08, marketDepth: 900, color: '#3a8fb7' },
+  powerEquip:    { name: '発電・送電設備', unit: '式', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 5, basePrice: 14000, volatility: 0.12, marketDepth: 150, color: '#2f9e44' },
+  comsat:        { name: '通信衛星・通信網', unit: '式', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 20, basePrice: 450000, volatility: 0.15, marketDepth: 25, color: '#7b61c4' },
   rocket:        { name: 'ロケット',     unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 100, basePrice: 2000000, volatility: 0.1, marketDepth: 1, color: '#9a8fd0' },
   weapon:        { name: '兵器',         unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 2400, volatility: 0.08, marketDepth: 900, color: '#6a7a5a' },
   ev:            { name: '電池・EV',     unit: '台',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 3,    storage: 'goods', storeVol: 3,   basePrice: 2500,    volatility: 0.1, marketDepth: 1040, color: '#3aa17e' },
@@ -93,7 +100,7 @@ GAME_DATA.productOrder = ['crude', 'gasoline', 'diesel', 'naphtha', 'heavy',
   'plastic', 'rubber', 'surfactant', 'fiber', 'steel', 'aluminum', 'copper', 'glass', 'cement', 'lumber', 'paper',
   'detergent', 'buildmat', 'clothing', 'car',
   'rareMetal', 'lithiumOre', 'alloy', 'silicon', 'lithium', 'ship', 'aircraft', 'semiconductor', 'pc', 'ev',
-  'naturalGas', 'pharmaMat', 'explosive', 'pharma', 'rocket', 'weapon', 'colony', 'offshore', 'aiDefense'];
+  'naturalGas', 'pharmaMat', 'explosive', 'pharma', 'rocket', 'weapon', 'colony', 'offshore', 'aiDefense', 'cable', 'opticFiber', 'motor', 'commGear', 'powerEquip', 'comsat'];
 
 // 取引先（契約）：最終製品（買えず、どのレシピの入力にもならない品目）だけ。契約すると毎月ノルマの数量を、市場より高い固定プレミアムで自動納品する
 // （市場の飽和を進めず、売却手数料もかからない）。足りない月は 不足分×単価×penaltyRate の違約金。契約は翌月から、毎月ノルマは自社設備の日量×30×share に更新
