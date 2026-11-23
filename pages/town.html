@@ -252,7 +252,7 @@ function renderSheet(s) {
         <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">全部置ける</b>' : `<b class="bad">${bad ? bad + '件が置けない：' : ''}${chk.msg}</b>`}</div>
         <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok ? '' : 'disabled'} onclick="bpConfirm()">建設する</button> <button class="btn small" onclick="bpOpen()">一覧へ</button> <button class="btn small" onclick="closeSheet()">やめる</button></div></div>`);
     }
-    UI.html('sheet', out.join('')); return;
+    setSheet(out.join('')); return;
   }
   if (placing === 'module') {
     const p = s.plants.find(q => q.id === placingPlant), gh = iso.ghost;
@@ -266,7 +266,7 @@ function renderSheet(s) {
         ${mfill ? `<div class="sub" style="margin-top:4px">🌊 海の上に置く：${mfill}マスを埋め立てる（＋${M(mfillFee)}）</div>` : ''}
         <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">置ける</b>' : `<b class="bad">${chk.msg}</b>`}${cb.ok ? '' : `　<b class="bad">${cb.msg}</b>`}</div>
         <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok && cb.ok ? '' : 'disabled'} onclick="confirmPlacing()">${mv ? '置き直す' : '建設する'}</button> <button class="btn small" onclick="rotatePlacing(1)">⟳ 回す</button> <button class="btn small" onclick="cancelPlacing()">やめる</button></div></div>`);
-      UI.html('sheet', out.join('')); return;
+      setSheet(out.join('')); return;
     }
   }
   if (placing) {
@@ -312,8 +312,10 @@ function renderSheet(s) {
     const n = (iso.ents || []).length;
     out.push(`<div class="card sub">建物をタップすると詳しく、空き地をタップするとそこに建てられます。${n ? `（建物 ${n}）` : ''}　油井は<a href="field.html">採掘地</a>で建てます。<div class="btns" style="margin-top:6px"><button class="btn small" ${E.blueprintUnlocked(s) ? '' : 'disabled'} onclick="bpOpen()">📐 ブループリント</button></div>${E.blueprintUnlocked(s) ? '' : `<div class="sub">${E.BLUEPRINT_LOCK}</div>`}</div>`);
   }
-  UI.html('sheet', out.join(''));
+  setSheet(out.join(''));
 }
+// メニュー（下のシート）の中身を入れ替えるとき、スクロールの位置を保つ（毎日の更新でメニューが一番上に戻らないように）
+function setSheet(html) { const sh = $('sheet'), top = sh.scrollTop; UI.html('sheet', html); if (sh.scrollTop !== top) sh.scrollTop = top; }
 
 function render(s) {
   if (!iso) {

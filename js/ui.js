@@ -26,10 +26,17 @@
   // 押している最中に再描画するとボタンが作り直されてクリックが消えるため、押下中は描画を止める
   let noSave = false;
   let pressing = false, releaseTimer = null;
+  // スマホ：画面をスクロールし始めると pointercancel が来るが、指はまだ画面に触れている。そのまま再描画すると、メニューが作り直されてスクロールが止まる
+  // （地図のメニューなど）。指が1本でも触れている間は、描画を止める（touches で数える）
+  let touches = 0;
   document.addEventListener('pointerdown', () => { pressing = true; clearTimeout(releaseTimer); }, true);
-  const release = () => { clearTimeout(releaseTimer); releaseTimer = setTimeout(() => { pressing = false; }, 80); };
+  const release = () => { clearTimeout(releaseTimer); if (touches > 0) return; releaseTimer = setTimeout(() => { if (touches === 0) pressing = false; }, 80); };
   document.addEventListener('pointerup', release, true);
   document.addEventListener('pointercancel', release, true);
+  document.addEventListener('touchstart', ev => { touches = ev.touches.length; pressing = true; clearTimeout(releaseTimer); }, { capture: true, passive: true });
+  const touchEnd = ev => { touches = ev.touches.length; if (touches === 0) { clearTimeout(releaseTimer); releaseTimer = setTimeout(() => { if (touches === 0) pressing = false; }, 120); } };
+  document.addEventListener('touchend', touchEnd, { capture: true, passive: true });
+  document.addEventListener('touchcancel', touchEnd, { capture: true, passive: true });
 
   const UI = {
     get state() { return state; },
