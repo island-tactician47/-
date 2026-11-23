@@ -5,5 +5,5 @@ GAME_DATA.difficulties = {
   tight:    { name: '自己資金のみ',     cash: 250000, loans: {}, desc: '借金なし。ただし融資を使わないと拡大が遅い' },
   indebted: { name: 'もともと借りている', cash: 280000, loans: { chigin: 200000 }, desc: '地方銀行から$200kを借りた状態で創業。返済に追われる' }
 };
-GAME_DATA.inflationPerYear = 0.015; // 物価上昇（価格・建設費・融資枠）
+GAME_DATA.inflationPerYear = 0; // 物価上昇（価格・建設費・融資枠）。0＝インフレなし（以前は0.015＝年1.5%。待つだけで有利になる副作用をなくすため0に）
 GAME_DATA.startYear = 1950;
