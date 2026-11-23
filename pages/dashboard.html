@@ -47,8 +47,8 @@ const $ = id => document.getElementById(id);
 const E = Engine, G = GAME_DATA, M = E.fmtMoney;
 const pct = v => (isFinite(v) ? (v * 100).toFixed(0) : '–') + '%';
 const yrs = v => isFinite(v) ? v.toFixed(1) + '年' : '回収できない';
-const REASON = { ok: ['稼働中', 'good'], input: ['原料不足', 'bad'], full: ['置き場が満杯', 'bad'], cash: ['資金不足', 'bad'], off: ['停止中', 'sub'], none: ['—', 'sub'] };
-const BAD = new Set(['input', 'full', 'cash']);
+const REASON = { ok: ['稼働中', 'good'], input: ['原料不足', 'bad'], full: ['置き場が満杯', 'bad'], cash: ['資金不足', 'bad'], import: ['輸入の上限', 'bad'], off: ['停止中', 'sub'], none: ['—', 'sub'] };
+const BAD = new Set(['input', 'full', 'cash', 'import']);
 
 function last12(s) { const h = s.history.slice(-12); return { rev: h.reduce((a, x) => a + x.revenue, 0), profit: h.reduce((a, x) => a + x.profit, 0), n: h.length }; }
 
@@ -119,6 +119,7 @@ function plantRow(s, p) {
   if (r === 'input') why = `不足：${shortInputs(s, p).join('・') || '—'}${p.autoBuy ? '' : '（自動購入OFF）'}`;
   else if (r === 'full') why = `${G.resources[Object.keys(rec.outputs)[0]].name}の置き場が満杯`;
   else if (r === 'cash') why = '原料を買う資金が足りない';
+  else if (r === 'import') why = '輸入で動かせる量の上限（満杯1基ぶん）。自前の原料が要る';
   return `<tr><td>${b.icon || ''} ${b.name} #${p.id}<div class="sub">${rec.name}</div></td><td class="${cls}">${lab}<div class="sub">${why}</div></td>
     <td class="num">${pct(util)}<div class="bar"><i style="width:${Math.min(100, util * 100)}%"></i></div></td></tr>`;
 }

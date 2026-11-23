@@ -18,7 +18,7 @@
   <div id="build"></div>
   <div id="plants"></div>
   <div id="hq"></div>
-  <p class="sub">加工設備は1基ごとにレシピを選ぶ（専用工場は固定）。原料は在庫から使い、自動購入をONにすると足りない分を市場の買値で補う（市場の買値は相場+4%）。作ったものは出荷日にまとめて売られる。倉庫は同じ種類の品目で共用する。本部は画面の整理用の分類（現金や意思決定は全社で1つ）。</p>
+  <p class="sub">加工設備は1基ごとにレシピを選ぶ（専用工場は固定）。原料は在庫から使い、自動購入（輸入）をONにすると足りない分を市場の買値で補う（市場の買値は相場+4%）。<b>Tier 3 以上の工場は、輸入だと利益が自前の原料のときの半分（Tier 6は8割）まで下がり、輸入で動かせるのも増設満杯の1基ぶんまで。自前で原料を作る工場が要る。</b>作ったものは出荷日にまとめて売られる。倉庫は同じ種類の品目で共用する。本部は画面の整理用の分類（現金や意思決定は全社で1つ）。</p>
 </main>
 
 <script src="../data/resources.js"></script>
@@ -47,6 +47,7 @@ const REASON = {
   input: ['🔴 原料不足', 'bad'],
   full:  ['🔴 置き場が満杯', 'bad'],
   cash:  ['🔴 資金不足', 'bad'],
+  import: ['🔴 輸入の上限', 'bad'],
   off:   ['⏸ 停止中', 'sub'],
   none:  ['—', 'sub']
 };
@@ -58,7 +59,7 @@ const qty = v => v >= 10 ? E.fmtNum(v) : v >= 1 ? String(parseFloat(v.toFixed(2)
 const num = (v, n) => (isFinite(v) ? v : 0).toFixed(n === undefined ? 2 : n);
 const sg = v => `<b class="${v >= 0 ? 'good' : 'bad'}">${v >= 0 ? '+' : '-'}$${Math.abs(v).toFixed(2)}</b>`;
 const itemList = o => Object.entries(o).map(([k, v]) => `${G.resources[k].name}×${parseFloat(v.toFixed(2))}`).join('＋');
-const BAD = new Set(['input', 'full', 'cash']);
+const BAD = new Set(['input', 'full', 'cash', 'import']);
 
 // 建設ボタン（説明は小さく下に）
 function buildBtn(s, type) {
@@ -180,7 +181,8 @@ function renderPlants(s, seg, info) {
     const rate = Math.round(p.runRate * 100);
     UI.html('pl-c-' + p.id, `${chips}
       <div class="row" style="margin-top:6px"><span class="sub">稼働率</span><div class="chips">${RATES.map(r => `<span class="chip ${rate === r ? 'on' : ''}" onclick="UI.act(s=>Engine.setPlantRate(s,${p.id},${r / 100}))">${r}%</span>`).join('')}</div></div>
-      <label class="row" style="margin-top:6px"><span>原料が足りない分を市場から買う</span><input type="checkbox" ${p.autoBuy ? 'checked' : ''} onchange="UI.act(s=>Engine.setPlantAutoBuy(s,${p.id},this.checked))"></label>`);
+      <label class="row" style="margin-top:6px"><span>原料が足りない分を市場から買う（輸入）</span><input type="checkbox" ${p.autoBuy ? 'checked' : ''} onchange="UI.act(s=>Engine.setPlantAutoBuy(s,${p.id},this.checked))"></label>
+      ${(() => { const ii = E.importInfo(s, p); return ii ? `<div class="sub ${ii.share > 0.01 || ii.hit ? 'bad' : 'warn'}">⚠ 輸入だと、利益は自前の原料のときの${Math.round(ii.ratio * 100)}%まで下がり、動かせるのも増設満杯の1基ぶんまで（同じレシピの輸入 ${qty(ii.used)}／${qty(ii.cap)}）。${ii.share > 0.01 ? `いまは動かした量の${Math.round(ii.share * 100)}%が輸入で、利益は自前の${Math.round(ii.profitShare * 100)}%。` : ''}</div>` : ''; })()}`);
     UI.html('pl-n-' + p.id, `<div class="sub" style="margin-top:6px">${itemList(rec.inputs)} → ${itemList(rec.outputs)}（${unit}あたり）</div>
       <div class="sub">いまの相場：売値$${num(ec.revenue)} − 原料$${num(ec.inputCostBuy)}（買う）− 操業$${num(ec.opex)} ＝ ${sg(ec.marginBuy)}　自社在庫を使うと ${sg(ec.marginOwn)}</div>
       <div class="sub">能力${qty(E.plantCapOf(p))}${unit}/日${p.modules ? `（増設モジュール${p.modules}個込み）` : ''}　${isFinite(ec.paybackYearsBuy) ? `回収目安${num(ec.paybackYearsBuy, 1)}年` : '回収できない'}</div>

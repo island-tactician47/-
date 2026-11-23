@@ -760,6 +760,13 @@
       const f = tot > 0 ? Math.min(1, boughtValue / tot) : 0, ec = this.recipeEconomics(s, p.recipe), m = ec ? ec.marginOwn : 0;
       return m > 0 ? (1 - r) * m * t * f - (premium || 0) : 0;
     },
+    // 画面用：この設備の輸入の状況。{ ratio（自前に対する利益の比率）, cap（輸入で動かせる上限・日量）, used（同じレシピの設備の合計）, share（動かした量のうち輸入の割合）, profitShare（いまの利益が自前の何割か）, hit（上限に達しているか） }。罰のない工場は null
+    importInfo(s, p) {
+      const r = this.importRatio(p.recipe); if (r >= 1) return null;
+      const cap = this.importCapDaily(p); let used = 0; for (const q of s.plants) if (q.recipe === p.recipe && q.last) used += q.last.imp || 0;
+      const t = p.last ? p.last.t : 0, share = t > 1e-9 ? Math.min(1, ((p.last && p.last.imp) || 0) / t) : 0;
+      return { ratio: r, cap, used, share, profitShare: 1 - (1 - r) * share, hit: used >= cap - 1e-9 };
+    },
     // 輸入で動かせる量の上限（日量）：その設備を増設モジュール満杯にした1基ぶんの生産量。同じレシピの設備すべての合計で、これを超えて輸入では動かせない（超えた分は自前の在庫で）。Tier 1〜2（罰なし）には上限なし
     importCapDaily(p) {
       if (this.importRatio(p.recipe) >= 1) return Infinity;
@@ -1089,7 +1096,7 @@
       }
       const opex = (rec.opexPerUnit || 0) * idx * M30, fixed = (b.fixedPerMonth || 0) * idx * (1 + nm * (MC.fixedMul || 0));
       const fee = this.importFee(s, p, rec, M30, ins.reduce((a, i) => a + (i.buy ? i.cost : 0), 0), ins.reduce((a, i) => a + (i.buy ? i.cost - i.qty * Market.sellPrice(s, i.k) : 0), 0));   // 輸入の罰（Tier 3 以上。買った原料の割合ぶん。割増の分は払い戻す）
-      return { rec, ran, t, rated, ins, outs, revenue, inCost, opex, fixed, fee, profit: revenue - inCost - fee - opex - fixed, reason: p.last && p.last.reason, short: p.last && p.last.short };
+      return { rec, ran, t, rated, ins, outs, revenue, inCost, opex, fixed, fee, imp: this.importInfo(s, p), profit: revenue - inCost - fee - opex - fixed, reason: p.last && p.last.reason, short: p.last && p.last.short };
     },
 
     // データの整合性検査。問題の文字列の配列を返す（空なら正常）。selftest と debug で使う
@@ -1591,7 +1598,7 @@
           if (outVol[c] - freeIn > 0) tA = Math.min(tA, (this.poolFree(s, c) + over) / (outVol[c] - freeIn));
         }
         tA = Math.max(0, tA);
-        let t = tA, why = null, roomLim = false, importedValue = 0, importedPremium = 0;
+        let t = tA, why = null, roomLim = false, capHit = false, importedValue = 0, importedPremium = 0;
         // 2) 自動購入：在庫が足りないぶんを市場から買って上乗せ（出力の置き場の範囲で）
         if (p.autoBuy && want > tA && tA >= Math.min(want, tStock) - 1e-9) {
           let tb = want - tA;
@@ -1599,7 +1606,7 @@
           for (const k in outDed) tb = Math.min(tb, Math.max(0, this.capacity(s, k) - s.inventory[k] - tA * (outDed[k] - (inDed[k] || 0))) / outDed[k]);
           tb = Math.max(0, tb);
           if (tb < want - tA - 1e-9) roomLim = true;
-          { const icap = this.importCapDaily(p); if (icap < Infinity) tb = Math.min(tb, Math.max(0, icap - (importUse[p.recipe] || 0))); }   // 輸入で動かせるのは、満杯の1基ぶんまで
+          { const icap = this.importCapDaily(p); if (icap < Infinity) { const room = Math.max(0, icap - (importUse[p.recipe] || 0)); if (tb > room + 1e-9) capHit = true; tb = Math.min(tb, room); } }   // 輸入で動かせるのは、満杯の1基ぶんまで
           if (tb > 0) {
             // 資金で買える量を先に逆算する（買った入力の一部だけが使われて在庫に残るのを防ぐ）
             let hi = tA + tb;
@@ -1622,11 +1629,12 @@
         let reason = 'ok';
         if (t < want - 1e-9) {
           if (why) reason = why;
+          else if (capHit) reason = 'import';   // 輸入で動かせる量の上限に達した（これ以上は自前の原料が要る）
           else if (roomLim || tA < Math.min(want, tStock) - 1e-9) reason = 'full';
           else if (tStock < want - 1e-9) reason = (p.autoBuy && inKeys.every(k => R[k].canBuy)) ? 'cash' : 'input';   // 買えない入力が足りないなら原料不足
           else reason = 'full';
         }
-        p.last = { t: Math.max(0, t), reason };
+        p.last = { t: Math.max(0, t), reason, imp: Math.max(0, t - tA) };   // imp＝輸入の原料で動かした生産量（日量）
         if (reason === 'input' || reason === 'cash') {   // 律速した入力（1日分の必要量に対する在庫の割合がいちばん小さい入力。ダッシュボードで表示）
           let sk = null, sr = Infinity;
           for (const k of inKeys) { const r0 = inv0[k] / rec.inputs[k]; if (r0 < sr) { sr = r0; sk = k; } }

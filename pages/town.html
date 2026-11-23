@@ -164,7 +164,7 @@ function statusOf(s, e) {
   if (e.moving) return `<b class="warn">移設中</b> 残り${E.fmtDuration(e.daysLeft)}${e.plant ? '（設備は止まっている）' : ''}`;
   if (e.building) return `<b class="warn">建設中</b> 残り${E.fmtDuration(e.daysLeft)}`;
   const p = e.plant;
-  if (p) { const r = p.last && p.last.reason; return r === 'ok' ? '<b class="good">稼働中</b>' : r === 'input' ? '<b class="bad">原料不足</b>' : r === 'full' ? '<b class="bad">置き場が満杯</b>' : r === 'cash' ? '<b class="bad">資金不足</b>' : '<span class="sub">停止中</span>'; }
+  if (p) { const r = p.last && p.last.reason; return r === 'ok' ? '<b class="good">稼働中</b>' : r === 'input' ? '<b class="bad">原料不足</b>' : r === 'full' ? '<b class="bad">置き場が満杯</b>' : r === 'cash' ? '<b class="bad">資金不足</b>' : r === 'import' ? '<b class="bad">輸入の上限（自前の原料が要る）</b>' : '<span class="sub">停止中</span>'; }
   if (e.type === 'refinery' || e.type === 'refineryLarge') return E.refineryOnline(s) ? '<b class="good">稼働中</b>' : '<span class="sub">停止中</span>';
   if (e.type === 'powerPlant') return s.power && s.power.gen > 0 ? `<b class="good">発電 ${E.fmtNum(s.power.gen)}MWh/日</b>` : '<span class="sub">発電していない</span>';
   return '';
@@ -176,15 +176,16 @@ function flowHtml(s, p, key) {
   const f = E.plantFlow(s, p); if (!f) return '';
   const R = G.resources, sgn = v => `<b class="${v >= 0 ? 'good' : 'bad'}">${v >= 0 ? '+' : '-'}${M(Math.abs(v))}</b>`;
   const stall = f.reason && f.reason !== 'ok' && f.t < f.rated - 1e-9;
-  const why = stall ? `<div class="sub bad">⚠ ${f.reason === 'input' ? '原料が足りない' + (f.short ? '：' + R[f.short].name : '') : f.reason === 'cash' ? '資金が足りず原料を買えない' : f.reason === 'full' ? '置き場が満杯' : ''}　定格の ${f.rated > 0 ? Math.round(f.t / f.rated * 100) : 0}% で動いている</div>` : '';
+  const why = stall ? `<div class="sub bad">⚠ ${f.reason === 'input' ? '原料が足りない' + (f.short ? '：' + R[f.short].name : '') : f.reason === 'cash' ? '資金が足りず原料を買えない' : f.reason === 'full' ? '置き場が満杯' : f.reason === 'import' ? '輸入で動かせる量の上限に達した。これ以上は、自前で原料を作らないと動かない' : ''}　定格の ${f.rated > 0 ? Math.round(f.t / f.rated * 100) : 0}% で動いている</div>` : '';
+  const ii = f.imp, impNote = ii && (ii.share > 0.01 || f.reason === 'import') ? `<div class="sub bad" style="margin-top:4px">⚠ 輸入の原料で動いている（動かした量の${Math.round(ii.share * 100)}%）。利益は、自前の原料のときの <b>${Math.round(ii.profitShare * 100)}%</b> まで下がる。自前で原料を作らないと稼げない。輸入で動かせるのは、増設満杯の1基ぶんまで（いま ${fq(ii.used)}／${fq(ii.cap)}）。</div>` : '';
   const row = (a, b, c) => `<div class="row" style="gap:6px"><span class="sub" style="flex:1">${a}</span><span class="sub num">${b}</span><span class="sub num" style="min-width:5.2em;text-align:right">${c || ''}</span></div>`;
-  const body = `${why}
+  const body = `${why}${impNote}
     <div class="sub" style="margin-top:4px"><b>使う（月）</b>　${f.ran ? '昨日の実績×30日' : '能力×稼働率×30日'}</div>
     ${f.ins.map(i => row(`${R[i.k].name}${i.buy ? '（買う）' : '（在庫）'}`, `${fq(i.qty)}${R[i.k].unit}`, `${M(i.cost)}${isFinite(i.stockDays) && !i.buy ? `<br><span class="${i.stockDays < 3 ? 'bad' : ''}">在庫${i.stockDays >= 100 ? '100日超' : fq(i.stockDays) + '日分'}</span>` : ''}`)).join('')}
     <div class="sub" style="margin-top:4px"><b>作る（月）</b></div>
     ${f.outs.map(o => row(R[o.k].name, `${fq(o.qty)}${R[o.k].unit}`, o.sellable ? M(o.value) : '売れない')).join('')}
     <div class="sub" style="margin-top:4px"><b>収支（月）</b></div>
-    ${row('売上', '', M(f.revenue))}${row('原料', '', '-' + M(f.inCost))}${f.fee > 0 ? row('輸入手数料（買った原料の割合ぶん。Tier ' + E.nodeDef(E.nodeOfRecipe(p.recipe)).tier + '）', '', '-' + M(f.fee)) : ''}${row('操業費', '', '-' + M(f.opex))}${row('維持費', '', '-' + M(f.fixed))}
+    ${row('売上', '', M(f.revenue))}${row('原料', '', '-' + M(f.inCost))}${f.fee !== 0 ? row('輸入の罰（買った原料の割合ぶん。買値の割増は含む。Tier ' + E.nodeDef(E.nodeOfRecipe(p.recipe)).tier + '）', '', (f.fee > 0 ? '-' : '+') + M(Math.abs(f.fee))) : ''}${row('操業費', '', '-' + M(f.opex))}${row('維持費', '', '-' + M(f.fixed))}
     <div class="row" style="margin-top:2px"><b>利益</b><span class="num">${sgn(f.profit)}</span></div>`;
   return `<div style="margin-top:6px">${UI.fold('town-flow', `📊 月の収支 ${sgn(f.profit)}${stall ? ' <span class="bad">⚠</span>' : ''}`, body, true)}</div>`;
 }
@@ -234,7 +235,7 @@ function renderSheet(s) {
         ${p && !e.building ? (() => { const def = E.plantDef(p), rate = Math.round(p.runRate * 100);
           const chips = def && def.recipes.length > 1 ? `<div class="chips" style="margin-top:6px">${def.recipes.map(id => E.recipeUnlocked(s, id) ? `<span class="chip ${p.recipe === id ? 'on' : ''}" onclick="UI.act(s=>Engine.setPlantRecipe(s,${p.id},'${id}'))">${G.recipes[id].name}</span>` : `<span class="chip" style="opacity:.45" onclick="UI.toast('${E.recipeLockReason(s, id)}')">🔒 ${G.recipes[id].name}</span>`).join('')}</div>` : '';
           return `${chips}<div class="row" style="margin-top:6px"><span class="sub">稼働率</span><div class="chips">${[0, 25, 50, 75, 100].map(r => `<span class="chip ${rate === r ? 'on' : ''}" onclick="UI.act(s=>Engine.setPlantRate(s,${p.id},${r / 100}))">${r}%</span>`).join('')}</div></div>
-          <label class="row" style="margin-top:6px"><span class="sub">原料が足りない分を市場から買う</span><input type="checkbox" ${p.autoBuy ? 'checked' : ''} onchange="UI.act(s=>Engine.setPlantAutoBuy(s,${p.id},this.checked))"></label>`; })() : ''}
+          <label class="row" style="margin-top:6px"><span class="sub">原料が足りない分を市場から買う（輸入）</span><input type="checkbox" ${p.autoBuy ? 'checked' : ''} onchange="UI.act(s=>Engine.setPlantAutoBuy(s,${p.id},this.checked))"></label>${E.importRatio(p.recipe) < 1 ? `<div class="sub warn">⚠ 買う（輸入）と、利益は自前の原料のときの${Math.round(E.importRatio(p.recipe) * 100)}%まで下がり、輸入で動かせるのも、増設満杯の1基ぶんまで。自前で原料を作る工場が要る。</div>` : ''}`; })() : ''}
         <div class="sub">${b.desc || ''}</div>
         <div style="margin-top:6px">${p ? '<a href="factory.html">工場の設定へ</a>　' : e.type === 'refinery' || e.type === 'refineryLarge' || e.type === 'distillation' ? '<a href="refinery.html">製油所へ</a>　' : ''}${!e.building && !G.buildings[e.type].needsSite && !E.stackCfg(e.type) && e.type !== '_port' ? `<button class="btn small" onclick="startMove('${sel}')">🔧 移設</button> <button class="btn small" onclick="demolishSel('${sel}')">🗑️ 撤去</button> ` : ''}<button class="btn small" onclick="sel=null;iso.selected=null;UI.refresh()">閉じる</button></div></div>`);
     }
