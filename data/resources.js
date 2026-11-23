@@ -66,9 +66,9 @@ GAME_DATA.resources = {
   pharmaMat:     { name: '医薬原料',     unit: 't', kind: 'material', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 2500, volatility: 0.03, marketDepth: 200, color: '#c98fd0' },
   explosive:     { name: '火薬',         unit: 't', kind: 'material', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 1000, volatility: 0.035, marketDepth: 400, color: '#c9663a' },
   pharma:        { name: '医薬品',       unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 6000, volatility: 0.09, marketDepth: 280, color: '#d46a8f' },
-  colony:        { name: '宇宙コロニー', unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 600, basePrice: 25000000, volatility: 0.25, marketDepth: 20, color: '#d8b04a' },
+  colony:        { name: '宇宙コロニー', unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 600, basePrice: 25000000, volatility: 0.25, marketDepth: 20, satDecay: 0.99981, color: '#d8b04a' },
   offshore:      { name: '洋上プラットフォーム', unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 500, basePrice: 6000000, volatility: 0.12, marketDepth: 20, color: '#4a7f9a' },
-  aiDefense:     { name: 'AI防衛システム', unit: '式', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 200, basePrice: 30000000, volatility: 0.35, marketDepth: 20, color: '#5a6a8a' },
+  aiDefense:     { name: 'AI防衛システム', unit: '式', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 200, basePrice: 30000000, volatility: 0.35, marketDepth: 20, satDecay: 0.99981, color: '#5a6a8a' },
   // ---- 電機ライン（銅）と光・通信ライン（ガラス）：Tier 3→4→5 の独立した2本。Tier 5 の発電・送電設備と通信衛星・通信網は、AI防衛システムの材料になる
   cable:         { name: '電線・ケーブル', unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 1100, volatility: 0.04, marketDepth: 3000, color: '#b5651d' },
   opticFiber:    { name: '光ファイバー', unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 520, volatility: 0.05, marketDepth: 2500, color: '#7fc4de' },

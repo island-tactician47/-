@@ -83,8 +83,12 @@
       return qty * (p0 + p1) / 2;
     },
 
+    // 品目ごとの飽和の戻り方（resources の satDecay。無ければ全品目共通の 0.977/日＝約1か月で半分）。コロニー・AI防衛システムは、工場を増やすほど値崩れがゆっくり積もるよう、とても遅い（約8年で半分）
+    satDecayOf(k) { const r = D().resources[k]; return (r && r.satDecay) || SAT_DECAY_PER_DAY; },
+    // 月に Q を売ったときの、売るときの平均の飽和＝Q×この係数。共通の戻り方なら約1.5（定常のピークは約2Q）。遅い戻り方なら 0.5＋f/(1−f)（f＝30日の残り率）
+    satAvgFactor(k) { const d = this.satDecayOf(k); if (d === SAT_DECAY_PER_DAY) return 1.5; const f = Math.pow(d, 30); return 0.5 + f / (1 - f); },
     dailyDecay(state) {
-      for (const k in state.market.sat) state.market.sat[k] *= SAT_DECAY_PER_DAY;
+      for (const k in state.market.sat) state.market.sat[k] *= this.satDecayOf(k);
     },
 
     // 月次の相場更新。イベントが起きたらそれを返す

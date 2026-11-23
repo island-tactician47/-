@@ -655,7 +655,7 @@
         for (const k in need) { const rec = G.recipes[made[k]], pt = plantOf(made[k]), cap = G.plants[pt].throughput * (rec.speed || 1); cost += need[k] * (rec.opexPerUnit || 0) + need[k] / (cap * 360) * G.buildings[pt].fixedPerMonth * 12; }
         for (const k in raw) cost += raw[k] * R[k].basePrice;
         cost += (crec.opexPerUnit || 0) * n + G.buildings[ptype].fixedPerMonth * 12;
-        v = n * R[key].basePrice * (1 - Market.SELL_FEE) * (1 - Math.min(0.5, Market.SAT_IMPACT * 0.5 / R[key].marketDepth)) - cost;
+        v = n * R[key].basePrice * (1 - Market.SELL_FEE) * (1 - Math.min(0.5, Market.SAT_IMPACT * Math.max(Market.satAvgFactor(key) * n / 12, 0.5) / R[key].marketDepth)) - cost;
       }
       Object.defineProperty(G._chain, key, { value: v, enumerable: false });
       return v;
@@ -1050,7 +1050,7 @@
         // 飽和（値崩れ）込み：月に Q を売ると平均で約1.5Qぶん飽和した価格で売れる（減衰0.977/日で定常のピークは約2Q）。
         // いまの飽和は含めず（二重計上を避ける）、飽和のない相場に定常の値崩れを掛ける。値崩れは主産物の marketDepth で計算し、副産物にも同じ率を掛ける（いまは単一出力）
         const main = Object.keys(rec.outputs)[0], Q = cap * rr * 30;
-        r.satLoss = Math.min(0.5, Market.SAT_IMPACT * Math.max(1.5 * Q, 0.5) / R[main].marketDepth);   // 船のように1単位ずつまとめて売る品目は、1回の売却の平均（0.5単位）が下限
+        r.satLoss = Math.min(0.5, Market.SAT_IMPACT * Math.max(Market.satAvgFactor(main) * Q, 0.5) / R[main].marketDepth);   // 船のように1単位ずつまとめて売る品目は、1回の売却の平均（0.5単位）が下限
         r.monthlyBuySat = (revenueNoSat * (1 - r.satLoss) - inBuy - opex) * cap * rr * 30 - fixed;
         const cost = b.cost * idx * (1 + nm * MC.costMul);
         r.paybackYearsBuy = r.monthlyBuy > 0 ? cost / (r.monthlyBuy * 12) : Infinity;
