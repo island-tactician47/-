@@ -1126,7 +1126,7 @@
 
     // 加工設備1基の、いまの稼働の月あたりの流れ（マップの建物の詳細用。状態は変えない）。
     // 生産量は昨日の実績（p.last.t。まだ動いていなければ 能力×稼働率）を30日ぶんにしたもの。
-    // 入力は、自動購入がオンで買えるなら買値、そうでなければ自社在庫（売値換算）で数える
+    // 入力は、買った割合ぶんを買値、残りを自社在庫（売値換算）で数える（買った割合＝昨日実際に買った割合。まだ動いていなければ、在庫が1か月ぶんに足りない割合。在庫があれば在庫を先に使う）
     plantFlow(s, p) {
       const rec = D().recipes[p.recipe], def = this.plantDef(p), b = D().buildings[p.type], R = D().resources;
       if (!rec || !def || !b) return null;
@@ -1134,17 +1134,21 @@
       const rated = this.plantCapOf(p) * (p.runRate === undefined ? 1 : p.runRate);
       const ran = !!(p.last && typeof p.last.t === 'number'), t = ran ? p.last.t : rated, M30 = t * DAYS_PER_MONTH;
       const ins = [], outs = []; let inCost = 0, revenue = 0;
+      const bm = this._boughtMap && this._boughtMap.get(p);
       for (const k in rec.inputs) {
-        const buy = !!(p.autoBuy && R[k].canBuy), price = buy ? Market.buyPrice(s, k) : Market.sellPrice(s, k), qty = rec.inputs[k] * M30, need = rec.inputs[k] * rated;
-        inCost += qty * price;
-        ins.push({ k, qty, cost: qty * price, buy, stockDays: need > 0 ? (s.inventory[k] || 0) / need : Infinity, canBuy: R[k].canBuy !== false });
+        // 買う割合：動いていれば昨日実際に買った割合。まだなら在庫が1か月ぶんに足りない割合（在庫があれば、その分は買わない＝在庫を先に使う）
+        const qty = rec.inputs[k] * M30, need = rec.inputs[k] * rated, canB = !!(p.autoBuy && R[k].canBuy);
+        const share = !canB ? 0 : (ran && bm && t > 1e-9) ? Math.min(1, Math.max(0, (bm[k] || 0) / (rec.inputs[k] * t))) : Math.max(0, Math.min(1, 1 - (s.inventory[k] || 0) / Math.max(1e-9, qty)));
+        const bp = Market.buyPrice(s, k), sp = Market.sellPrice(s, k), buy = share > 0.01, cost = qty * (share * bp + (1 - share) * sp);
+        inCost += cost;
+        ins.push({ k, qty, cost, buy, share, boughtCost: qty * share * bp, premium: qty * share * (bp - sp), stockDays: need > 0 ? (s.inventory[k] || 0) / need : Infinity, canBuy: R[k].canBuy !== false });
       }
       for (const k in rec.outputs) {
         const qty = rec.outputs[k] * M30, sellable = R[k].canSell !== false, value = sellable ? qty * Market.sellPrice(s, k) : 0;
         revenue += value; outs.push({ k, qty, value, sellable });
       }
       const opex = (rec.opexPerUnit || 0) * idx * M30, fixed = (b.fixedPerMonth || 0) * idx * (1 + nm * (MC.fixedMul || 0));
-      const fee = this.importFee(s, p, rec, M30, ins.reduce((a, i) => a + (i.buy ? i.cost : 0), 0), ins.reduce((a, i) => a + (i.buy ? i.cost - i.qty * Market.sellPrice(s, i.k) : 0), 0));   // 輸入の罰（Tier 3 以上。買った原料の割合ぶん。割増の分は払い戻す）
+      const fee = this.importFee(s, p, rec, M30, ins.reduce((a, i) => a + i.boughtCost, 0), ins.reduce((a, i) => a + i.premium, 0));   // 輸入の罰（Tier 3 以上。買った原料の割合ぶん。割増の分は払い戻す）
       return { rec, ran, t, rated, ins, outs, revenue, inCost, opex, fixed, fee, imp: this.importInfo(s, p), profit: revenue - inCost - fee - opex - fixed, reason: p.last && p.last.reason, short: p.last && p.last.short };
     },
 
@@ -1648,6 +1652,7 @@
         }
         tA = Math.max(0, tA);
         let t = tA, why = null, roomLim = false, capHit = false, importedValue = 0, importedPremium = 0;
+        const boughtNow = {};   // この日に市場から買った量（入力ごと）。画面の月の収支の見積もりに使う（状態には入れない）
         // 2) 自動購入：在庫が足りないぶんを市場から買って上乗せ（出力の置き場の範囲で）
         if (p.autoBuy && want > tA && tA >= Math.min(want, tStock) - 1e-9) {
           let tb = want - tA;
@@ -1668,7 +1673,7 @@
               for (let i = 0; i < 40; i++) { const mid = (lo + hi) / 2; if (cost(mid) <= cash) lo = mid; else hi = mid; }
               hi = lo;
             }
-            for (const k of inKeys) { const lack = rec.inputs[k] * hi - s.inventory[k]; if (lack > 1e-12) { const b0 = s.inventory[k]; this.buy(s, k, lack, true, { ignoreSpace: true, seg: pseg }); const got = Math.max(0, s.inventory[k] - b0); importedValue += got * Market.buyPrice(s, k); importedPremium += got * (Market.buyPrice(s, k) - Market.sellPrice(s, k)); } }
+            for (const k of inKeys) { const lack = rec.inputs[k] * hi - s.inventory[k]; if (lack > 1e-12) { const b0 = s.inventory[k]; this.buy(s, k, lack, true, { ignoreSpace: true, seg: pseg }); const got = Math.max(0, s.inventory[k] - b0); boughtNow[k] = got; importedValue += got * Market.buyPrice(s, k); importedPremium += got * (Market.buyPrice(s, k) - Market.sellPrice(s, k)); } }
             t = hi;
             for (const k of inKeys) t = Math.min(t, s.inventory[k] / rec.inputs[k]);
             if (this.importCapDaily(p) < Infinity) importUse[p.recipe] = (importUse[p.recipe] || 0) + Math.max(0, t - tA);
@@ -1684,6 +1689,7 @@
           else reason = 'full';
         }
         p.last = { t: Math.max(0, t), reason, imp: Math.max(0, t - tA) };   // imp＝輸入の原料で動かした生産量（日量）
+        (this._boughtMap || (this._boughtMap = new WeakMap())).set(p, boughtNow);
         if (reason === 'input' || reason === 'cash') {   // 律速した入力（1日分の必要量に対する在庫の割合がいちばん小さい入力。ダッシュボードで表示）
           let sk = null, sr = Infinity;
           for (const k of inKeys) { const r0 = inv0[k] / rec.inputs[k]; if (r0 < sr) { sr = r0; sk = k; } }
