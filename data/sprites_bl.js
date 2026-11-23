@@ -3290,18 +3290,18 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/powerEquipFactory_r0.png",
     "w": 555.0,
-    "h": 313.0,
+    "h": 337.5,
     "ax": 277.5,
-    "ay": 186.1,
+    "ay": 210.6,
     "fw": 9,
     "fd": 8
    },
    {
     "file": "../assets/bl/powerEquipFactory_r1.png",
     "w": 555.0,
-    "h": 301.5,
+    "h": 291.5,
     "ax": 277.5,
-    "ay": 174.6,
+    "ay": 164.6,
     "fw": 8,
     "fd": 9
    },
@@ -3317,9 +3317,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/powerEquipFactory_r3.png",
     "w": 555.0,
-    "h": 302.5,
+    "h": 402.0,
     "ax": 277.5,
-    "ay": 175.6,
+    "ay": 275.1,
     "fw": 8,
     "fd": 9
    }
