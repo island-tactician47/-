@@ -3744,5 +3744,89 @@ window.GAME_DATA.spritesBL = {
     "fd": 3
    }
   ]
+ },
+ "tireFactory": {
+  "fw": 6,
+  "fd": 5,
+  "r": [
+   {
+    "file": "../assets/bl/tireFactory_r0.png",
+    "w": 363.0,
+    "h": 194.5,
+    "ax": 181.5,
+    "ay": 110.1,
+    "fw": 6,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/tireFactory_r1.png",
+    "w": 363.0,
+    "h": 194.5,
+    "ax": 181.5,
+    "ay": 110.1,
+    "fw": 5,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/tireFactory_r2.png",
+    "w": 363.0,
+    "h": 194.5,
+    "ax": 181.5,
+    "ay": 110.1,
+    "fw": 6,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/tireFactory_r3.png",
+    "w": 363.0,
+    "h": 207.0,
+    "ax": 181.5,
+    "ay": 122.6,
+    "fw": 5,
+    "fd": 6
+   }
+  ]
+ },
+ "batteryFactory": {
+  "fw": 5,
+  "fd": 5,
+  "r": [
+   {
+    "file": "../assets/bl/batteryFactory_r0.png",
+    "w": 331.0,
+    "h": 186.0,
+    "ax": 165.5,
+    "ay": 109.1,
+    "fw": 5,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/batteryFactory_r1.png",
+    "w": 331.0,
+    "h": 180.0,
+    "ax": 165.5,
+    "ay": 103.1,
+    "fw": 5,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/batteryFactory_r2.png",
+    "w": 331.0,
+    "h": 180.0,
+    "ax": 165.5,
+    "ay": 103.1,
+    "fw": 5,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/batteryFactory_r3.png",
+    "w": 331.0,
+    "h": 215.0,
+    "ax": 165.5,
+    "ay": 138.1,
+    "fw": 5,
+    "fd": 5
+   }
+  ]
  }
 };

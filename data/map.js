@@ -29,7 +29,7 @@ window.GAME_DATA.map = {
     tireFactory: [3, 3], batteryFactory: [2, 3], cableFactory: [2, 2], fiberFactory: [2, 2], motorFactory: [2, 3], powerEquipFactory: [3, 3], commGearFactory: [2, 2], satelliteFactory: [3, 3]
   },
   // 向きを選べない種類（絵が4方向そろっていないもの。そろったら外す）。造船所（海側が決まっている）と研究棟（敷地に重ねる）は engine.canRotate が別に判定する
-  noRotate: { tireFactory: 1, batteryFactory: 1 },   // タイヤ工場：絵（Blender）がまだ無い（手続き描画）。4方向の絵ができたら外す
+  noRotate: {},
   footprint: {
     default: [4, 4], module: [2, 2], oilWell: [2, 2], container: [4, 4], portcrane: [4, 4], yard_coal: [2, 2], yard_iron: [2, 2], yard_copper: [2, 2], yard_limestone: [2, 2], mine_coal: [3, 3], mine_iron: [3, 3], mine_copper: [3, 3], mine_limestone: [3, 3],   // oilWell は町の地図には出さない（採掘地ページの絵の大きさ）
       // module は親が決まっていないとき（上の moduleFootprint が優先）
