@@ -222,7 +222,7 @@ function renderInvest(s) {
     UI.html('goalcard', g ? `<div class="card"><div class="row"><h3>🏆 目標：年末の純利益 ${M(g.target)}</h3><b class="num">${(g.ratio * 100).toFixed(0)}%</b></div>
       <div class="bar"><i style="width:${Math.max(0, Math.min(100, g.ratio * 100))}%"></i></div>
       <div class="sub">直近12か月の純利益 ${M(g.profit12)}　${(E.goalCfg().projects || []).map(k => g.built.includes(k) ? '<b class="good">✔ ' + G.resources[k].name + 'を完成</b>' : '<b class="bad">・ ' + G.resources[k].name + 'をまだ1基も完成させていない</b>').join('　')}${g.reached ? '　<b class="good">達成済み（ランク ' + s.goal.rank + '「' + s.goal.title + '」・' + s.goal.score + '点）</b>' : ''}</div>
-      ${s.goal ? '' : '<div class="sub">12月の決算で、その年の純利益が目標以上で、コロニーとAI防衛システムを1基ずつ完成させていれば達成（洋上プラットフォームは任意）。目標は「コロニーとAI防衛システムを、材料まで全部自前で作って売ったときの年間利益の和」の' + E.goalCfg().profitMultiplier + '倍（税引き後）。届くとスコア（早さ・自己資本比率・営業利益率）とランクが出る。</div>'}</div>` : ''); }
+      ${s.goal ? '' : '<div class="sub">12月の決算で、その年の純利益が目標以上で、コロニーとAI防衛システムを1基ずつ完成させていれば達成（洋上プラットフォームは任意）。目標は年間の純利益 ' + M(E.goalTarget(s)) + '（税引き後）。届くとスコア（早さ・自己資本比率・営業利益率）とランクが出る。</div>'}</div>` : ''); }
   UI.html('invest', false ? `<div class="card sub">🔬 研究中：${E.researchName(s.research.active.id)}（月 ${M(E.researchMonthly(s, s.research.active.id))}）</div>` : '');
 }
 

@@ -662,7 +662,7 @@
     },
     // ゴールの金額：コロニーとAI防衛システム（goal.projects）の、各1基の年間利益の和の profitMultiplier 倍（名目。物価指数で増える）
     goalBase1950() { const cfg = this.goalCfg(); return cfg ? (cfg.projects || ['colony']).reduce((a, k) => a + this.chainProfit1950(k), 0) : 0; },
-    goalTarget(s) { const cfg = this.goalCfg(); return cfg ? cfg.profitMultiplier * this.goalBase1950() * this.priceIndex(s) : 0; },
+    goalTarget(s) { const cfg = this.goalCfg(); return cfg ? (cfg.target ? cfg.target : cfg.profitMultiplier * this.goalBase1950()) * this.priceIndex(s) : 0; },
     // ゴールの条件の最終プロジェクト（goal.projects＝コロニーとAI防衛システム）のうち、1基でも完成させたもの。すべて完成させたら colonyBuilt が true（洋上プラットフォームは数えない）
     projectsBuilt(s) { const pt = (s.stats && s.stats.producedTotal) || {}, cfg = this.goalCfg(); return ((cfg && cfg.projects) || ['colony']).filter(k => (pt[k] || 0) >= 1); },
     colonyBuilt(s) { const cfg = this.goalCfg(), ps = (cfg && cfg.projects) || ['colony']; return this.projectsBuilt(s).length === ps.length; },
@@ -704,7 +704,7 @@
       const f = v => v.toFixed(0);
       s.pendingEvents.push({
         title: '🏆 目標達成', modal: true,
-        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、年間の純利益 <b>${this.fmtMoney(yp)}</b>（コロニーとAI防衛システムの年間利益の和の${cfg.profitMultiplier}倍）に届き、コロニーとAI防衛システムを完成させた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
+        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、年間の純利益 <b>${this.fmtMoney(yp)}</b>（目標の${this.fmtMoney(this.goalTarget(s))}）に届き、コロニーとAI防衛システムを完成させた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
         goal: { company: name, diff: s.difficulty, years: Math.round(sc.years * 10) / 10, score: s.goal.score, rank: sc.rank, title: sc.title, profit: Math.round(yp), at: Date.now() }
       });
       return true;

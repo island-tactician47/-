@@ -102,7 +102,8 @@ GAME_DATA.tree = {
 // コロニーは、1基の材料を、そのまま市場で売ったときの利益のおよそ2倍の利益になるように、価格・費用を決めた（tools/calibrate_recipes.py）。
 GAME_DATA.goal = {
   projects: ['colony', 'aiDefense'],   // ゴールの金額の基準にする最終プロジェクト
-  profitMultiplier: 2.5,   // ゴールの金額＝（projects の各1基を材料まで全部自前で作って売ったときの年間利益の和）×この倍率（Engine.chainProfit1950）
+  target: 70000000,        // ゴールの金額（年末の純利益・税引き後。ドル）。物価上昇はないので、そのまま。target が無ければ、下の profitMultiplier で決める
+  profitMultiplier: 2.85,  // （target が無いときの）ゴールの金額＝（projects の各1基を材料まで全部自前で作って売ったときの年間利益の和）×この倍率（Engine.chainProfit1950）。いまは target が優先
   speedBest: 25, speedWorst: 70, speedOffset: { rich: 0, tight: 5, indebted: 10 },
   weights: { speed: 0.5, equity: 0.25, margin: 0.25 }, marginFull: 0.30,
   restructurePenalty: 10, overdraftPenaltyPerMonth: 2, overdraftPenaltyMax: 15,
