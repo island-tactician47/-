@@ -3206,18 +3206,18 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/aiDefenseFactory_r0.png",
     "w": 779.0,
-    "h": 585.5,
+    "h": 600.0,
     "ax": 389.5,
-    "ay": 408.1,
+    "ay": 422.6,
     "fw": 12,
     "fd": 12
    },
    {
     "file": "../assets/bl/aiDefenseFactory_r1.png",
     "w": 779.0,
-    "h": 458.5,
+    "h": 486.0,
     "ax": 389.5,
-    "ay": 281.1,
+    "ay": 308.6,
     "fw": 12,
     "fd": 12
    },
@@ -3233,9 +3233,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/aiDefenseFactory_r3.png",
     "w": 779.0,
-    "h": 525.0,
+    "h": 532.5,
     "ax": 389.5,
-    "ay": 347.6,
+    "ay": 355.1,
     "fw": 12,
     "fd": 12
    }
