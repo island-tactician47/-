@@ -38,6 +38,7 @@ GAME_DATA.resources = {
   glass:      { name: 'ガラス',       unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 250, volatility: 0.02, marketDepth: 1800, color: '#8fd3e0' },
   cement:     { name: 'セメント',     unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 12.5, volatility: 0.02, marketDepth: 25000, color: '#a8a39a' },
   lumber:     { name: '木材',         unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 75,  volatility: 0.035, marketDepth: 3600, color: '#c49a5a' },
+  tire:       { name: 'タイヤ',       unit: 't', kind: 'material', tier: 5, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 520, volatility: 0.04, marketDepth: 1500, color: '#33333b' },
   paper:      { name: '紙',           unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 100, volatility: 0.03, marketDepth: 4500, color: '#e8e2cf' },
 
   // ---- 製品（作って売る。買えない）。storeVol＝保管枠、shipVol＝出荷枠を食う量（大きいものほど大きい） ----
@@ -99,7 +100,7 @@ GAME_DATA.storageClasses = {
 GAME_DATA.productOrder = ['crude', 'gasoline', 'diesel', 'naphtha', 'heavy',
   'coal', 'ironore', 'bauxite', 'copperore', 'limestone', 'silica', 'logs',
   'plastic', 'rubber', 'surfactant', 'fiber', 'steel', 'aluminum', 'copper', 'glass', 'cement', 'lumber', 'paper',
-  'detergent', 'buildmat', 'clothing', 'car',
+  'tire', 'detergent', 'buildmat', 'clothing', 'car',
   'rareMetal', 'lithiumOre', 'alloy', 'silicon', 'lithium', 'ship', 'aircraft', 'semiconductor', 'pc', 'ev',
   'naturalGas', 'niter', 'pharmaMat', 'explosive', 'pharma', 'rocket', 'weapon', 'colony', 'offshore', 'aiDefense', 'cable', 'opticFiber', 'motor', 'commGear', 'powerEquip', 'comsat'];
 

@@ -87,12 +87,13 @@ GAME_DATA.buildings = {
   copperSmelter:   { name: '非鉄製錬所',   icon: '🟠', category: 'factory', tier: 4, cost: 700000,  months: 12, fixedPerMonth: 2800, desc: '銅精鉱から銅' },
   kiln:            { name: '窯業工場',     icon: '🧱', category: 'factory', tier: 4, cost: 500000,  months: 12, fixedPerMonth: 2000, desc: 'ケイ砂・石灰石からガラス、石灰石からセメント（1基1レシピ）' },
   sawmill:         { name: '製材所',       icon: '🪵', category: 'factory', tier: 4, cost: 300000,  months: 8,  fixedPerMonth: 1200, desc: '原木から木材' },
-  paperMill:       { name: '製紙工場',     icon: '📄', category: 'factory', tier: 4, cost: 600000,  months: 12, fixedPerMonth: 2400, desc: '原木から紙（2aでは売る以外の使い道がない）' },
+  paperMill:       { name: '製紙工場',     icon: '📄', category: 'factory', tier: 4, cost: 600000,  months: 12, fixedPerMonth: 2400, desc: '木材から紙（コロニーの材料）' },
   // 最終製品の専用工場（レシピ固定。他の製品は作れない）
   detergentFactory: { name: '洗剤・化粧品工場', icon: '🧴', category: 'factory', tier: 3, cost: 1500000, months: 18, fixedPerMonth: 6000,  desc: '界面活性剤とプラスチック（容器）から洗剤・化粧品' },
   garmentFactory:   { name: '縫製工場',         icon: '🧵', category: 'factory', tier: 4, cost: 1200000, months: 18, fixedPerMonth: 4800,  desc: '合成繊維から衣料' },
+  tireFactory:      { name: 'タイヤ工場',       icon: '🛞', category: 'factory', tier: 5, cost: 1000000, months: 18, fixedPerMonth: 4000,  desc: '合成ゴムからタイヤ（自動車・EVの材料）' },
   buildmatFactory:  { name: '建材工場',         icon: '🏗️', category: 'factory', tier: 4, cost: 700000,  months: 12, fixedPerMonth: 2800,  desc: '木材・セメント・鋼材から建材' },
-  carFactory:       { name: '自動車工場',       icon: '🚗', category: 'factory', tier: 5, cost: 3000000, months: 30, fixedPerMonth: 12000, desc: '鋼材・アルミ・合成ゴム・ガラス・プラスチック・銅から自動車' },
+  carFactory:       { name: '自動車工場',       icon: '🚗', category: 'factory', tier: 5, cost: 3000000, months: 30, fixedPerMonth: 12000, desc: '鋼材・アルミ・タイヤ・ガラス・プラスチック・銅から自動車' },
 
   // ---- 段階2b：重工業・先端の専用工場 ----
   shipyard:          { name: '造船所',           icon: '🚢', category: 'factory', tier: 5, cost: 4000000, months: 30, fixedPerMonth: 16000, desc: '鋼材・合金・重油・銅から船舶（年に1隻ほど。完成までまとめて貯まる）' },

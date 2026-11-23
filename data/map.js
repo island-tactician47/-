@@ -26,10 +26,10 @@ window.GAME_DATA.map = {
   moduleFootprint: {
     chemPlant: [3, 3], steelMill: [3, 4], aluminumSmelter: [2, 4], kiln: [2, 3], sawmill: [2, 2], paperMill: [2, 3],
     detergentFactory: [3, 2], garmentFactory: [2, 2], buildmatFactory: [3, 3], carFactory: [3, 3], aircraftFactory: [3, 3], semiconductorFactory: [2, 3], copperSmelter: [2, 3], pcFactory: [3, 2], evFactory: [3, 3], pharmaFactory: [2, 2], rocketFactory: [2, 3], munitionsFactory: [3, 3], fineChemPlant: [3, 3], explosivesFactory: [3, 3],
-    cableFactory: [2, 2], fiberFactory: [2, 2], motorFactory: [2, 3], powerEquipFactory: [3, 3], commGearFactory: [2, 2], satelliteFactory: [3, 3]
+    tireFactory: [3, 3], cableFactory: [2, 2], fiberFactory: [2, 2], motorFactory: [2, 3], powerEquipFactory: [3, 3], commGearFactory: [2, 2], satelliteFactory: [3, 3]
   },
   // 向きを選べない種類（絵が4方向そろっていないもの。そろったら外す）。造船所（海側が決まっている）と研究棟（敷地に重ねる）は engine.canRotate が別に判定する
-  noRotate: {},
+  noRotate: { tireFactory: 1 },   // タイヤ工場：絵（Blender）がまだ無い（手続き描画）。4方向の絵ができたら外す
   footprint: {
     default: [4, 4], module: [2, 2], oilWell: [2, 2], container: [4, 4], portcrane: [4, 4], yard_coal: [2, 2], yard_iron: [2, 2], yard_copper: [2, 2], yard_limestone: [2, 2], mine_coal: [3, 3], mine_iron: [3, 3], mine_copper: [3, 3], mine_limestone: [3, 3],   // oilWell は町の地図には出さない（採掘地ページの絵の大きさ）
       // module は親が決まっていないとき（上の moduleFootprint が優先）
@@ -38,7 +38,7 @@ window.GAME_DATA.map = {
     steelMill: [12, 12], aluminumSmelter: [6, 6], copperSmelter: [4, 4], kiln: [4, 4], sawmill: [4, 4], paperMill: [4, 4],
     detergentFactory: [4, 4], garmentFactory: [4, 4], buildmatFactory: [6, 6],
     carFactory: [7, 5], shipyard: [5, 8], aircraftFactory: [6, 5], semiconductorFactory: [6, 6], pcFactory: [7, 6], evFactory: [8, 8], pharmaFactory: [6, 5],
-    rocketFactory: [6, 6], munitionsFactory: [7, 8], fineChemPlant: [6, 5], explosivesFactory: [6, 6], colonyFactory: [12, 12], offshoreFactory: [10, 10], cableFactory: [6, 5], fiberFactory: [5, 5], motorFactory: [7, 6], powerEquipFactory: [9, 8], commGearFactory: [6, 6], satelliteFactory: [8, 8], aiDefenseFactory: [12, 12],   // NT に無い型（手続き描画 js/sprites2.js）は小さめ
+    rocketFactory: [6, 6], munitionsFactory: [7, 8], fineChemPlant: [6, 5], tireFactory: [6, 5], explosivesFactory: [6, 6], colonyFactory: [12, 12], offshoreFactory: [10, 10], cableFactory: [6, 5], fiberFactory: [5, 5], motorFactory: [7, 6], powerEquipFactory: [9, 8], commGearFactory: [6, 6], satelliteFactory: [8, 8], aiDefenseFactory: [12, 12],   // NT に無い型（手続き描画 js/sprites2.js）は小さめ
     powerPlant: [8, 8], researchLab: [4, 4], warehouse_bulk: [4, 4], warehouse_goods: [4, 4]
   }
 };

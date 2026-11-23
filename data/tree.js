@@ -1,13 +1,13 @@
 // 技術ツリー（ノード）。設計は docs/技術ツリーとゴールの設計.md。file:// で開けるよう代入形式。
-// Tier 1：精製所と素材（製鋼・アルミ・窯業・非鉄・製材・製紙）。素材は、同じ条件（旧ティア3：製油所の稼働＋精製品の累計売上）でいっしょに開く（自動）。
-// Tier 2：化学（自動）と、火薬・光ファイバー・電線・建材（解放権で開く）。Tier 1〜2 は輸入の罰なし。Tier 3：精密化学・洗剤・衣料。
+// Tier 1：精製所と素材（製鋼・アルミ・窯業・非鉄・製材）。素材は、同じ条件（旧ティア3：製油所の稼働＋精製品の累計売上）でいっしょに開く（自動）。
+// Tier 2：化学（自動）と、火薬・精密化学・製紙（製材から）・光ファイバー・電線・建材（解放権で開く）。Tier 3：洗剤・衣料・タイヤ。輸入の罰は Tier 2 以上（Tier 1 だけなし）。
 // 時代（ティア）をノードに置き換える：ノードの tier は 1〜6（数字が大きいほど先端）。
 // GAME_DATA.tree.nodes[id] = {
 //   name, icon, tier,
 //   needs:     前提の（素材）ノードのid。すべて開いていて、かつ輸入なしで回る余剰があると「選べる」（選択権）。Tier 3+ の判定に使う
 //   buildings / recipes / resources：このノードが開くと使える設備・レシピ・品目（ここに無いものは最初から使える）
 //   legacyTier：旧ティア（era）の番号。移行期の互換（unlockTier(s,t)＝legacyTier ≤ t のノードをすべて開く）と、旧セーブの解放済みの判定に使う
-//   tickets：解放権の枚数（解放権で開くノード。Tier 2 の火薬・光ファイバー・電線・建材と Tier 3+）。auto：自動で開く（Tier 1 の素材と Tier 2 の化学。旧ティアの条件で開く）
+//   tickets：解放権の枚数（解放権で開くノード。Tier 2 の化学以外と Tier 3+）。auto：自動で開く（Tier 1 の素材と Tier 2 の化学。製紙は解放権。旧ティアの条件で開く）
 //   supply：{ building, recipe }（選択権の量の基準：その設備を、増設モジュールをすべて付けて全開で回す量の入力）。省略時は buildings[0] とそのレシピ
 //   legacyResearch：旧セーブでは研究が済んでいたときだけ開いた（旧ティアの到達では開かない）。移行の判定に使う
 //   colony・aiDefense：最後のノード（Tier 5 のうち4つが開くまで画面に描かない。config.finalReveal）
@@ -18,9 +18,9 @@ GAME_DATA.tree = {
   config: {
     // 解放権：会社全体の直近12か月の利益（名目）が、この額を超えるたびに1枚。一度もらった枚数は減らない
     ticketSteps: [150000, 190000, 230000, 290000, 370000, 460000, 570000, 720000, 890000, 1120000, 1400000, 1750000, 2180000, 2730000, 3410000, 4260000, 5330000, 6660000, 8330000, 10410000, 13010000, 16260000, 18700000, 21500000, 24730000, 28440000, 32700000, 37610000, 43250000, 49740000, 57200000, 65780000, 75650000, 87000000, 95700000, 105270000, 115800000, 127380000],   // 150k から 1.25倍ずつ22段（約1626万ドル）、そのあと1.15倍ずつ12段（約8700万ドル）、さらに1.1倍ずつ4段（約1億2738万ドル）、計38段。インフレ（年1.5%）で名目の利益が増える前提。コロニー経路は約22枚、AI防衛システム経路は約23枚、ゴールの条件の両方を開くと約36枚。値は仮：バランスのボットで調整（インフレなしだと後半の段は届かない：進捗メモのチェックポイント58）
-    // 輸入の罰：加工設備が原料を市場から買った（自動購入）とき、その製品のノードの Tier が3以上なら、買った原料の価値の割合ぶんだけ手数料を引く。
-    //   手数料＝(1−比)×その工場の粗利（原料を自社の在庫で賄ったときの、売上−原料−操業費）×生産量×買った割合。全部を輸入すると、利益が自前のときの「比」になる。Tier 1〜2 は罰なし
-    importRatio: { 3: 0.5, 4: 0.5, 5: 0.5, 6: 0.8 },
+    // 輸入の罰：加工設備が原料を市場から買った（自動購入）とき、その製品のノードの Tier が2以上なら、買った原料の価値の割合ぶんだけ手数料を引く。
+    //   手数料＝(1−比)×その工場の粗利（原料を自社の在庫で賄ったときの、売上−原料−操業費）×生産量×買った割合。全部を輸入すると、利益が自前のときの「比」になる。Tier 1 は罰なし。火薬（入力が輸入しか手段の無い硝石だけ）は、Tier 2 でも罰なし
+    importRatio: { 2: 0.5, 3: 0.5, 4: 0.5, 5: 0.5, 6: 0.8 },
     supplyMonths: 3,          // 選択権：直近3か月の実績の平均で、輸入なしで回る余剰を測る
     supplyModules: 0,         // 必要な量：その設備に、増設モジュールを何個付けて全開で回す量か（0＝増設なしの1基。上限は map.js の modules.max）
     supplyFactor: 1.0,        // 必要な量にかける係数（バランス調整用）
@@ -41,19 +41,21 @@ GAME_DATA.tree = {
                  buildings: ['copperSmelter'], recipes: ['copper', 'lithium'], resources: ['copper', 'copperore', 'lithium', 'lithiumOre'] },
     sawmill:   { x: 150, color: '#8b6b3a', name: '製材',         icon: '🪵', tier: 1, legacyTier: 3, auto: true, needs: ['refinery'],
                  buildings: ['sawmill'], recipes: ['lumber'], resources: ['lumber', 'logs'] },
-    paper:     { x: 1520, color: '#9a8f6a', name: '製紙',         icon: '📄', tier: 1, legacyTier: 3, auto: true, needs: ['refinery'],
+    paper:     { x: 1520, color: '#9a8f6a', name: '製紙',         icon: '📄', tier: 2, legacyTier: 3, tickets: 1, needs: ['sawmill'],
                  buildings: ['paperMill'], recipes: ['paper'], resources: ['paper'] },
-    fine:      { x: 850, color: '#8a6d3b', name: '精密化学',     icon: '🧪', tier: 3, legacyTier: 6, tickets: 1, legacyResearch: true, needs: ['chem'],
+    fine:      { x: 850, color: '#8a6d3b', name: '精密化学',     icon: '🧪', tier: 2, legacyTier: 6, tickets: 1, legacyResearch: true, needs: ['refinery'],
                  buildings: ['fineChemPlant'], recipes: ['pharmaMat'], resources: ['pharmaMat'], supply: { building: 'fineChemPlant', recipe: 'pharmaMat' } },
-    explo:     { x: 1850, color: '#b5334a', name: '火薬',         icon: '💥', tier: 2, legacyTier: 6, tickets: 1, legacyResearch: true, needs: ['refinery'],
+    explo:     { x: 1850, color: '#b5334a', name: '火薬',         icon: '💥', tier: 2, legacyTier: 6, tickets: 1, legacyResearch: true, needs: [],
                  buildings: ['explosivesFactory'], recipes: ['explosive'], resources: ['explosive', 'niter'], supply: { building: 'explosivesFactory', recipe: 'explosive' } },
     detergent: { x: 1350, color: '#6bb3d9', name: '洗剤・化粧品', icon: '🧴', tier: 3, legacyTier: 3, tickets: 1, needs: ['chem'],
                  buildings: ['detergentFactory'], recipes: ['detergent'], resources: ['detergent'] },
     clothing:  { x: 1600, color: '#d98ba0', name: '衣料',         icon: '👕', tier: 3, legacyTier: 4, tickets: 1, needs: ['chem'],
                  buildings: ['garmentFactory'], recipes: ['clothing'], resources: ['clothing'] },
+    tire:      { x: 1100, color: '#3b3b44', name: 'タイヤ',       icon: '🛞', tier: 3, legacyTier: 4, tickets: 1, needs: ['chem'],
+                 buildings: ['tireFactory'], recipes: ['tire'], resources: ['tire'] },
     buildmat:  { x: 1100, color: '#4d6fa3', name: '建材',         icon: '🏗️', tier: 2, legacyTier: 4, tickets: 1, needs: ['sawmill', 'kiln', 'steel'],
                  buildings: ['buildmatFactory'], recipes: ['buildmat'], resources: ['buildmat'] },
-    car:       { x: 1225, color: '#7a4f9a', name: '自動車',       icon: '🚗', tier: 4, legacyTier: 5, tickets: 2, needs: ['steel', 'aluminum', 'chem', 'kiln', 'copper'],
+    car:       { x: 1225, color: '#7a4f9a', name: '自動車',       icon: '🚗', tier: 4, legacyTier: 5, tickets: 2, needs: ['steel', 'aluminum', 'chem', 'kiln', 'copper', 'tire'],
                  buildings: ['carFactory'], recipes: ['car'], resources: ['car'] },
     ship:      { x: 1725, color: '#444444', name: '造船',         icon: '🚢', tier: 4, legacyTier: 5, tickets: 2, needs: ['steel', 'copper'],
                  buildings: ['shipyard'], recipes: ['ship'], resources: ['ship'] },
@@ -63,7 +65,7 @@ GAME_DATA.tree = {
                  buildings: ['semiconductorFactory'], recipes: ['semiconductor'], resources: ['semiconductor'] },
     pc:        { x: 975, color: '#66a182', name: 'PC',           icon: '💻', tier: 5, legacyTier: 6, tickets: 2, needs: ['semi', 'chem', 'kiln', 'aluminum'],
                  buildings: ['pcFactory'], recipes: ['pc'], resources: ['pc'] },
-    ev:        { x: 1725, color: '#00798c', name: 'EV・電池',     icon: '🔋', tier: 5, legacyTier: 6, tickets: 2, needs: ['steel', 'aluminum', 'chem', 'copper', 'semi'],
+    ev:        { x: 1725, color: '#00798c', name: 'EV・電池',     icon: '🔋', tier: 5, legacyTier: 6, tickets: 2, needs: ['steel', 'aluminum', 'chem', 'copper', 'semi', 'tire'],
                  buildings: ['evFactory'], recipes: ['ev'], resources: ['ev'] },
     aircraft:  { x: 1975, color: '#edae49', name: '航空機',       icon: '✈️', tier: 5, legacyTier: 6, tickets: 2, needs: ['aluminum', 'steel', 'semi', 'chem', 'copper'],
                  buildings: ['aircraftFactory'], recipes: ['aircraft'], resources: ['aircraft'] },
