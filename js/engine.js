@@ -761,6 +761,9 @@
       return m > 0 ? (1 - r) * m * t * f - (premium || 0) : 0;
     },
     // ---------- ブループリント（配置の保存と貼り付け）：選んだ建物（増設モジュールは含めない）の相対配置を保存し、空いた場所へまとめて建てる ----------
+    // 解禁：Tier 6 のノード（宇宙コロニー・AI防衛システム）を、どれか1つ開くと使える
+    blueprintUnlocked(s) { const N = this.treeNodes(); return Object.keys(N).some(id => N[id].tier === 6 && this.nodeUnlocked(s, id)); },
+    BLUEPRINT_LOCK: 'ブループリントは、Tier 6（宇宙コロニーかAI防衛システム）を開くと使える',
     // keys＝マップ上の建物の key の配列。戻り値＝{ items:[{type, dx, dy, rot}], w, d }（左上の建物の角を原点とした相対位置。足あとの全体の幅・奥行き）。建てられる種類が無ければ null
     blueprintFromKeys(s, keys) {
       const pl = (s.map && s.map.placed) || {}, items = []; let x0 = Infinity, y0 = Infinity;
@@ -772,6 +775,7 @@
     },
     // 左上を (ox, oy) にして貼り付けられるか：{ ok, msg（最初の理由）, items:[{ok, msg}]、cost（建設費＋埋め立て）}。全部置けて資金が足りるときだけ ok
     blueprintCheck(s, bp, ox, oy) {
+      if (!this.blueprintUnlocked(s)) return { ok: false, items: bp.items.map(() => ({ ok: false })), cost: 0, msg: this.BLUEPRINT_LOCK };
       const res = { ok: true, items: [], cost: 0, msg: null }; let fill = 0;
       this.ensureMap(s); const occ = this.mapOccupancy(s), need = {};
       for (const it of bp.items) need[it.type] = (need[it.type] || 0) + 1;

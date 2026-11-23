@@ -63,7 +63,7 @@ const BPKEY = 'factorySim.blueprints.v1';
 function bpLoad() { try { const a = JSON.parse(localStorage.getItem(BPKEY) || '[]'); return Array.isArray(a) ? a.filter(b => b && Array.isArray(b.items) && b.items.length) : []; } catch (e) { return []; } }
 function bpStore(list) { try { localStorage.setItem(BPKEY, JSON.stringify(list.slice(0, 30))); } catch (e) {} }
 function bpClear() { bpMode = null; bpKeys = new Set(); bpCur = null; bpAt = null; if (iso) { iso.multi = null; iso.ghosts = null; } }
-function bpOpen() { sel = null; cursor = null; placing = null; iso.selected = null; iso.cursor = null; iso.ghost = null; bpMode = 'menu'; UI.refresh(); }
+function bpOpen() { if (!E.blueprintUnlocked(UI.state)) { UI.toast(E.BLUEPRINT_LOCK); return; } sel = null; cursor = null; placing = null; iso.selected = null; iso.cursor = null; iso.ghost = null; bpMode = 'menu'; UI.refresh(); }
 function bpStartSelect() { bpClear(); bpMode = 'select'; bpKeys = new Set(); iso.multi = bpKeys; UI.refresh(); }
 function bpSelectedBlueprint() { return E.blueprintFromKeys(UI.state, [...bpKeys]); }
 function bpSave() {
@@ -310,7 +310,7 @@ function renderSheet(s) {
       ${types.map(t => { const b = G.buildings[t], chk = E.canBuild(s, t), cant = !chk.ok && !/資金不足/.test(chk.msg || ''); return `<button class="btn tbtn" ${cant ? 'disabled' : ''} onclick="startPlacing('${t}')">${b.icon || ''} ${b.name}　${M(E.costOf(s, t))}・${E.buildText(b.months)}${cant ? `<div class="sub">${chk.msg}</div>` : (!chk.ok ? `<div class="sub warn">${chk.msg}</div>` : '')}</button>`; }).join('') || '<div class="sub">解放済みの設備はまだない</div>'}</div>`);
   } else {
     const n = (iso.ents || []).length;
-    out.push(`<div class="card sub">建物をタップすると詳しく、空き地をタップするとそこに建てられます。${n ? `（建物 ${n}）` : ''}　油井は<a href="field.html">採掘地</a>で建てます。<div class="btns" style="margin-top:6px"><button class="btn small" onclick="bpOpen()">📐 ブループリント</button></div></div>`);
+    out.push(`<div class="card sub">建物をタップすると詳しく、空き地をタップするとそこに建てられます。${n ? `（建物 ${n}）` : ''}　油井は<a href="field.html">採掘地</a>で建てます。<div class="btns" style="margin-top:6px"><button class="btn small" ${E.blueprintUnlocked(s) ? '' : 'disabled'} onclick="bpOpen()">📐 ブループリント</button></div>${E.blueprintUnlocked(s) ? '' : `<div class="sub">${E.BLUEPRINT_LOCK}</div>`}</div>`);
   }
   UI.html('sheet', out.join(''));
 }
