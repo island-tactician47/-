@@ -90,22 +90,48 @@ function treeSvg(s, ids) {
   // 図の作り（docs/技術ツリー案.png と同じ）：Tier ごとの段、ノードは固定の横位置（data/tree.js の x）、線は元のノードの色。描くノードだけを詰めて並べる
   const NW = 150, NH = 62, ROWGAP = 190, TOP = 40, TIERCOL = { 1: '#6b7b8c', 2: '#4f7f64', 3: '#4d6fa3', 4: '#7a4f9a', 5: '#a34d4d', 6: '#c28a1e' };
   const tiers = [...new Set(ids.map(id => E.nodeDef(id).tier))].sort((a, b) => a - b), ry = {}; tiers.forEach((t, r) => { ry[t] = TOP + r * ROWGAP; });
-  const xs = ids.map(id => E.nodeDef(id).x), x0 = Math.min(...xs) - NW / 2 - 24, x1 = Math.max(...xs) + NW / 2 + 24, W = x1 - x0, H = TOP * 2 + (tiers.length - 1) * ROWGAP + NH + 12;
+  // 家系図のように：親ごとに1本の幹が下へ伸び、子の段の手前で枝分かれして子に入る（線は直角・親の色。子へ落ちる最後の線は共通の濃い色）。
+  // 位置は data/tree.js の x と lanes（幹が途中の段で通る横位置。tools/layout_tree.py が計算）。推移的に冗長な前提（A→B→C があるときの A→C）と、同じ Tier どうしの前提は描かない（前提としては効いている）
+  const lanes = (G.tree && G.tree.lanes) || {}, laneX = (p, tr) => (lanes[p] && lanes[p][tr] !== undefined) ? lanes[p][tr] : E.nodeDef(p).x;
+  const xs = ids.map(id => E.nodeDef(id).x).concat(ids.flatMap(id => Object.values(lanes[id] || {})));
+  const x0 = Math.min(...xs) - NW / 2 - 24, x1 = Math.max(...xs) + NW / 2 + 24, W = x1 - x0, H = TOP * 2 + (tiers.length - 1) * ROWGAP + NH + 12;
   treeX0 = x0;
-  const cx = id => E.nodeDef(id).x - x0, top = id => ry[E.nodeDef(id).tier], outs = {}, ins = {};
-  for (const id of ids) for (const n of E.nodeDef(id).needs || []) if (ids.includes(n) && E.nodeDef(n).tier !== E.nodeDef(id).tier) { (outs[n] = outs[n] || []).push(id);   // 同じ Tier どうしの線は描かない（化学→他の素材など。前提としては効いている）
-     (ins[id] = ins[id] || []).push(n); }
-  const slot = (list, key, id) => { const l = list.slice().sort((a, b) => E.nodeDef(a).x - E.nodeDef(b).x), i = l.indexOf(key), n = l.length; return n > 1 ? cx(id) - NW / 2 + 14 + (NW - 28) * (i + 0.5) / n : cx(id); };
-  let edges = '', nodes = '';
-  for (const id of ids) for (const n of ins[id] || []) {
-    const ax = slot(outs[n], id, n), ay = top(n) + NH, bx = slot(ins[id], n, id), by = top(id), dy = (by - ay) * 0.5, on = E.nodeUnlocked(s, n);
-    edges += `<path d="M${ax.toFixed(1)},${ay} C${ax.toFixed(1)},${ay + dy} ${bx.toFixed(1)},${by - dy} ${bx.toFixed(1)},${by}" fill="none" stroke="${E.nodeDef(n).color || '#888'}" stroke-width="3.5" opacity="${on ? 0.9 : 0.35}" ${on ? '' : 'stroke-dasharray="8 6"'}/><path d="M${bx.toFixed(1)},${by} l-6,-11 l12,0 z" fill="${E.nodeDef(n).color || '#888'}" opacity="${on ? 0.9 : 0.35}"/>`;
+  const cx = id => E.nodeDef(id).x - x0, top = id => ry[E.nodeDef(id).tier], tierOf = id => E.nodeDef(id).tier;
+  const ancMemo = {}, anc = i => ancMemo[i] || (ancMemo[i] = (() => { const o = new Set(); for (const n of E.nodeDef(i).needs || []) { o.add(n); for (const a of anc(n)) o.add(a); } return o; })());
+  const edges = [];   // [親, 子]
+  for (const c of ids) for (const p of E.nodeDef(c).needs || []) {
+    if (!ids.includes(p) || tierOf(p) >= tierOf(c)) continue;
+    if ((E.nodeDef(c).needs || []).some(q => q !== p && ids.includes(q) && anc(q).has(p))) continue;   // 冗長（他の前提を経由して届く）
+    edges.push([p, c]);
   }
-  // 同じ Tier の前提（Tier 3 以上。通信機器←半導体、洋上プラットフォーム←PC など）は、段の上を越える弧で描く（Tier 2 の化学→他の素材は描かない）
-  for (const id of ids) for (const n of E.nodeDef(id).needs || []) if (ids.includes(n) && E.nodeDef(n).tier === E.nodeDef(id).tier && E.nodeDef(id).tier >= 3) {
-    const ax = cx(n), bx = cx(id), y = top(id), on = E.nodeUnlocked(s, n), lift = 46 + Math.min(40, Math.abs(ax - bx) / 12), col = E.nodeDef(n).color || '#888';
-    edges += `<path d="M${ax.toFixed(1)},${y} C${ax.toFixed(1)},${y - lift} ${bx.toFixed(1)},${y - lift} ${bx.toFixed(1)},${y - 2}" fill="none" stroke="${col}" stroke-width="3.5" opacity="${on ? 0.9 : 0.35}" ${on ? '' : 'stroke-dasharray="8 6"'}/><path d="M${bx.toFixed(1)},${y} l-6,-11 l12,0 z" fill="${col}" opacity="${on ? 0.9 : 0.35}"/>`;
+  const kids = {}; for (const [p, c] of edges) (kids[p] = kids[p] || []).push(c);
+  // 子の段の上のすき間の「枝の高さ」：その段の子を x の順に上から下へ
+  const chan = {};
+  tiers.forEach((tr, ti) => {
+    if (!ti) return;
+    const cs = [...new Set(edges.filter(([, c]) => tierOf(c) === tr).map(([, c]) => c))].sort((a, b) => E.nodeDef(a).x - E.nodeDef(b).x), ya = ry[tiers[ti - 1]] + NH + 30, yb = ry[tr] - 22;
+    cs.forEach((k, i) => { chan[k] = ya + (yb - ya) * (i + 0.5) / cs.length; });
+  });
+  // 選んだノードにつながる線を濃く（前提の側は先祖すべて、先の側は子孫すべて）。ほかは薄く
+  const desc = sel => { const o = new Set(); for (const id of ids) if (anc(id).has(sel)) o.add(id); return o; };
+  const up = selId ? new Set([selId, ...anc(selId)]) : null, down = selId ? new Set([selId, ...desc(selId)]) : null;
+  const rel = (p, c) => !selId || up.has(c) || down.has(p);
+  let edges_svg = '';
+  const seg = (pts, col, on, dim) => `<path d="M${pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' L')}" fill="none" stroke="${col}" stroke-width="${dim ? 3 : 4}" stroke-linejoin="round" opacity="${dim ? 0.13 : on ? 0.95 : 0.5}" ${on ? '' : 'stroke-dasharray="8 6"'}/>`;
+  for (const p in kids) {
+    const col = E.nodeDef(p).color || '#888', on = E.nodeUnlocked(s, p), tp = tierOf(p), cs = kids[p], tmax = Math.max(...cs.map(tierOf));
+    const path = tiers.filter(tr => tr >= tp && tr <= tmax), xt = tr => tr === tp ? cx(p) : laneX(p, tr) - x0, anyRel = cs.some(c => rel(p, c));
+    for (let i = 0; i + 1 < path.length; i++) {
+      const ta = path[i], tb = path[i + 1], ya = ry[ta] + NH, yb = ry[tb], ye = ya + 14, xa = xt(ta);
+      if (tb < tmax) { const xb = xt(tb); edges_svg += seg([[xa, ya], [xa, ye], [xb, ye], [xb, yb], [xb, ry[tb] + NH]], col, on, !anyRel); }
+      for (const c of cs) if (tierOf(c) === tb) edges_svg += seg([[xa, ya], [xa, chan[c]], [cx(c), chan[c]]], col, on, !rel(p, c));
+    }
   }
+  for (const c of new Set(edges.map(([, k]) => k))) {
+    const bx = cx(c), by = top(c), dim = selId && !up.has(c) && !edges.some(([p, k]) => p === c && down.has(p)), relAny = !selId || up.has(c) || edges.some(([p, k]) => k === c && down.has(p));
+    edges_svg += `<path d="M${bx.toFixed(1)},${chan[c].toFixed(1)} L${bx.toFixed(1)},${by}" fill="none" stroke="#5b544a" stroke-width="4" opacity="${relAny ? 0.95 : 0.13}"/><path d="M${bx.toFixed(1)},${by} l-7,-12 l14,0 z" fill="#5b544a" opacity="${relAny ? 0.95 : 0.13}"/>`;
+  }
+  let nodes = '';
   let heads = ''; for (const t of tiers) heads += `<text x="${(8).toFixed(0)}" y="${ry[t] - 10}" font-size="20" font-weight="700" fill="#8a8378">Tier ${t}</text>`;
   for (const id of ids) {
     const d = E.nodeDef(id), st = E.nodeState(s, id), tc = TIERCOL[d.tier] || '#888', x = cx(id) - NW / 2, y = top(id);
@@ -117,7 +143,7 @@ function treeSvg(s, ids) {
       <text x="${(x + 12).toFixed(1)}" y="${y + 50}" font-size="15" fill="${subc}">${sub}</text></g>`;
   }
   const sc = +UI.tab('res-zoom', '0.55');
-  return `<div id="treesc" style="overflow:auto;max-height:70vh;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior:contain;border:1px solid var(--line);border-radius:10px;background:#f2ede4"><svg width="${(W * sc).toFixed(0)}" height="${(H * sc).toFixed(0)}" viewBox="0 0 ${W.toFixed(0)} ${H}" style="display:block">${heads}${edges}${nodes}</svg></div>`;
+  return `<div id="treesc" style="overflow:auto;max-height:70vh;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior:contain;border:1px solid var(--line);border-radius:10px;background:#f2ede4"><svg width="${(W * sc).toFixed(0)}" height="${(H * sc).toFixed(0)}" viewBox="0 0 ${W.toFixed(0)} ${H}" style="display:block">${heads}${edges_svg}${nodes}</svg></div>`;
 }
 
 function render(s) {
