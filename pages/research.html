@@ -90,13 +90,14 @@ function treeSvg(s, ids) {
   // 図の作り（docs/技術ツリー案.png と同じ）：Tier ごとの段、ノードは固定の横位置（data/tree.js の x）、線は元のノードの色。描くノードだけを詰めて並べる
   const NW = 150, NH = 62, ROWGAP = 190, TOP = 40, TIERCOL = { 1: '#6b7b8c', 2: '#4f7f64', 3: '#4d6fa3', 4: '#7a4f9a', 5: '#a34d4d', 6: '#c28a1e' };
   const tiers = [...new Set(ids.map(id => E.nodeDef(id).tier))].sort((a, b) => a - b), ry = {}; tiers.forEach((t, r) => { ry[t] = TOP + r * ROWGAP; });
-  // 家系図のように：親ごとに1本の幹が下へ伸び、子の段の手前で枝分かれして子に入る（線は直角・親の色。子へ落ちる最後の線は共通の濃い色）。
-  // 位置は data/tree.js の x と lanes（幹が途中の段で通る横位置。tools/layout_tree.py が計算）。推移的に冗長な前提（A→B→C があるときの A→C）と、同じ Tier どうしの前提は描かない（前提としては効いている）
+  // 配線図のように：親の幹から子へ枝分かれし、子の上には前提の数だけ矢印が付く（前提ごとに別の差し込み口）。横の線は重ならない（すき間ごとに、重ならない線は同じ高さを共有し、重なる線は別の高さへ）。
+  // できるだけ直線（親の真下に差し込み口があれば真っすぐ）。位置は data/tree.js の x と lanes（幹が途中の段で通る横位置。tools/layout_tree.py が計算）。
+  // 推移的に冗長な前提（A→B→C があるときの A→C）と、同じ Tier どうしの前提は描かない（前提としては効いている）
   const lanes = (G.tree && G.tree.lanes) || {}, laneX = (p, tr) => (lanes[p] && lanes[p][tr] !== undefined) ? lanes[p][tr] : E.nodeDef(p).x;
   const xs = ids.map(id => E.nodeDef(id).x).concat(ids.flatMap(id => Object.values(lanes[id] || {})));
-  const x0 = Math.min(...xs) - NW / 2 - 24, x1 = Math.max(...xs) + NW / 2 + 24, W = x1 - x0, H = TOP * 2 + (tiers.length - 1) * ROWGAP + NH + 12;
+  const x0 = Math.min(...xs) - NW / 2 - 24, x1 = Math.max(...xs) + NW / 2 + 24, W = x1 - x0;
   treeX0 = x0;
-  const cx = id => E.nodeDef(id).x - x0, top = id => ry[E.nodeDef(id).tier], tierOf = id => E.nodeDef(id).tier;
+  const cx = id => E.nodeDef(id).x - x0, tierOf = id => E.nodeDef(id).tier;
   const ancMemo = {}, anc = i => ancMemo[i] || (ancMemo[i] = (() => { const o = new Set(); for (const n of E.nodeDef(i).needs || []) { o.add(n); for (const a of anc(n)) o.add(a); } return o; })());
   const edges = [];   // [親, 子]
   for (const c of ids) for (const p of E.nodeDef(c).needs || []) {
@@ -105,13 +106,42 @@ function treeSvg(s, ids) {
     edges.push([p, c]);
   }
   const kids = {}; for (const [p, c] of edges) (kids[p] = kids[p] || []).push(c);
-  // 子の段の上のすき間の「枝の高さ」：その段の子を x の順に上から下へ
-  const chan = {};
-  tiers.forEach((tr, ti) => {
-    if (!ti) return;
-    const cs = [...new Set(edges.filter(([, c]) => tierOf(c) === tr).map(([, c]) => c))].sort((a, b) => E.nodeDef(a).x - E.nodeDef(b).x), ya = ry[tiers[ti - 1]] + NH + 30, yb = ry[tr] - 22;
-    cs.forEach((k, i) => { chan[k] = ya + (yb - ya) * (i + 0.5) / cs.length; });
-  });
+  const prevT = {}; tiers.forEach((tr, i) => { if (i) prevT[tr] = tiers[i - 1]; });
+  const xt = (p, tr) => tr === tierOf(p) ? cx(p) : laneX(p, tr) - x0;   // 親 p の幹の、段 tr での横位置
+  // 子の差し込み口：親の幹の位置にできるだけ近く、ノードの幅の中で、間隔をあけて
+  const port = {};
+  for (const c of new Set(edges.map(([, k]) => k))) {
+    const ps = edges.filter(([, k]) => k === c).map(([p]) => p).sort((a, b) => xt(a, prevT[tierOf(c)]) - xt(b, prevT[tierOf(c)]));
+    const lo = cx(c) - NW / 2 + 14, hi = cx(c) + NW / 2 - 14, sp = Math.min(18, (hi - lo) / Math.max(1, ps.length - 1));
+    const pos = ps.map(p => Math.min(hi, Math.max(lo, xt(p, prevT[tierOf(c)]))));
+    for (let i = 1; i < pos.length; i++) pos[i] = Math.max(pos[i], pos[i - 1] + sp);
+    if (pos[pos.length - 1] > hi) { pos[pos.length - 1] = hi; for (let i = pos.length - 2; i >= 0; i--) pos[i] = Math.min(pos[i], pos[i + 1] - sp); }
+    ps.forEach((p, i) => { port[p + '>' + c] = pos[i]; });
+  }
+  // すき間ごとの横線（幹の段差・枝）を集め、重ならないように高さ（トラック）を割り当てる。同じ親の線は重なってよい
+  const segs = {};   // 'ta>tb' → [{l, r, p, kind, c}]
+  for (const p in kids) {
+    const cs = kids[p], tp = tierOf(p), tmax = Math.max(...cs.map(tierOf)), path = tiers.filter(tr => tr >= tp && tr <= tmax);
+    for (let i = 0; i + 1 < path.length; i++) {
+      const ta = path[i], tb = path[i + 1], xa = xt(p, ta), g = segs[ta + '>' + tb] = segs[ta + '>' + tb] || [];
+      if (tb < tmax && xa !== xt(p, tb)) g.push({ l: Math.min(xa, xt(p, tb)), r: Math.max(xa, xt(p, tb)), p, kind: 'e', c: '' });
+      for (const c of cs) if (tierOf(c) === tb) { const q = port[p + '>' + c]; if (Math.abs(q - xa) > 0.5) g.push({ l: Math.min(xa, q), r: Math.max(xa, q), p, kind: 'b', c }); }
+    }
+  }
+  const track = {}, ntrk = {};
+  for (const gk in segs) {
+    const rows = [];
+    for (const sg of segs[gk].sort((a, b) => a.l - b.l || a.r - b.r)) {
+      let ti = rows.findIndex(row => row.every(o => o.p === sg.p || o.r + 10 < sg.l || sg.r + 10 < o.l));
+      if (ti < 0) { rows.push([]); ti = rows.length - 1; }
+      rows[ti].push(sg); track[gk + '|' + sg.p + '|' + sg.kind + '|' + sg.c] = ti;
+    }
+    ntrk[gk] = rows.length;
+  }
+  const TRK = 12;
+  tiers.forEach((tr, i) => { ry[tr] = i ? ry[tiers[i - 1]] + NH + Math.max(70, 30 + TRK * (ntrk[tiers[i - 1] + '>' + tr] || 0)) : TOP; });
+  const H = ry[tiers[tiers.length - 1]] + NH + TOP, top = id => ry[tierOf(id)];
+  const trkY = (ta, ti) => ry[ta] + NH + 16 + TRK * ti;
   // 選んだノードにつながる線を濃く（前提の側は先祖すべて、先の側は子孫すべて）。ほかは薄く
   const desc = sel => { const o = new Set(); for (const id of ids) if (anc(id).has(sel)) o.add(id); return o; };
   const up = selId ? new Set([selId, ...anc(selId)]) : null, down = selId ? new Set([selId, ...desc(selId)]) : null;
@@ -120,16 +150,19 @@ function treeSvg(s, ids) {
   const seg = (pts, col, on, dim) => `<path d="M${pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' L')}" fill="none" stroke="${col}" stroke-width="${dim ? 3 : 4}" stroke-linejoin="round" opacity="${dim ? 0.13 : on ? 0.95 : 0.5}" ${on ? '' : 'stroke-dasharray="8 6"'}/>`;
   for (const p in kids) {
     const col = E.nodeDef(p).color || '#888', on = E.nodeUnlocked(s, p), tp = tierOf(p), cs = kids[p], tmax = Math.max(...cs.map(tierOf));
-    const path = tiers.filter(tr => tr >= tp && tr <= tmax), xt = tr => tr === tp ? cx(p) : laneX(p, tr) - x0, anyRel = cs.some(c => rel(p, c));
+    const path = tiers.filter(tr => tr >= tp && tr <= tmax), anyRel = cs.some(c => rel(p, c));
     for (let i = 0; i + 1 < path.length; i++) {
-      const ta = path[i], tb = path[i + 1], ya = ry[ta] + NH, yb = ry[tb], ye = ya + 14, xa = xt(ta);
-      if (tb < tmax) { const xb = xt(tb); edges_svg += seg([[xa, ya], [xa, ye], [xb, ye], [xb, yb], [xb, ry[tb] + NH]], col, on, !anyRel); }
-      for (const c of cs) if (tierOf(c) === tb) edges_svg += seg([[xa, ya], [xa, chan[c]], [cx(c), chan[c]]], col, on, !rel(p, c));
+      const ta = path[i], tb = path[i + 1], gk = ta + '>' + tb, ya = ry[ta] + NH, yb = ry[tb], xa = xt(p, ta);
+      if (tb < tmax) {
+        const xb = xt(p, tb);
+        edges_svg += xa === xb ? seg([[xa, ya], [xb, ry[tb] + NH]], col, on, !anyRel) : seg([[xa, ya], [xa, trkY(ta, track[gk + '|' + p + '|e|'])], [xb, trkY(ta, track[gk + '|' + p + '|e|'])], [xb, ry[tb] + NH]], col, on, !anyRel);
+      }
+      for (const c of cs) {
+        if (tierOf(c) !== tb) continue;
+        const q = port[p + '>' + c], dim = !rel(p, c), y = trkY(ta, track[gk + '|' + p + '|b|' + c]);
+        edges_svg += (Math.abs(q - xa) <= 0.5 ? seg([[xa, ya], [q, yb]], col, on, dim) : seg([[xa, ya], [xa, y], [q, y], [q, yb]], col, on, dim)) + `<path d="M${q.toFixed(1)},${yb} l-6,-11 l12,0 z" fill="${col}" opacity="${dim ? 0.13 : on ? 0.95 : 0.5}"/>`;
+      }
     }
-  }
-  for (const c of new Set(edges.map(([, k]) => k))) {
-    const bx = cx(c), by = top(c), dim = selId && !up.has(c) && !edges.some(([p, k]) => p === c && down.has(p)), relAny = !selId || up.has(c) || edges.some(([p, k]) => k === c && down.has(p));
-    edges_svg += `<path d="M${bx.toFixed(1)},${chan[c].toFixed(1)} L${bx.toFixed(1)},${by}" fill="none" stroke="#5b544a" stroke-width="4" opacity="${relAny ? 0.95 : 0.13}"/><path d="M${bx.toFixed(1)},${by} l-7,-12 l14,0 z" fill="#5b544a" opacity="${relAny ? 0.95 : 0.13}"/>`;
   }
   let nodes = '';
   let heads = ''; for (const t of tiers) heads += `<text x="${(8).toFixed(0)}" y="${ry[t] - 10}" font-size="20" font-weight="700" fill="#8a8378">Tier ${t}</text>`;
