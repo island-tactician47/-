@@ -3500,36 +3500,36 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_cableFactory_r0.png",
     "w": 139.0,
-    "h": 95.0,
+    "h": 95.5,
     "ax": 69.5,
-    "ay": 61.1,
+    "ay": 61.6,
     "fw": 2,
     "fd": 2
    },
    {
     "file": "../assets/bl/module_cableFactory_r1.png",
     "w": 139.0,
-    "h": 78.5,
+    "h": 79.0,
     "ax": 69.5,
-    "ay": 44.6,
+    "ay": 45.1,
     "fw": 2,
     "fd": 2
    },
    {
     "file": "../assets/bl/module_cableFactory_r2.png",
     "w": 139.0,
-    "h": 95.0,
+    "h": 95.5,
     "ax": 69.5,
-    "ay": 61.1,
+    "ay": 61.6,
     "fw": 2,
     "fd": 2
    },
    {
     "file": "../assets/bl/module_cableFactory_r3.png",
     "w": 139.0,
-    "h": 90.5,
+    "h": 90.0,
     "ax": 69.5,
-    "ay": 56.6,
+    "ay": 56.1,
     "fw": 2,
     "fd": 2
    }
@@ -3542,9 +3542,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_fiberFactory_r0.png",
     "w": 139.0,
-    "h": 132.5,
+    "h": 133.0,
     "ax": 69.5,
-    "ay": 98.6,
+    "ay": 99.1,
     "fw": 2,
     "fd": 2
    },
@@ -3584,9 +3584,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_motorFactory_r0.png",
     "w": 171.0,
-    "h": 125.0,
+    "h": 125.5,
     "ax": 85.5,
-    "ay": 83.6,
+    "ay": 84.1,
     "fw": 2,
     "fd": 3
    },
@@ -3611,9 +3611,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_motorFactory_r3.png",
     "w": 171.0,
-    "h": 125.0,
+    "h": 125.5,
     "ax": 85.5,
-    "ay": 83.6,
+    "ay": 84.1,
     "fw": 3,
     "fd": 2
    }
@@ -3635,9 +3635,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_powerEquipFactory_r1.png",
     "w": 203.0,
-    "h": 161.5,
+    "h": 162.0,
     "ax": 101.5,
-    "ay": 113.1,
+    "ay": 113.6,
     "fw": 3,
     "fd": 3
    },
@@ -3719,9 +3719,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_satelliteFactory_r1.png",
     "w": 203.0,
-    "h": 119.0,
+    "h": 119.5,
     "ax": 101.5,
-    "ay": 70.6,
+    "ay": 71.1,
     "fw": 3,
     "fd": 3
    },
