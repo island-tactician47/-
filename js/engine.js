@@ -638,11 +638,13 @@
     equity(s) { return s.cash + this.inventoryValue(s) + this.assetValue(s) - this.totalDebt(s); },
     // コロニー1基（1年に1基ぶん）を、材料まで全部自前で作って売ったときの、会社の年間利益（1950年のドル。物価指数は掛けていない）。
     // 売上（売却手数料・1基の値崩れ込み）−（材料の工場の操業費・維持費・原料）−（コロニー工場の操業費・維持費）。データから計算する（レシピ・価格を変えると、ゴールも付いてくる）
-    colonyChainProfit1950() {
-      const G = D(); if (G._colonyProfit !== undefined) return G._colonyProfit;
-      const R = G.resources, crec = G.recipes && G.recipes.colony, cp = G.plants && G.plants.colonyFactory;
+    colonyChainProfit1950() { return this.chainProfit1950('colony'); },
+    // 最終プロジェクト（コロニー・洋上プラットフォーム・超音速旅客機・AI防衛システム）1基（1年に1基ぶん）の、同じ計算。key＝品目のキー（レシピ・品目・設備の対応は plants から探す）
+    chainProfit1950(key) {
+      const G = D(); if (!G._chain) Object.defineProperty(G, '_chain', { value: {}, enumerable: false }); if (G._chain[key] !== undefined) return G._chain[key];
+      const R = G.resources, crec = G.recipes && G.recipes[key], ptype = G.plants && Object.keys(G.plants).find(t => G.plants[t].recipes.includes(key)), cp = ptype && G.plants[ptype];
       let v = 0;
-      if (crec && cp && R.colony) {
+      if (crec && cp && R[key]) {
         const made = {}; for (const id in G.recipes) for (const k in G.recipes[id].outputs) made[k] = id;
         const plantOf = id => Object.keys(G.plants).find(t => G.plants[t].recipes.includes(id)), need = {}, raw = {};
         const req = (k, q) => { if (made[k]) { need[k] = (need[k] || 0) + q; const rec = G.recipes[made[k]]; for (const i in rec.inputs) req(i, rec.inputs[i] * q); } else raw[k] = (raw[k] || 0) + q; };
@@ -650,15 +652,16 @@
         let cost = 0;
         for (const k in need) { const rec = G.recipes[made[k]], pt = plantOf(made[k]), cap = G.plants[pt].throughput * (rec.speed || 1); cost += need[k] * (rec.opexPerUnit || 0) + need[k] / (cap * 360) * G.buildings[pt].fixedPerMonth * 12; }
         for (const k in raw) cost += raw[k] * R[k].basePrice;
-        cost += (crec.opexPerUnit || 0) * n + G.buildings.colonyFactory.fixedPerMonth * 12;
-        v = n * R.colony.basePrice * (1 - Market.SELL_FEE) * (1 - Math.min(0.5, Market.SAT_IMPACT * 0.5 / R.colony.marketDepth)) - cost;
+        cost += (crec.opexPerUnit || 0) * n + G.buildings[ptype].fixedPerMonth * 12;
+        v = n * R[key].basePrice * (1 - Market.SELL_FEE) * (1 - Math.min(0.5, Market.SAT_IMPACT * 0.5 / R[key].marketDepth)) - cost;
       }
-      Object.defineProperty(G, '_colonyProfit', { value: v, enumerable: false });
+      Object.defineProperty(G._chain, key, { value: v, enumerable: false });
       return v;
     },
     // ゴールの金額：コロニー1基（年1基）の年間利益の profitMultiplier 倍（名目。物価指数で増える）
     goalTarget(s) { const cfg = this.goalCfg(); return cfg ? cfg.profitMultiplier * this.colonyChainProfit1950() * this.priceIndex(s) : 0; },
-    colonyBuilt(s) { return ((s.stats && s.stats.producedTotal && s.stats.producedTotal.colony) || 0) >= 1; },
+    // 最終プロジェクト（コロニー・洋上プラットフォーム・超音速旅客機・AI防衛システム）のどれかを、1基でも完成させたか（tree.js の finalProducts）
+    colonyBuilt(s) { const pt = (s.stats && s.stats.producedTotal) || {}; return (this.treeCfg().finalProducts || ['colony']).some(k => (pt[k] || 0) >= 1); },
     // 進み具合：{ profit12（直近12か月の純利益）, target, ratio, colonyBuilt（コロニーを1基完成させたか）, eq（純資産。スコア用）, reached }
     goalProgress(s) {
       const cfg = this.goalCfg(); if (!cfg) return null;
@@ -684,7 +687,7 @@
       const rk = cfg.ranks.find(r => total >= r.min) || cfg.ranks[cfg.ranks.length - 1];
       return { speed, equityRatio, margin, penalty, total, rank: rk.rank, title: rk.title, years, equity: eq };
     },
-    // 年末（12月の決算）に判定：その年の純利益が目標の金額以上で、コロニーを1基完成させていれば達成（初めてだけ。スコアを出して知らせる。続けて遊べる）。届いたら true
+    // 年末（12月の決算）に判定：その年の純利益が目標の金額以上で、最終プロジェクト（コロニーなど）を1基完成させていれば達成（初めてだけ。スコアを出して知らせる。続けて遊べる）。届いたら true
     checkGoal(s) {
       const cfg = this.goalCfg(); if (!cfg || s.goal) return false;
       const h = s.history || [], last = h[h.length - 1];
@@ -697,7 +700,7 @@
       const f = v => v.toFixed(0);
       s.pendingEvents.push({
         title: '🏆 目標達成', modal: true,
-        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、年間の純利益 <b>${this.fmtMoney(yp)}</b>（コロニー1基の年間利益の${cfg.profitMultiplier}倍）に届き、コロニーを完成させた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
+        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、年間の純利益 <b>${this.fmtMoney(yp)}</b>（コロニー1基の年間利益の${cfg.profitMultiplier}倍）に届き、最終プロジェクトを完成させた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
         goal: { company: name, diff: s.difficulty, years: Math.round(sc.years * 10) / 10, score: s.goal.score, rank: sc.rank, title: sc.title, profit: Math.round(yp), at: Date.now() }
       });
       return true;
@@ -707,7 +710,7 @@
     // 次の目標の文（ヘッダーに出す）：選べるノード → 解放権をためる → 素材を増やす → すべて開いた
     nodeGoal(s) {
       const ids = Object.keys(this.treeNodes()).filter(id => !this.nodeUnlocked(s, id) && !this.nodeDef(id).auto && (this.nodeDef(id).needs || []).every(n => this.nodeUnlocked(s, n)));   // 前提がそろっているノード
-      if (!ids.length) { if (!Object.keys(this.treeNodes()).every(id => this.nodeUnlocked(s, id))) return null; const g = this.goalProgress(s); return g && !g.reached ? (g.colonyBuilt ? `目標：年末の純利益 ${this.fmtMoney(g.target)}（いま直近12か月 ${this.fmtMoney(g.profit12)}）` : `目標：コロニーを1基完成させ、年末の純利益 ${this.fmtMoney(g.target)} に届く`) : '目標：すべてのノードを開いた'; }
+      if (!ids.length) { const g = this.goalProgress(s); return g && !g.reached ? (g.colonyBuilt ? `目標：年末の純利益 ${this.fmtMoney(g.target)}（いま直近12か月 ${this.fmtMoney(g.profit12)}）` : `目標：最終プロジェクト（コロニーなど）を1基完成させ、年末の純利益 ${this.fmtMoney(g.target)} に届く`) : '目標：すべてのノードを開いた'; }
       const sts = ids.map(id => ({ id, st: this.nodeState(s, id) }));
       const c = sts.find(x => x.st.canUnlock); if (c) return `目標：研究タブで「${this.nodeName(c.id)}」を開ける（解放権${c.st.tickets.need}枚）`;
       const sel = sts.find(x => x.st.selectable); if (sel) { const nx = this.ticketSteps()[this.ticketsEarned(s)]; return `目標：解放権をためて「${this.nodeName(sel.id)}」を開く${nx ? '（次は直近12か月の利益 ' + this.fmtMoney(nx) + '）' : ''}`; }

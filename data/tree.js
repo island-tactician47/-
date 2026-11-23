@@ -23,6 +23,7 @@ GAME_DATA.tree = {
     supplyMonths: 3,          // 選択権：直近3か月の実績の平均で、輸入なしで回る余剰を測る
     supplyModules: 0,         // 必要な量：その設備に、増設モジュールを何個付けて全開で回す量か（0＝増設なしの1基。上限は map.js の modules.max）
     supplyFactor: 1.0,        // 必要な量にかける係数（バランス調整用）
+    finalProducts: ['colony', 'offshore', 'supersonic', 'aiDefense'],   // 最終プロジェクトの品目。どれか1基を完成させるのがゴールの条件
     colonyReveal: { node: 'colony', tier: 5, count: 4 }   // 例外：コロニーは Tier 5 のうち4つが開いたら描く
   },
   nodes: {
@@ -70,6 +71,13 @@ GAME_DATA.tree = {
     // 最後の工場：船・航空機・半導体以外のすべての最終製品と合金が材料（半導体は数えない。ただし PC・EV・兵器・ロケットの前提なので、結局開く）
     colony:    { x: 790, color: '#c28a1e', name: '宇宙コロニー', icon: '🛰️', tier: 6, tickets: 3, needs: ['steel', 'pharma', 'pc', 'ev', 'weapon', 'rocket', 'car', 'buildmat', 'detergent', 'clothing', 'paper'],
                  buildings: ['colonyFactory'], recipes: ['colony'], resources: ['colony'] },
+    // 最終プロジェクト（コロニーの仲間）：船・航空機・半導体を、1つずつ主役にする。前提がそろえば現れる（選べるのは、素材の余りがそろったとき）
+    offshore:  { x: 250, color: '#4a7f9a', name: '洋上プラットフォーム', icon: '🛢️', tier: 6, tickets: 3, needs: ['ship', 'steel', 'kiln', 'pc'],
+                 buildings: ['offshoreFactory'], recipes: ['offshore'], resources: ['offshore'] },
+    supersonic: { x: 520, color: '#9fb2c4', name: '超音速旅客機', icon: '✈️', tier: 6, tickets: 3, needs: ['aircraft', 'aluminum', 'ev', 'copper', 'chem', 'pc'],
+                 buildings: ['supersonicFactory'], recipes: ['supersonic'], resources: ['supersonic'] },
+    aiDefense: { x: 1060, color: '#5a6a8a', name: 'AI防衛システム', icon: '🛡️', tier: 6, tickets: 3, needs: ['semi', 'weapon', 'rocket', 'pc', 'explo'],
+                 buildings: ['aiDefenseFactory'], recipes: ['aiDefense'], resources: ['aiDefense'] },
     rocket:    { x: 1330, color: '#d1495b', name: 'ロケット',     icon: '🚀', tier: 5, legacyTier: 6, tickets: 2, legacyResearch: true, needs: ['steel', 'semi', 'explo', 'aluminum'],
                  buildings: ['rocketFactory'], recipes: ['rocket'], resources: ['rocket'] },
   }

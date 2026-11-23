@@ -3156,5 +3156,131 @@ window.GAME_DATA.spritesBL = {
     "fd": 12
    }
   ]
+ },
+ "offshoreFactory": {
+  "fw": 10,
+  "fd": 10,
+  "r": [
+   {
+    "file": "../assets/bl/offshoreFactory_r0.png",
+    "w": 651.0,
+    "h": 378.5,
+    "ax": 325.5,
+    "ay": 230.1,
+    "fw": 10,
+    "fd": 10
+   },
+   {
+    "file": "../assets/bl/offshoreFactory_r1.png",
+    "w": 651.0,
+    "h": 378.5,
+    "ax": 325.5,
+    "ay": 230.1,
+    "fw": 10,
+    "fd": 10
+   },
+   {
+    "file": "../assets/bl/offshoreFactory_r2.png",
+    "w": 651.0,
+    "h": 398.5,
+    "ax": 325.5,
+    "ay": 250.1,
+    "fw": 10,
+    "fd": 10
+   },
+   {
+    "file": "../assets/bl/offshoreFactory_r3.png",
+    "w": 651.0,
+    "h": 381.5,
+    "ax": 325.5,
+    "ay": 233.1,
+    "fw": 10,
+    "fd": 10
+   }
+  ]
+ },
+ "supersonicFactory": {
+  "fw": 10,
+  "fd": 8,
+  "r": [
+   {
+    "file": "../assets/bl/supersonicFactory_r0.png",
+    "w": 587.0,
+    "h": 313.0,
+    "ax": 293.5,
+    "ay": 178.6,
+    "fw": 10,
+    "fd": 8
+   },
+   {
+    "file": "../assets/bl/supersonicFactory_r1.png",
+    "w": 587.0,
+    "h": 297.0,
+    "ax": 293.5,
+    "ay": 162.6,
+    "fw": 8,
+    "fd": 10
+   },
+   {
+    "file": "../assets/bl/supersonicFactory_r2.png",
+    "w": 587.0,
+    "h": 297.0,
+    "ax": 293.5,
+    "ay": 162.6,
+    "fw": 10,
+    "fd": 8
+   },
+   {
+    "file": "../assets/bl/supersonicFactory_r3.png",
+    "w": 587.0,
+    "h": 297.0,
+    "ax": 293.5,
+    "ay": 162.6,
+    "fw": 8,
+    "fd": 10
+   }
+  ]
+ },
+ "aiDefenseFactory": {
+  "fw": 9,
+  "fd": 9,
+  "r": [
+   {
+    "file": "../assets/bl/aiDefenseFactory_r0.png",
+    "w": 587.0,
+    "h": 290.0,
+    "ax": 293.5,
+    "ay": 155.6,
+    "fw": 9,
+    "fd": 9
+   },
+   {
+    "file": "../assets/bl/aiDefenseFactory_r1.png",
+    "w": 587.0,
+    "h": 291.5,
+    "ax": 293.5,
+    "ay": 157.1,
+    "fw": 9,
+    "fd": 9
+   },
+   {
+    "file": "../assets/bl/aiDefenseFactory_r2.png",
+    "w": 587.0,
+    "h": 334.0,
+    "ax": 293.5,
+    "ay": 199.6,
+    "fw": 9,
+    "fd": 9
+   },
+   {
+    "file": "../assets/bl/aiDefenseFactory_r3.png",
+    "w": 587.0,
+    "h": 308.0,
+    "ax": 293.5,
+    "ay": 173.6,
+    "fw": 9,
+    "fd": 9
+   }
+  ]
  }
 };
