@@ -124,30 +124,41 @@ function treeSvg(s, ids) {
     const cs = kids[p], tp = tierOf(p), tmax = Math.max(...cs.map(tierOf)), path = tiers.filter(tr => tr >= tp && tr <= tmax);
     for (let i = 0; i + 1 < path.length; i++) {
       const ta = path[i], tb = path[i + 1], xa = xt(p, ta), g = segs[ta + '>' + tb] = segs[ta + '>' + tb] || [];
-      if (tb < tmax && xa !== xt(p, tb)) g.push({ l: Math.min(xa, xt(p, tb)), r: Math.max(xa, xt(p, tb)), p, kind: 'e', c: '' });
-      for (const c of cs) if (tierOf(c) === tb) { const q = port[p + '>' + c]; if (Math.abs(q - xa) > 0.5) g.push({ l: Math.min(xa, q), r: Math.max(xa, q), p, kind: 'b', c }); }
+      if (tb < tmax && xa !== xt(p, tb)) g.push({ l: Math.min(xa, xt(p, tb)), r: Math.max(xa, xt(p, tb)), p, kind: 'e', c: '', xa, q: xt(p, tb) });
+      for (const c of cs) if (tierOf(c) === tb) { const q = port[p + '>' + c]; if (Math.abs(q - xa) > 0.5) g.push({ l: Math.min(xa, q), r: Math.max(xa, q), p, kind: 'b', c, xa, q }); }
     }
   }
   const track = {}, ntrk = {};
   for (const gk in segs) {
-    const rows = [];
-    for (const sg of segs[gk].sort((a, b) => a.l - b.l || a.r - b.r)) {
-      let ti = rows.findIndex(row => row.every(o => o.p === sg.p || o.r + 10 < sg.l || sg.r + 10 < o.l));
-      if (ti < 0) { rows.push([]); ti = rows.length - 1; }
-      rows[ti].push(sg); track[gk + '|' + sg.p + '|' + sg.kind + '|' + sg.c] = ti;
+    // 重なる線は別の高さ。交差を減らす規則：①同じ親の同じ側へ向かう線は、遠いほど上 ②同じ子へ入る線は、同じ側の親なら、子に近い親ほど上
+    const sl = segs[gk]; for (const s of sl) { s.side = s.q > s.xa ? 1 : -1; s.span = Math.abs(s.q - s.xa); }
+    const pre = new Map(sl.map(s => [s, []]));
+    for (const a of sl) for (const b of sl) {
+      if (a === b) continue;
+      if (a.p === b.p && a.side === b.side && a.span > b.span) pre.get(b).push([a, false]);
+      if (a.kind === 'b' && b.kind === 'b' && a.c === b.c && a.p !== b.p && (a.xa < a.q) === (b.xa < b.q) && a.span < b.span) pre.get(b).push([a, true]);
+    }
+    const done = new Map(), rows = []; let remaining = sl.slice();
+    while (remaining.length) {
+      let ready = remaining.filter(s => pre.get(s).every(([a]) => done.has(a)));
+      if (!ready.length) ready = [remaining.reduce((m, s) => s.span > m.span ? s : m)];   // 循環したら、長い線から
+      const s = ready.reduce((m, x) => (x.span > m.span || (x.span === m.span && x.l < m.l)) ? x : m);
+      let ti = 0; for (const [a, strict] of pre.get(s)) if (done.has(a)) ti = Math.max(ti, done.get(a) + (strict ? 1 : 0));
+      for (;; ti++) { while (rows.length <= ti) rows.push([]); if (rows[ti].every(o => o.p === s.p || o.r + 10 < s.l || s.r + 10 < o.l)) break; }
+      rows[ti].push(s); done.set(s, ti); track[gk + '|' + s.p + '|' + s.kind + '|' + s.c] = ti; remaining = remaining.filter(x => x !== s);
     }
     ntrk[gk] = rows.length;
   }
-  const TRK = 12;
-  tiers.forEach((tr, i) => { ry[tr] = i ? ry[tiers[i - 1]] + NH + Math.max(70, 30 + TRK * (ntrk[tiers[i - 1] + '>' + tr] || 0)) : TOP; });
+  const TRK = 16;
+  tiers.forEach((tr, i) => { ry[tr] = i ? ry[tiers[i - 1]] + NH + Math.max(100, 50 + TRK * (ntrk[tiers[i - 1] + '>' + tr] || 0)) : TOP; });
   const H = ry[tiers[tiers.length - 1]] + NH + TOP, top = id => ry[tierOf(id)];
-  const trkY = (ta, ti) => ry[ta] + NH + 16 + TRK * ti;
+  const trkY = (ta, ti) => ry[ta] + NH + 24 + TRK * ti;
   // 選んだノードにつながる線を濃く（前提の側は先祖すべて、先の側は子孫すべて）。ほかは薄く
   const desc = sel => { const o = new Set(); for (const id of ids) if (anc(id).has(sel)) o.add(id); return o; };
   const up = selId ? new Set([selId, ...anc(selId)]) : null, down = selId ? new Set([selId, ...desc(selId)]) : null;
   const rel = (p, c) => !selId || up.has(c) || down.has(p);
   let edges_svg = '';
-  const seg = (pts, col, on, dim) => `<path d="M${pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' L')}" fill="none" stroke="${col}" stroke-width="${dim ? 3 : 4}" stroke-linejoin="round" opacity="${dim ? 0.13 : on ? 0.95 : 0.5}" ${on ? '' : 'stroke-dasharray="8 6"'}/>`;
+  const seg = (pts, col, on, dim) => `<path d="M${pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' L')}" fill="none" stroke="${col}" stroke-width="${dim ? 2.5 : (selId ? 5 : 4)}" stroke-linejoin="round" opacity="${dim ? 0.13 : on ? 0.95 : 0.5}" ${on ? '' : 'stroke-dasharray="8 6"'}/>`;
   for (const p in kids) {
     const col = E.nodeDef(p).color || '#888', on = E.nodeUnlocked(s, p), tp = tierOf(p), cs = kids[p], tmax = Math.max(...cs.map(tierOf));
     const path = tiers.filter(tr => tr >= tp && tr <= tmax), anyRel = cs.some(c => rel(p, c));
@@ -171,7 +182,8 @@ function treeSvg(s, ids) {
     const fill = st.unlocked ? '#e4f3ea' : st.canUnlock ? '#fde9c8' : st.selectable ? '#dcebf6' : '#fffdf8';
     const sub = st.unlocked ? '開いた' : st.auto ? '自動で開く' : st.canUnlock ? `選べる・解放権${st.tickets.need}枚` : st.selectable ? `選択権あり・解放権${st.tickets.need}枚` : `解放権${st.tickets.need}枚`;
     const subc = st.unlocked ? '#1f6a3f' : st.canUnlock ? '#8a5200' : st.selectable ? '#1f5a7d' : tc;
-    nodes += `<g onclick="selectNodeUI('${id}')" style="cursor:pointer"><rect x="${x.toFixed(1)}" y="${y}" width="${NW}" height="${NH}" rx="12" fill="${fill}" stroke="${id === selId ? '#26221e' : tc}" stroke-width="${id === selId ? 6 : 4}"/>
+    const dimN = selId && !up.has(id) && !down.has(id);
+    nodes += `<g onclick="selectNodeUI('${id}')" style="cursor:pointer" opacity="${dimN ? 0.3 : 1}"><rect x="${x.toFixed(1)}" y="${y}" width="${NW}" height="${NH}" rx="12" fill="${fill}" stroke="${id === selId ? '#26221e' : tc}" stroke-width="${id === selId ? 6 : 4}"/>
       <text x="${(x + 12).toFixed(1)}" y="${y + 28}" font-size="23" font-weight="700" fill="#26221e">${d.name.length > 7 ? d.name.slice(0, 7) : d.name}</text>
       <text x="${(x + 12).toFixed(1)}" y="${y + 50}" font-size="15" fill="${subc}">${sub}</text></g>`;
   }
