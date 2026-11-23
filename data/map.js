@@ -31,7 +31,7 @@ window.GAME_DATA.map = {
   // 向きを選べない種類（絵が4方向そろっていないもの。そろったら外す）。造船所（海側が決まっている）と研究棟（敷地に重ねる）は engine.canRotate が別に判定する
   noRotate: {},
   footprint: {
-    default: [4, 4], module: [2, 2], oilWell: [2, 2], container: [4, 4], portcrane: [4, 4], yard_coal: [2, 2], yard_iron: [2, 2], yard_copper: [2, 2], yard_limestone: [2, 2], mine_coal: [3, 3], mine_iron: [3, 3], mine_copper: [3, 3], mine_limestone: [3, 3],   // oilWell は町の地図には出さない（採掘地ページの絵の大きさ）
+    default: [4, 4], module: [2, 2], oilWell: [2, 2], container: [4, 4], portcrane: [4, 4], yard_coal: [2, 2], yard_iron: [2, 2], yard_copper: [2, 2], yard_silica: [2, 2], mine_coal: [3, 3], mine_iron: [3, 3], mine_copper: [3, 3], mine_silica: [3, 3],   // oilWell は町の地図には出さない（採掘地ページの絵の大きさ）
       // module は親が決まっていないとき（上の moduleFootprint が優先）
     refinery: [4, 4], refineryLarge: [8, 10], chemPlant: [6, 5], distillation: [2, 2],
     crudeTank: [4, 4], tank_gasoline: [2, 2], tank_diesel: [2, 2], tank_naphtha: [2, 2], tank_heavy: [2, 2],

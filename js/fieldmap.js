@@ -2,8 +2,8 @@
 // アイソメ：タイル(x,y)→画面((x-y)*32, (x+y)*16)（絵はタイル幅64px）。視点の回転は無し。
 (function () {
   const G = GAME_DATA, E = Engine;
-  const OREIMG = { coal: 'coal', ironore: 'iron', copperore: 'copper', limestone: 'limestone' };
-  const GROUND = { oil: '#7b6a4a', crude: '#8d8878', coal: '#55565a', ironore: '#8a5a45', copperore: '#6f8468', limestone: '#bdb7a2' };
+  const OREIMG = { coal: 'coal', ironore: 'iron', copperore: 'copper', silica: 'silica' };
+  const GROUND = { oil: '#7b6a4a', crude: '#8d8878', coal: '#55565a', ironore: '#8a5a45', copperore: '#6f8468', silica: '#d6c99a' };
   const W = 36;   // 地図の幅（タイル）
 
   // ---- 配置（データだけで決まる。一度だけ計算）
@@ -29,17 +29,17 @@
   const routes = [];
   function layout() {
     zones.length = 0; roads.length = 0; hills.length = 0; blocks.length = 0; routes.length = 0;
-    const site = res => Object.keys(G.mineSites).filter(id => G.mineSites[id].res === res).map(id => ({ id, kind: 'mine', res, label: G.mineSites[id].name, n: G.mineSites[id].slots, cell: 3, cols: Math.min(3, G.mineSites[id].slots), ground: GROUND[res] }));
+    const site = res => Object.keys(G.mineSites).filter(id => G.mineSites[id].res === res && !G.mineSites[id].endless).map(id => ({ id, kind: 'mine', res, label: G.mineSites[id].name, n: G.mineSites[id].slots, cell: 3, cols: Math.min(3, G.mineSites[id].slots), ground: GROUND[res] }));
     const oil = Object.keys(G.leases).filter(id => !G.leases[id].cluster).map(id => { const L = G.leases[id]; return { id, kind: 'oil', label: L.name, n: L.slots, cell: 2, cols: Math.min(5, Math.ceil(Math.sqrt(L.slots * 0.9))), ground: GROUND.oil }; });
     cluster(site('copperore'), 3, 10, 24, 3, 'copperore');
     cluster(oil, 3, 27, 32, 2, 'oil');
     cluster(Object.keys(G.leases).filter(id => G.leases[id].cluster === 'offshore').map(id => { const L = G.leases[id]; return { id, kind: 'oil', label: L.name, n: L.slots, cell: 2, cols: 5, ground: GROUND.oil }; }), 39, 34, 17, 2, 'oil');
     cluster(site('coal'), 37, 10, 18, 3, 'coal');
     cluster(site('ironore'), 58, 10, 18, 3, 'ironore');
-    cluster(site('limestone'), 58, 35, 18, 3, 'limestone');
+    cluster(site('silica'), 58, 35, 18, 3, 'silica');
     // 集積地（麓）：幹線道路 y=56（左右）と x=42（下）。原油タンクは幹線の左、貯鉱場は右
     const crude = { id: '_crude', kind: 'crude', label: '原油タンク', n: 6, cell: 4, cols: 3, ground: GROUND.crude, rows: 2, w: 14, h: 10, x: 27, y: 58 }; zones.push(crude);
-    [['coal', 44, 58], ['ironore', 53, 58], ['copperore', 44, 65], ['limestone', 53, 65]].forEach(([res, x, y]) => zones.push({ id: '_yard_' + res, kind: 'yard', res, label: G.resources[res].name + 'の貯鉱場', n: G.buildings.mine.yard.max, cell: 2, cols: 3, ground: GROUND[res], rows: 2, w: 8, h: 6, x, y }));
+    [['coal', 44, 58], ['ironore', 53, 58], ['copperore', 44, 65], ['silica', 53, 65]].forEach(([res, x, y]) => zones.push({ id: '_yard_' + res, kind: 'yard', res, label: G.resources[res].name + 'の貯鉱場', n: G.buildings.mine.yard.max, cell: 2, cols: 3, ground: GROUND[res], rows: 2, w: 8, h: 6, x, y }));
     roads.push({ x1: 1, y1: 56, x2: 76, y2: 56 }, { x1: 42, y1: 56, x2: 42, y2: 72 }, { x1: 27, y1: 71, x2: 62, y2: 71 });
     hub = { x: 25, y: 54, w: 46, h: 20 };
     blocks.push(hub); MAPH = 75;
@@ -79,7 +79,7 @@
   function diamond(x, y, w, d) { ctx.beginPath(); ctx.moveTo(sx(x, y), sy(x, y)); ctx.lineTo(sx(x + w, y), sy(x + w, y)); ctx.lineTo(sx(x + w, y + d), sy(x + w, y + d)); ctx.lineTo(sx(x, y + d), sy(x, y + d)); ctx.closePath(); }
 
   // 採石場の段々：区画の縁の1タイルを2段の斜面にして、中を低くする。奥側（左上・右上）の壁だけが見える
-  const WALL = { coal: ['#4a4a50', '#6a6a72', '#85858d'], ironore: ['#7a6f66', '#9d8f84', '#b9aa9d'], copperore: ['#6f776c', '#8e988a', '#aab5a5'], limestone: ['#a9a595', '#c9c5b3', '#e3dfcd'] };   // 北西の壁・北東の壁・地層の線
+  const WALL = { coal: ['#4a4a50', '#6a6a72', '#85858d'], ironore: ['#7a6f66', '#9d8f84', '#b9aa9d'], copperore: ['#6f776c', '#8e988a', '#aab5a5'], silica: ['#b5a883', '#d6c99a', '#ece2bd'] };   // 北西の壁・北東の壁・地層の線
   const STEP = 22, STEPS = 2;
   function pit(z) {
     const cols = WALL[z.res] || WALL.coal; let o = { x: z.x, y: z.y, w: z.w, d: z.h }, lv = 0;
@@ -98,7 +98,7 @@
     return lv;
   }
   // 崖：段々に積んだ山（ジグラット）。前の2面（左下・右下）が岩肌、上面は草。下の段ほど大きい
-  const HILL = { copperore: ['#56624f', '#8a9a82', '#d4e0c8'], oil: ['#6a5a3c', '#a08c62', '#e0d2a8'], coal: ['#2c2c33', '#55555e', '#a8a8b4'], ironore: ['#6a4535', '#a8745c', '#e8bfa8'], limestone: ['#9a9684', '#d6d2c0', '#fffcec'] };   // 暗い面（左下）・明るい面（右下）・地層の線
+  const HILL = { copperore: ['#56624f', '#8a9a82', '#d4e0c8'], oil: ['#6a5a3c', '#a08c62', '#e0d2a8'], coal: ['#2c2c33', '#55555e', '#a8a8b4'], ironore: ['#6a4535', '#a8745c', '#e8bfa8'], silica: ['#a89c74', '#ddd0a2', '#fff6d8'] };   // 暗い面（左下）・明るい面（右下）・地層の線
   function hill(h) {
     const c = HILL[h.rock] || HILL.coal, H = 30;
     for (let i = 0; i < h.levels; i++) {
@@ -124,7 +124,7 @@
     ctx.moveTo(sx(alongX ? x : x, alongX ? y : y), sy(alongX ? x : x, alongX ? y : y)); ctx.lineTo(sx(alongX ? x + w : x, alongX ? y : y + d), sy(alongX ? x + w : x, alongX ? y : y + d)); ctx.stroke(); ctx.setLineDash([]);
   }
   // トラック：道（折れ線）に沿って走る。レーンを少しずらし、行きは荷つき・帰りは空。時間は壁時計（描き直しのたびに位置が進む）
-  const TRUCKCOL = { coal: '#2e2e33', ironore: '#b4694f', copperore: '#8aa083', limestone: '#e8e4d2', crude: '#2a2a2e' };
+  const TRUCKCOL = { coal: '#2e2e33', ironore: '#b4694f', copperore: '#8aa083', silica: '#eadfb8', crude: '#2a2a2e' };
   function box(x, y, w, d, hgt, top, left, right) {   // 小さなアイソメの箱（世界座標のタイルで指定）
     const P = (px, py, l) => [sx(px, py), sy(px, py) - l], f = (pts, c) => { ctx.beginPath(); pts.forEach((q, j) => j ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1])); ctx.closePath(); ctx.fillStyle = c; ctx.fill(); };
     f([P(x, y + d, 0), P(x + w, y + d, 0), P(x + w, y + d, hgt), P(x, y + d, hgt)], left); f([P(x + w, y + d, 0), P(x + w, y, 0), P(x + w, y, hgt), P(x + w, y + d, hgt)], right); f([P(x, y, hgt), P(x + w, y, hgt), P(x + w, y + d, hgt), P(x, y + d, hgt)], top);

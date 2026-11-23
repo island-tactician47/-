@@ -57,6 +57,11 @@
       if (!s.nextPlantId) s.nextPlantId = 1;
       if (!s.tiers) s.tiers = {};
       if (s.contracts) for (const k in s.contracts) { const c = s.contracts[k]; if (!this.contractCfg(k) || !c || !(c.qty >= 0)) delete s.contracts[k]; else { c.delivered = c.delivered || 0; c.start = c.start || 0; c.months = c.months || 0; c.ending = !!c.ending; } }
+      { const MV = { ls_a: 'si_a', ls_b: 'si_b' };   // 2026-11-23：石灰石の鉱山をケイ砂の鉱山に変えた。古いセーブの鉱区・鉱山・貯鉱場・建設中を移す（石灰石の在庫はそのまま）
+        if (s.mineSites) for (const o in MV) if (s.mineSites[o]) { if (!s.mineSites[MV[o]]) s.mineSites[MV[o]] = s.mineSites[o]; delete s.mineSites[o]; }
+        if (s.mines) for (const m of s.mines) if (MV[m.site]) m.site = MV[m.site];
+        for (const c of s.construction) { if (c.type === 'mine' && MV[c.site]) c.site = MV[c.site]; if (c.type === 'oreYard' && c.res === 'limestone') { c.res = 'silica'; if (c.label) c.label = c.label.replace('石灰石', 'ケイ砂'); } }
+        if (s.oreYards && s.oreYards.limestone) { s.oreYards.silica = (s.oreYards.silica || 0) + s.oreYards.limestone; delete s.oreYards.limestone; } }
       if (s.oreYards || s.construction.some(c => c.type === 'oreYard')) {   // 貯鉱場（鉱石でない・棟数が不正なものは外す）
         const OR = D().buildings.mine.ores, YM = this.yardCfg().max;
         if (!s.oreYards || typeof s.oreYards !== 'object') s.oreYards = {};
@@ -1352,6 +1357,7 @@
     mineCost(s, id) { const b = D().buildings.mine, S = this.mineSites()[id]; return Math.round(b.cost * b.ores[S.res].costMul * this.priceIndex(s)); },
     mineRate(s, m) {
       const b = D().buildings.mine, S = this.mineSites()[m.site], o = b.ores[S.res];
+      if (S.endless) return S.richness * o.rate;   // 無尽蔵の鉱床は減らない
       const age = Math.max(0, (s.day - m.builtDay) / DAYS_PER_YEAR);
       return S.richness * Math.max(o.rate * b.floorFrac, o.rate * Math.exp(-b.declinePerYear * age));
     },
@@ -1385,6 +1391,7 @@
     buyMineSite(s, id) {
       const S = this.mineSites()[id]; if (!S) return { ok: false, msg: '不明な鉱区' };
       if (this.mineSiteState(s, id).owned) return { ok: false, msg: '取得済み' };
+      if (S.endless && !this.endlessOpen(s)) return { ok: false, msg: this.ENDLESS_LOCK };
       { const lock = this.buildLockReason(s, 'mine'); if (lock) return { ok: false, msg: lock }; }
       const cost = Math.round(S.cost * this.priceIndex(s));
       if (s.cash < cost) return { ok: false, msg: `資金不足（${this.fmtMoney(cost)}）` };
@@ -1418,17 +1425,22 @@
       return { ok: true };
     },
 
+    // 無尽蔵の鉱床（枠が無制限・日量が減らない。油田と、鉱石ごとの鉱区）は、Tier 6 のノードを1つ開くと買える
+    endlessOpen(s) { return this.blueprintUnlocked(s); },
+    ENDLESS_LOCK: '無尽蔵の鉱床は、Tier 6（宇宙コロニーかAI防衛システム）を開くと買える',
+    leaseDef(id) { return D().leases[id] || (D().endlessLeases || {})[id] || null; },   // 油田の定義（通常の鉱区＋無尽蔵の油田）
     // 油井
     wellRate(s, w) {
       const b = D().buildings.oilWell;
-      const L = D().leases[w.lease];
+      const L = this.leaseDef(w.lease);
+      if (L.endless) return L.richness * b.initialRate;   // 無尽蔵の油田は減らない
       const age = Math.max(0, (s.day - w.builtDay) / DAYS_PER_YEAR);
       return L.richness * Math.max(b.floorRate, b.initialRate * Math.exp(-b.declinePerYear * age));
     },
     totalWellRate(s) { return s.wells.reduce((a, w) => a + this.wellRate(s, w), 0); },
     wellsOnLease(s, id) { return s.wells.filter(w => w.lease === id).length; },
     buildingOnLease(s, id) { return s.construction.filter(c => c.type === 'oilWell' && c.lease === id).length; },
-    leaseFree(s, id) { return D().leases[id].slots - this.wellsOnLease(s, id) - this.buildingOnLease(s, id); },
+    leaseFree(s, id) { return this.leaseDef(id).slots - this.wellsOnLease(s, id) - this.buildingOnLease(s, id); },
 
     // ---------- 融資 ----------
     totalDebt(s) { return Object.values(s.loans).reduce((a, l) => a + l.principal, 0) + s.overdraft; },
@@ -1503,7 +1515,7 @@
     // ---------- 建設 ----------
     costOf(s, type, lease) {
       let c = D().buildings[type].cost * this.priceIndex(s);
-      if (type === 'oilWell' && lease) c *= D().leases[lease].wellCostMul;
+      if (type === 'oilWell' && lease) c *= this.leaseDef(lease).wellCostMul;
       return Math.round(c);
     },
     canBuild(s, type, lease) {
@@ -1541,7 +1553,7 @@
       if (stackKey) entry.key = stackKey;
       else if (pos) { entry.key = this.newKey(s, type); s.map.placed[entry.key] = { type, x: pos.x, y: pos.y }; if (rot) s.map.placed[entry.key].rot = rot; }
       s.construction.push(entry);
-      this.log(s, `🚧 ${b.name}${lease ? '（' + D().leases[lease].name + '）' : ''}の建設を開始（${this.fmtMoney(chk.cost)}${fillFee ? '＋埋め立て ' + this.fmtMoney(fillFee) : ''}、${this.buildText(b.months)}）`);
+      this.log(s, `🚧 ${b.name}${lease ? '（' + this.leaseDef(lease).name + '）' : ''}の建設を開始（${this.fmtMoney(chk.cost)}${fillFee ? '＋埋め立て ' + this.fmtMoney(fillFee) : ''}、${this.buildText(b.months)}）`);
       return { ok: true };
     },
     portUpgradeCost(s) { const n = this.nextPort(s); return n ? Math.round(n.cost * this.priceIndex(s)) : 0; },
@@ -1564,7 +1576,9 @@
       return { ok: true };
     },
     buyLease(s, id) {
-      const L = D().leases[id], st = s.leases[id];
+      const L = this.leaseDef(id); if (!L) return { ok: false, msg: '不明な鉱区' };
+      if (L.endless) { if (!this.endlessOpen(s)) return { ok: false, msg: this.ENDLESS_LOCK }; if (!s.leases[id]) s.leases[id] = { owned: false, revealed: true }; }
+      const st = s.leases[id];
       if (st.owned) return { ok: false, msg: '取得済み' };
       const cost = Math.round(L.cost * this.priceIndex(s));
       if (s.cash < cost) return { ok: false, msg: `資金不足（${this.fmtMoney(cost)}）` };
@@ -1578,7 +1592,7 @@
       if (c.type === 'module') { const p = (s && s.plants.find(q => q.id === c.plantId)); const b = p && D().buildings[p.type]; return `🧱 ${b ? b.name : ''}の増設モジュール`; }
       const b = D().buildings[c.type];
       if (c.type === 'mine' && c.site) return `${b.icon} ${D().resources[this.mineSites()[c.site].res].name}の${b.name}（${this.mineSites()[c.site].name}）`;
-      return `${b.icon} ${b.name}${c.lease ? '（' + D().leases[c.lease].name + '）' : ''}`;
+      return `${b.icon} ${b.name}${c.lease ? '（' + this.leaseDef(c.lease).name + '）' : ''}`;
     },
 
     // ---------- 加工設備 ----------
@@ -1799,7 +1813,7 @@
           const st = s.leases[c.lease];
           if (!st.revealed) {
             st.revealed = true;
-            const L = D().leases[c.lease];
+            const L = this.leaseDef(c.lease);
             this.log(s, `🔍 ${L.name}の初号井が完成。油層の豊かさは ${L.richness.toFixed(2)} と判明`);
           }
         } else if (c.type === 'move') {

@@ -2737,48 +2737,6 @@ window.GAME_DATA.spritesBL = {
    }
   ]
  },
- "mine_limestone": {
-  "fw": 3,
-  "fd": 3,
-  "r": [
-   {
-    "file": "../assets/bl/mine_limestone_r0.png",
-    "w": 203.0,
-    "h": 138.5,
-    "ax": 101.5,
-    "ay": 90.1,
-    "fw": 3,
-    "fd": 3
-   },
-   {
-    "file": "../assets/bl/mine_limestone_r1.png",
-    "w": 203.0,
-    "h": 117.0,
-    "ax": 101.5,
-    "ay": 68.6,
-    "fw": 3,
-    "fd": 3
-   },
-   {
-    "file": "../assets/bl/mine_limestone_r2.png",
-    "w": 203.0,
-    "h": 137.0,
-    "ax": 101.5,
-    "ay": 88.6,
-    "fw": 3,
-    "fd": 3
-   },
-   {
-    "file": "../assets/bl/mine_limestone_r3.png",
-    "w": 203.0,
-    "h": 158.5,
-    "ax": 101.5,
-    "ay": 110.1,
-    "fw": 3,
-    "fd": 3
-   }
-  ]
- },
  "yard_coal": {
   "fw": 2,
   "fd": 2,
@@ -2896,48 +2854,6 @@ window.GAME_DATA.spritesBL = {
    },
    {
     "file": "../assets/bl/yard_copper_r3.png",
-    "w": 139.0,
-    "h": 73.5,
-    "ax": 69.5,
-    "ay": 39.6,
-    "fw": 2,
-    "fd": 2
-   }
-  ]
- },
- "yard_limestone": {
-  "fw": 2,
-  "fd": 2,
-  "r": [
-   {
-    "file": "../assets/bl/yard_limestone_r0.png",
-    "w": 139.0,
-    "h": 73.5,
-    "ax": 69.5,
-    "ay": 39.6,
-    "fw": 2,
-    "fd": 2
-   },
-   {
-    "file": "../assets/bl/yard_limestone_r1.png",
-    "w": 139.0,
-    "h": 81.0,
-    "ax": 69.5,
-    "ay": 47.1,
-    "fw": 2,
-    "fd": 2
-   },
-   {
-    "file": "../assets/bl/yard_limestone_r2.png",
-    "w": 139.0,
-    "h": 81.0,
-    "ax": 69.5,
-    "ay": 47.1,
-    "fw": 2,
-    "fd": 2
-   },
-   {
-    "file": "../assets/bl/yard_limestone_r3.png",
     "w": 139.0,
     "h": 73.5,
     "ax": 69.5,
@@ -3909,6 +3825,90 @@ window.GAME_DATA.spritesBL = {
     "ax": 85.5,
     "ay": 73.1,
     "fw": 3,
+    "fd": 2
+   }
+  ]
+ },
+ "mine_silica": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/mine_silica_r0.png",
+    "w": 203.0,
+    "h": 138.5,
+    "ax": 101.5,
+    "ay": 90.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/mine_silica_r1.png",
+    "w": 203.0,
+    "h": 117.5,
+    "ax": 101.5,
+    "ay": 69.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/mine_silica_r2.png",
+    "w": 203.0,
+    "h": 137.0,
+    "ax": 101.5,
+    "ay": 88.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/mine_silica_r3.png",
+    "w": 203.0,
+    "h": 158.5,
+    "ax": 101.5,
+    "ay": 110.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "yard_silica": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/yard_silica_r0.png",
+    "w": 139.0,
+    "h": 73.5,
+    "ax": 69.5,
+    "ay": 39.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/yard_silica_r1.png",
+    "w": 139.0,
+    "h": 81.0,
+    "ax": 69.5,
+    "ay": 47.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/yard_silica_r2.png",
+    "w": 139.0,
+    "h": 81.0,
+    "ax": 69.5,
+    "ay": 47.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/yard_silica_r3.png",
+    "w": 139.0,
+    "h": 73.5,
+    "ax": 69.5,
+    "ay": 39.6,
+    "fw": 2,
     "fd": 2
    }
   ]

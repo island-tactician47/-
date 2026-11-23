@@ -19,16 +19,16 @@ GAME_DATA.buildings = {
   // rate＝掘りたての日量（t/日）×鉱区の豊かさ。年 declinePerYear ずつ減り、rate×floorFrac が下限。costMul＝建設費の倍率
   mine: {
     name: '鉱山', icon: '⛏️', category: 'field', tier: 4,
-    cost: 80000, months: 3, needsSite: true,
-    declinePerYear: 0.06, floorFrac: 0.4, fixedPerMonth: 150,
+    cost: 400000, months: 3, needsSite: true,   // 2026-11-23：日量・建設費・維持費・貯鉱場の容量を、すべて5倍（産出量が小さすぎたため。回収年数は変えない）
+    declinePerYear: 0.06, floorFrac: 0.4, fixedPerMonth: 750,
     // 貯鉱場：鉱石ごとの専用の置き場（採掘地ページで建てる。町の地図には出さない）。掘った鉱石は貯鉱場の空きにだけ入る（無ければ掘れた分は捨てる）。
     // 買った鉱石も貯鉱場に先に入り、あふれた分だけ素材倉庫を使う。cap＝1棟あたりの容量（t）
-    yard: { cost: 15000, months: 2, fixedPerMonth: 30, max: 6, cap: { coal: 2000, ironore: 2000, copperore: 400, limestone: 4000 } },
+    yard: { cost: 15000, months: 2, fixedPerMonth: 30, max: 6, cap: { coal: 10000, ironore: 10000, copperore: 2000, silica: 10000 } },
     ores: {
-      coal:      { rate: 10, opexPerUnit: 1.6, costMul: 1 },
-      ironore:   { rate: 10, opexPerUnit: 1.8, costMul: 1 },
-      copperore: { rate: 4,  opexPerUnit: 52,  costMul: 5 },
-      limestone: { rate: 35, opexPerUnit: 0.7, costMul: 1 }
+      coal:      { rate: 50, opexPerUnit: 1.6, costMul: 1 },
+      ironore:   { rate: 50, opexPerUnit: 1.8, costMul: 1 },
+      copperore: { rate: 20, opexPerUnit: 52,  costMul: 5 },
+      silica:    { rate: 50, opexPerUnit: 1.2, costMul: 0.5 }   // 石灰石の鉱山はやめて、ケイ砂に（石灰石はセメントにしか使わない）
     },
     desc: '鉱区に建てる。掘った鉱石は貯鉱場に入り、工場がまず使う（売れない）。年6%ずつ減る'
   },

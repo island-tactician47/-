@@ -27,8 +27,8 @@ GAME_DATA.recipes = {
   steel: { name: '鋼材', inputs: { ironore: 1.6, coal: 0.8 }, outputs: { steel: 1 }, opexPerUnit: 68.9, energyShare: 0.22 },
   aluminum: { name: 'アルミ', inputs: { bauxite: 4.4 }, outputs: { aluminum: 1 }, opexPerUnit: 230.3, energyShare: 0.45 },
   copper: { name: '銅', inputs: { copperore: 3.5 }, outputs: { copper: 1 }, opexPerUnit: 27.4, energyShare: 0.3 },
-  glass: { name: 'ガラス', inputs: { silica: 0.65, limestone: 0.25 }, outputs: { glass: 1 }, opexPerUnit: 190.1, energyShare: 0.3 },
-  cement: { name: 'セメント', inputs: { limestone: 1.4 }, outputs: { cement: 1 }, opexPerUnit: 6.2, energyShare: 0.3, speed: 14 },
+  glass: { name: 'ガラス', inputs: { silica: 0.65, limestone: 0.25 }, outputs: { glass: 1 }, opexPerUnit: 189.8, energyShare: 0.3 },
+  cement: { name: 'セメント', inputs: { limestone: 1.4 }, outputs: { cement: 1 }, opexPerUnit: 6.8, energyShare: 0.3, speed: 14 },
   lumber: { name: '木材', inputs: { logs: 1.7 }, outputs: { lumber: 1 }, opexPerUnit: 18.8, energyShare: 0.1 },
   paper: { name: '紙', inputs: { lumber: 0.5 }, outputs: { paper: 1 }, opexPerUnit: 27.3, energyShare: 0.25 },
   battery: { name: '電池', inputs: { lithium: 0.5, aluminum: 0.3, copper: 0.2 }, outputs: { battery: 1 }, opexPerUnit: 1463.9, energyShare: 0.1 },
@@ -38,7 +38,7 @@ GAME_DATA.recipes = {
   buildmat: { name: '建材', inputs: { lumber: 0.5, cement: 0.3, steel: 0.2 }, outputs: { buildmat: 1 }, opexPerUnit: 15.1, energyShare: 0.08 },
   car: { name: '自動車', inputs: { steel: 1.0, aluminum: 0.05, tire: 0.1, glass: 0.05, plastic: 0.02, copper: 0.03 }, outputs: { car: 1 }, opexPerUnit: 701.9, energyShare: 0.07 },
   alloy: { name: '合金', inputs: { steel: 0.85, rareMetal: 0.15 }, outputs: { alloy: 1 }, opexPerUnit: 366.4, energyShare: 0.2, speed: 0.125, tier: 5 },
-  silicon: { name: 'シリコン', inputs: { silica: 2.2 }, outputs: { silicon: 1 }, opexPerUnit: 1514.1, energyShare: 0.4, speed: 0.12, tier: 6 },
+  silicon: { name: 'シリコン', inputs: { silica: 2.2 }, outputs: { silicon: 1 }, opexPerUnit: 1512.8, energyShare: 0.4, speed: 0.12, tier: 6 },
   lithium: { name: 'リチウム', inputs: { lithiumOre: 6 }, outputs: { lithium: 1 }, opexPerUnit: 2555.7, energyShare: 0.2, speed: 0.105, tier: 6 },
   ship: { name: '船舶', inputs: { steel: 3000, alloy: 400, heavy: 2000, copper: 60 }, outputs: { ship: 1 }, opexPerUnit: 609455.0, energyShare: 0.05 },
   aircraft: { name: '航空機', inputs: { aluminum: 40, alloy: 40, semiconductor: 2, plastic: 5, copper: 3 }, outputs: { aircraft: 1 }, opexPerUnit: 875493.8, energyShare: 0.05 },
@@ -56,7 +56,7 @@ GAME_DATA.recipes = {
   cable: { name: '電線・ケーブル', inputs: { copper: 0.8, aluminum: 0.3 }, outputs: { cable: 1 }, opexPerUnit: 150.8, energyShare: 0.3 },
   motor: { name: 'モーター・変圧器', inputs: { cable: 1.0, steel: 2.0, copper: 0.3 }, outputs: { motor: 1 }, opexPerUnit: 594.7, energyShare: 0.08 },
   powerEquip: { name: '発電・送電設備', inputs: { motor: 1.0, cable: 0.5, steel: 4.0, alloy: 0.4, glass: 0.5, silicon: 0.3 }, outputs: { powerEquip: 1 }, opexPerUnit: 2642.0, energyShare: 0.08 },
-  opticFiber: { name: '光ファイバー', inputs: { glass: 1.0, silica: 0.25 }, outputs: { opticFiber: 1 }, opexPerUnit: 52.1, energyShare: 0.3 },
+  opticFiber: { name: '光ファイバー', inputs: { glass: 1.0, silica: 0.25 }, outputs: { opticFiber: 1 }, opexPerUnit: 52.0, energyShare: 0.3 },
   commGear: { name: '通信機器', inputs: { opticFiber: 1.0, copper: 0.5, plastic: 0.4, semiconductor: 0.1 }, outputs: { commGear: 1 }, opexPerUnit: 1051.7, energyShare: 0.08 },
   comsat: { name: '通信衛星・通信網', inputs: { commGear: 40, semiconductor: 14, alloy: 10 }, outputs: { comsat: 1 }, opexPerUnit: 33876.6, energyShare: 0.06 }
 };

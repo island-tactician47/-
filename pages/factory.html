@@ -126,8 +126,8 @@ function renderSegHead(s, seg, info) {
 
 // 石油本部の採掘・精製の要約（詳しくは採掘地・製油所のページ）
 function renderOilBase(s, seg) {
-  if (seg !== 'oil') {   // 金属・窯業の本部は、鉱山（石炭・鉄鉱石・銅精鉱・石灰石）の要約と、採掘地（鉱山タブ）へのリンク
-    const ores = ['coal', 'ironore', 'copperore', 'limestone'].filter(k => E.segmentOfItem(k) === seg);
+  if (seg !== 'oil') {   // 金属・窯業の本部は、鉱山（石炭・鉄鉱石・銅精鉱・ケイ砂）の要約と、採掘地（鉱山タブ）へのリンク
+    const ores = ['coal', 'ironore', 'copperore', 'silica'].filter(k => E.segmentOfItem(k) === seg);
     if (!ores.length) { UI.html('oilbase', ''); return; }
     const row = k => { const R = G.resources[k], n = (s.mines || []).filter(m => G.mineSites[m.site].res === k).length; return `${R.name} 鉱山${n}か所・日産 ${E.fmtNum(E.mineRateOf(s, k))}t　在庫 ${E.fmtNum(s.inventory[k] || 0)} / ${E.fmtNum(E.yardCap(s, k))}t`; };
     UI.html('oilbase', `<div class="card"><div class="row"><b>⛏️ 鉱山</b><a class="btn small" href="field.html" onclick="try{localStorage.setItem('factorySim.ui.tab.field-tab','mine')}catch(e){}">採掘地へ</a></div>

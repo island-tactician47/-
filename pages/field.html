@@ -66,7 +66,11 @@
 const $ = id => document.getElementById(id);
 const E = Engine, G = GAME_DATA;
 
-const ORES = ['coal', 'ironore', 'copperore', 'limestone'];
+const ORES = ['coal', 'ironore', 'copperore', 'silica'];
+// 枠が無制限（無尽蔵の鉱床）でもアイコンが長くなりすぎないように
+const slotTxt = n => n === Infinity ? '無制限' : n;
+const ic = (n, ch) => n <= 24 ? ch.repeat(n) : ch.repeat(24) + '…×' + n;
+const ghosts = (free, ch) => ch.repeat(Math.max(0, Math.min(8, free)));
 function renderMines(s) {
   const lock = E.buildLockReason(s, 'mine');
   const out = [`<div class="card"><div class="sub">鉱区を買って鉱山を建てると、鉱石が貯鉱場に入り、工場がまず使います（買う量が減る）。鉱石は売れません。貯鉱場は鉱石ごとに建てます。鉱山は年${Math.round(G.buildings.mine.declinePerYear * 100)}%ずつ減ります。<b>貯鉱場が無い・満杯だと鉱山は止まります（休止もできます）。</b>${lock ? `<br><span class="bad">${lock}</span>` : ''}</div></div>`];
@@ -74,8 +78,8 @@ function renderMines(s) {
     const R = G.resources[res], o = G.buildings.mine.ores[res], rate = E.mineRateOf(s, res);
     const stock = s.inventory[res] || 0, yc = E.yardCap(s, res), yn = E.yardCount(s, res), yb = E.yardBuilding(s, res), room = E.oreRoom(s, res), full = rate > 0 && room < rate;
     const ychk = E.canBuildYard(s, res), YC = G.buildings.mine.yard;
-    const sites = Object.keys(G.mineSites).filter(id => G.mineSites[id].res === res);
-    const IMG = { coal: 'coal', ironore: 'iron', copperore: 'copper', limestone: 'limestone' }[res];
+    const sites = Object.keys(G.mineSites).filter(id => G.mineSites[id].res === res && (!G.mineSites[id].endless || E.endlessOpen(s) || E.mineSiteState(s, id).owned));
+    const IMG = { coal: 'coal', ironore: 'iron', copperore: 'copper', silica: 'silica' }[res];
     const cards = sites.map(id => {
       const S = G.mineSites[id], st = E.mineSiteState(s, id), n = E.minesOnSite(s, id), nb = E.buildingOnSite(s, id);
       const rich = st.revealed ? `豊かさ <b>${S.richness.toFixed(2)}</b>` : `推定 ${S.estimate[0]}〜${S.estimate[1]}`;
@@ -84,12 +88,12 @@ function renderMines(s) {
         const chk = E.canBuildMine(s, id);
         const paused = !!E.mineSiteState(s, id).paused;
         body = `<img class="pic" src="../assets/bl/mine_${IMG}_r0.png" alt="">
-          <div class="icons">${'⛏️'.repeat(n)}${'🚧'.repeat(nb)}<span class="ghost">${'◻️'.repeat(Math.max(0, S.slots - n - nb))}</span></div>
-          <div class="sub">鉱山 ${n}/${S.slots}${paused ? '　<b class="bad">休止中</b>' : ''}　日量 ${E.fmtNum(E.mineRateOn(s, id))}t${st.revealed ? `　新規は日量約${E.fmtNum(o.rate * S.richness)}t` : ''}</div>
+          <div class="icons">${ic(n, '⛏️')}${ic(nb, '🚧')}<span class="ghost">${ghosts(S.slots - n - nb, '◻️')}</span></div>
+          <div class="sub">鉱山 ${n}/${slotTxt(S.slots)}${S.endless ? '　<b class="good">枯れない</b>' : ''}${paused ? '　<b class="bad">休止中</b>' : ''}　日量 ${E.fmtNum(E.mineRateOn(s, id))}t${st.revealed ? `　新規は日量約${E.fmtNum(o.rate * S.richness)}t` : ''}</div>
           <div class="btns" style="margin-top:6px">${n > 0 ? `<button class="btn sec small" onclick="UI.act(s=>Engine.toggleMineSite(s,'${id}'))">${paused ? '▶ 再開する' : '⏸ 休止する'}</button> ` : ''}<button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.buildMine(s,'${id}'))">鉱山を建てる（${E.fmtMoney(E.mineCost(s, id))}・${E.buildText(G.buildings.mine.months)}）</button></div>`;
       } else {
         const lc = Math.round(S.cost * E.priceIndex(s)), ok = !lock && s.cash >= lc;
-        body = `<div class="sub">${S.desc}　枠 ${S.slots}か所</div>
+        body = `<div class="sub">${S.desc}　枠 ${slotTxt(S.slots)}${S.endless ? '' : 'か所'}</div>
           <div class="btns" style="margin-top:6px"><button class="btn sec small" ${ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.buyMineSite(s,'${id}'))">採掘権を買う（${E.fmtMoney(lc)}）</button></div>`;
       }
       return `<div class="card"><div class="row"><h3>${S.name}${st.owned ? '' : ' <span class="sub">未取得</span>'}</h3><span class="sub">${rich}</span></div>${body}</div>`;
@@ -178,6 +182,23 @@ function render(s) {
         <div class="btns" style="margin-top:6px"><button class="btn sec small" ${s.cash >= lc ? '' : 'disabled'} onclick="UI.act(s=>Engine.buyLease(s,'${id}'))">採掘権を買う（${E.fmtMoney(lc)}）</button></div>`;
     }
     html.push(`<div class="card"><div class="row"><h3>${L.name}${st.owned ? '' : ' <span class="sub">未取得</span>'}</h3><span class="sub">${rich}</span></div>${body}</div>`);
+  }
+  { // 無尽蔵の油田（終盤。Tier 6 のノードを開くと買える。枠は無制限・日量は減らない）
+    const id = 'endless', L = E.leaseDef(id), st = s.leases[id] || { owned: false, revealed: true };
+    if (E.endlessOpen(s) || st.owned) {
+      const n = E.wellsOnLease(s, id), nb = E.buildingOnLease(s, id), wellCost = E.costOf(s, 'oilWell', id);
+      let body;
+      if (st.owned) {
+        const leaseRate = s.wells.filter(w => w.lease === id).reduce((a, w) => a + E.wellRate(s, w), 0), chk = E.canBuild(s, 'oilWell', id);
+        body = `<img class="pic" src="../assets/bl/oilWell_r0.png" alt=""><div class="icons">${ic(n, '🛢️')}${ic(nb, '🚧')}<span class="ghost">${ghosts(8, '◻️')}</span></div>
+          <div class="sub">油井 ${n}本（無制限・<b class="good">枯れない</b>）　日量 ${E.fmtNum(leaseRate)}bbl　新規井は日量約${Math.round(G.buildings.oilWell.initialRate * L.richness)}bbl</div>
+          <div class="btns" style="margin-top:6px"><button class="btn small" ${chk.ok ? '' : 'disabled'} onclick="UI.act(s=>Engine.build(s,'oilWell','${id}'))">油井を掘る（${E.fmtMoney(wellCost)}・${E.buildText(G.buildings.oilWell.months)}）</button></div>`;
+      } else {
+        const lc = Math.round(L.cost * E.priceIndex(s));
+        body = `<div class="sub">${L.desc}　枠 無制限　掘削費 ×${L.wellCostMul}</div><div class="btns" style="margin-top:6px"><button class="btn sec small" ${s.cash >= lc ? '' : 'disabled'} onclick="UI.act(s=>Engine.buyLease(s,'${id}'))">採掘権を買う（${E.fmtMoney(lc)}）</button></div>`;
+      }
+      html.push(`<div class="card"><div class="row"><h3>${L.name}${st.owned ? '' : ' <span class="sub">未取得</span>'}</h3><span class="sub">豊かさ <b>${L.richness.toFixed(2)}</b></span></div>${body}</div>`);
+    }
   }
   UI.html('leases', html.join(''));
 
