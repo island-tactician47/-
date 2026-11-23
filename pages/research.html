@@ -218,6 +218,19 @@ function render(s) {
 }
 function pick(id) { const d = E.nodeDef(id); if (!confirm(`「${d.name}」を開きます（解放権${d.tickets}枚を使う）。よろしいですか？`)) return; UI.act(s => E.selectNode(s, id)); }
 UI.boot({ page: 'research', render });
+// 確認用：?focustest=1（ノードをタップ→背景をタップ、の2段階で、薄いノードの数を調べて #focustest に出す。tools/focus_test.py が使う）
+if (new URLSearchParams(location.search).get('focustest')) setTimeout(() => {
+  const dimCount = () => [...document.querySelectorAll('#tree svg g[opacity]')].filter(g => g.getAttribute('opacity') === '0.3').length;
+  const out = { start: dimCount() };
+  const car = [...document.querySelectorAll('#tree svg g[onclick]')].find(g => /'car'/.test(g.getAttribute('onclick')));
+  if (car) car.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+  setTimeout(() => {
+    out.afterNode = dimCount();
+    const bg = document.querySelector('#tree svg rect[onclick]');
+    out.hasBg = !!bg; if (bg) bg.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    setTimeout(() => { out.afterBg = dimCount(); const d = document.createElement('div'); d.id = 'focustest'; d.textContent = JSON.stringify(out); document.body.appendChild(d); }, 500);
+  }, 500);
+}, 800);
 </script>
 </body>
 </html>
