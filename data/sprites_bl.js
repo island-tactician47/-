@@ -3206,18 +3206,18 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/aiDefenseFactory_r0.png",
     "w": 779.0,
-    "h": 476.5,
+    "h": 582.5,
     "ax": 389.5,
-    "ay": 299.1,
+    "ay": 405.1,
     "fw": 12,
     "fd": 12
    },
    {
     "file": "../assets/bl/aiDefenseFactory_r1.png",
     "w": 779.0,
-    "h": 413.5,
+    "h": 456.5,
     "ax": 389.5,
-    "ay": 236.1,
+    "ay": 279.1,
     "fw": 12,
     "fd": 12
    },
@@ -3233,9 +3233,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/aiDefenseFactory_r3.png",
     "w": 779.0,
-    "h": 448.5,
+    "h": 519.5,
     "ax": 389.5,
-    "ay": 271.1,
+    "ay": 342.1,
     "fw": 12,
     "fd": 12
    }
@@ -3490,6 +3490,300 @@ window.GAME_DATA.spritesBL = {
     "ay": 152.6,
     "fw": 5,
     "fd": 5
+   }
+  ]
+ },
+ "module_offshoreFactory": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/module_offshoreFactory_r0.png",
+    "w": 203.0,
+    "h": 124.0,
+    "ax": 101.5,
+    "ay": 75.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_offshoreFactory_r1.png",
+    "w": 203.0,
+    "h": 106.5,
+    "ax": 101.5,
+    "ay": 58.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_offshoreFactory_r2.png",
+    "w": 203.0,
+    "h": 124.0,
+    "ax": 101.5,
+    "ay": 75.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_offshoreFactory_r3.png",
+    "w": 203.0,
+    "h": 100.5,
+    "ax": 101.5,
+    "ay": 52.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "module_cableFactory": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/module_cableFactory_r0.png",
+    "w": 139.0,
+    "h": 95.0,
+    "ax": 69.5,
+    "ay": 61.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/module_cableFactory_r1.png",
+    "w": 139.0,
+    "h": 78.5,
+    "ax": 69.5,
+    "ay": 44.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/module_cableFactory_r2.png",
+    "w": 139.0,
+    "h": 95.0,
+    "ax": 69.5,
+    "ay": 61.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/module_cableFactory_r3.png",
+    "w": 139.0,
+    "h": 90.5,
+    "ax": 69.5,
+    "ay": 56.6,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "module_fiberFactory": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/module_fiberFactory_r0.png",
+    "w": 139.0,
+    "h": 132.5,
+    "ax": 69.5,
+    "ay": 98.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/module_fiberFactory_r1.png",
+    "w": 139.0,
+    "h": 123.0,
+    "ax": 69.5,
+    "ay": 89.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/module_fiberFactory_r2.png",
+    "w": 139.0,
+    "h": 138.5,
+    "ax": 69.5,
+    "ay": 104.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/module_fiberFactory_r3.png",
+    "w": 139.0,
+    "h": 148.5,
+    "ax": 69.5,
+    "ay": 114.6,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "module_motorFactory": {
+  "fw": 2,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/module_motorFactory_r0.png",
+    "w": 171.0,
+    "h": 125.0,
+    "ax": 85.5,
+    "ay": 83.6,
+    "fw": 2,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_motorFactory_r1.png",
+    "w": 171.0,
+    "h": 95.0,
+    "ax": 85.5,
+    "ay": 53.6,
+    "fw": 3,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/module_motorFactory_r2.png",
+    "w": 171.0,
+    "h": 110.0,
+    "ax": 85.5,
+    "ay": 68.6,
+    "fw": 2,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_motorFactory_r3.png",
+    "w": 171.0,
+    "h": 125.0,
+    "ax": 85.5,
+    "ay": 83.6,
+    "fw": 3,
+    "fd": 2
+   }
+  ]
+ },
+ "module_powerEquipFactory": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/module_powerEquipFactory_r0.png",
+    "w": 203.0,
+    "h": 179.0,
+    "ax": 101.5,
+    "ay": 130.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_powerEquipFactory_r1.png",
+    "w": 203.0,
+    "h": 161.5,
+    "ax": 101.5,
+    "ay": 113.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_powerEquipFactory_r2.png",
+    "w": 203.0,
+    "h": 146.0,
+    "ax": 101.5,
+    "ay": 97.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_powerEquipFactory_r3.png",
+    "w": 203.0,
+    "h": 163.0,
+    "ax": 101.5,
+    "ay": 114.6,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "module_commGearFactory": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/module_commGearFactory_r0.png",
+    "w": 139.0,
+    "h": 120.5,
+    "ax": 69.5,
+    "ay": 86.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/module_commGearFactory_r1.png",
+    "w": 139.0,
+    "h": 139.0,
+    "ax": 69.5,
+    "ay": 105.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/module_commGearFactory_r2.png",
+    "w": 139.0,
+    "h": 157.5,
+    "ax": 69.5,
+    "ay": 123.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/module_commGearFactory_r3.png",
+    "w": 139.0,
+    "h": 139.0,
+    "ax": 69.5,
+    "ay": 105.1,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "module_satelliteFactory": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/module_satelliteFactory_r0.png",
+    "w": 203.0,
+    "h": 139.5,
+    "ax": 101.5,
+    "ay": 91.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_satelliteFactory_r1.png",
+    "w": 203.0,
+    "h": 119.0,
+    "ax": 101.5,
+    "ay": 70.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_satelliteFactory_r2.png",
+    "w": 203.0,
+    "h": 124.0,
+    "ax": 101.5,
+    "ay": 75.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_satelliteFactory_r3.png",
+    "w": 203.0,
+    "h": 136.5,
+    "ax": 101.5,
+    "ay": 88.1,
+    "fw": 3,
+    "fd": 3
    }
   ]
  }
