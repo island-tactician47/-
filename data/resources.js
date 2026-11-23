@@ -81,7 +81,7 @@ GAME_DATA.resources = {
   comsat:        { name: '通信衛星・通信網', unit: '式', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 20, basePrice: 450000, volatility: 0.15, marketDepth: 25, color: '#7b61c4' },
   rocket:        { name: 'ロケット',     unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 100, basePrice: 2400000, volatility: 0.1, marketDepth: 1, color: '#9a8fd0' },
   weapon:        { name: '兵器',         unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 2400, volatility: 0.08, marketDepth: 900, color: '#6a7a5a' },
-  ev:            { name: '電池・EV',     unit: '台',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 3,    storage: 'goods', storeVol: 3,   basePrice: 2500,    volatility: 0.1, marketDepth: 1040, color: '#3aa17e' },
+  ev:            { name: 'EV',     unit: '台',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 3,    storage: 'goods', storeVol: 3,   basePrice: 2500,    volatility: 0.1, marketDepth: 1040, color: '#3aa17e' },
 };
 // 保管クラスの定義（品目の storage と、倉庫の capacity[クラス] で使う。単位は保管枠）
 GAME_DATA.storageClasses = {

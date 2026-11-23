@@ -40,7 +40,7 @@ GAME_DATA.events = {
     // ---- 輸送機本部（自動車・造船・航空・EV）
     { id: 'carboom', segment: 'transport', weight: 3, title: '自動車の購買ブーム', text: '所得の増加で、乗用車がよく売れている。', effects: { car: 1.25, ev: 1.1 }, months: 12 },
     { id: 'shipping', segment: 'transport', weight: 2, title: '海運が好況', text: '貿易の拡大で、船舶の発注が相次いでいる。', effects: { ship: 1.25 }, months: 12 },
-    { id: 'evsubsidy', segment: 'transport', weight: 2, title: 'EVの補助金が決まる', text: '電池・EVの需要が急に伸びている。', effects: { ev: 1.3 }, months: 8 },
+    { id: 'evsubsidy', segment: 'transport', weight: 2, title: 'EVの補助金が決まる', text: 'EVの需要が急に伸びている。', effects: { ev: 1.3 }, months: 8 },
     { id: 'airtravel', segment: 'transport', weight: 2, title: '航空需要の拡大', text: '空の旅が広がり、航空機の引き合いが強い。', effects: { aircraft: 1.2 }, months: 12 },
     { id: 'carslump', segment: 'transport', weight: 1, title: '自動車の販売不振', text: '買い控えで、乗用車の売れ行きが落ちている。', effects: { car: 0.85 }, months: 8 },
     // ---- 先端本部（半導体・PC・ロケット・兵器）

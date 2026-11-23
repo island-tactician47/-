@@ -121,7 +121,7 @@ GAME_DATA.buildings = {
   powerEquipFactory: { name: '発電・送電設備工場', icon: '🌬️', category: 'factory', tier: 6, cost: 3500000, months: 30, fixedPerMonth: 14000, desc: 'モーター・電線・鋼材・合金・ガラス・シリコンから、風力・太陽光・送電網の設備を作る（電機ラインのTier 5。AI防衛システムの材料）' },
   commGearFactory:   { name: '通信機器工場', icon: '📡', category: 'factory', tier: 6, cost: 2500000, months: 24, fixedPerMonth: 10000, desc: '光ファイバー・銅・プラスチック・半導体から、ルーターや送受信機などの通信機器を組み立てる（光・通信ラインのTier 4）' },
   satelliteFactory:  { name: '通信衛星工場', icon: '🛰️', category: 'factory', tier: 6, cost: 4000000, months: 36, fixedPerMonth: 16000, desc: '通信機器・半導体・合金から、通信衛星と通信網を組み立てる（光・通信ラインのTier 5。AI防衛システムの材料）' },
-  evFactory:         { name: '電池・EV工場',     icon: '🔋', category: 'factory', tier: 6, cost: 3500000, months: 30, fixedPerMonth: 14000, desc: '鋼材・アルミ・タイヤ・電池・モーター・半導体から電池・EV' }
+  evFactory:         { name: 'EV工場',     icon: '🔋', category: 'factory', tier: 6, cost: 3500000, months: 30, fixedPerMonth: 14000, desc: '鋼材・アルミ・タイヤ・電池・モーター・半導体から電池・EV' }
 };
 
 
