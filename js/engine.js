@@ -667,6 +667,8 @@
     projectsBuilt(s) { const pt = (s.stats && s.stats.producedTotal) || {}, cfg = this.goalCfg(); return ((cfg && cfg.projects) || ['colony']).filter(k => (pt[k] || 0) >= 1); },
     colonyBuilt(s) { const cfg = this.goalCfg(), ps = (cfg && cfg.projects) || ['colony']; return this.projectsBuilt(s).length === ps.length; },
     // 進み具合：{ profit12（直近12か月の純利益）, target, ratio, colonyBuilt（コロニーを1基完成させたか）, eq（純資産。スコア用）, reached }
+    // 最終プロジェクトの名前：技術ツリーに現れるまでは伏せ字（コロニー・AI防衛システム）
+    projectLabel(s, k) { return this.nodeVisible(s, k) ? D().resources[k].name : '？？？'; },
     goalProgress(s) {
       const cfg = this.goalCfg(); if (!cfg) return null;
       const target = this.goalTarget(s), p12 = this.profit12(s);
@@ -715,7 +717,7 @@
     nodeGoal(s) {
       const fin = [];
       const ids = Object.keys(this.treeNodes()).filter(id => !this.nodeUnlocked(s, id) && !this.nodeDef(id).auto && !fin.includes(id) && (this.nodeDef(id).needs || []).every(n => this.nodeUnlocked(s, n)));   // 前提がそろっているノード
-      if (!ids.length) { const g = this.goalProgress(s); return g && !g.reached ? (g.colonyBuilt ? `目標：年末の純利益 ${this.fmtMoney(g.target)}（いま直近12か月 ${this.fmtMoney(g.profit12)}）` : `目標：${(this.goalCfg().projects || ['colony']).filter(k => !g.built.includes(k)).map(k => D().resources[k].name).join('と')}を1基ずつ完成させ、年末の純利益 ${this.fmtMoney(g.target)} に届く`) : '目標：すべてのノードを開いた'; }
+      if (!ids.length) { const g = this.goalProgress(s); return g && !g.reached ? (g.colonyBuilt ? `目標：年末の純利益 ${this.fmtMoney(g.target)}（いま直近12か月 ${this.fmtMoney(g.profit12)}）` : `目標：${(this.goalCfg().projects || ['colony']).filter(k => !g.built.includes(k)).map(k => this.projectLabel(s, k)).join('と')}を1基ずつ完成させ、年末の純利益 ${this.fmtMoney(g.target)} に届く`) : '目標：すべてのノードを開いた'; }
       const sts = ids.map(id => ({ id, st: this.nodeState(s, id) }));
       const c = sts.find(x => x.st.canUnlock); if (c) return `目標：研究タブで「${this.nodeName(c.id)}」を開ける（解放権${c.st.tickets.need}枚）`;
       const sel = sts.find(x => x.st.selectable); if (sel) { const nx = this.ticketSteps()[this.ticketsEarned(s)]; return `目標：解放権をためて「${this.nodeName(sel.id)}」を開く${nx ? '（次は直近12か月の利益 ' + this.fmtMoney(nx) + '）' : ''}`; }
