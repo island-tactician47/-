@@ -750,6 +750,8 @@
     },
     // 輸入の罰：レシピの Tier（ノードの Tier）で決まる「全部を輸入したときの利益÷自前の利益」（1＝罰なし）
     importRatio(recipeId) {
+      { const rec = D().recipes[recipeId], ex = (D().importPremium && D().importPremium.exempt) || [], ks = rec ? Object.keys(rec.inputs || {}) : [];
+        if (ks.length && ks.every(k => ex.includes(k))) return 1; }   // 入力がすべて「輸入しか手段が無い品目」（天然ガス→火薬）なら、罰も上限も無し（自前で作れないので、輸入を罰する意味が無い）
       const n = this.nodeOfRecipe(recipeId), d = n && this.nodeDef(n), r = d && (this.treeCfg().importRatio || {})[d.tier];
       return typeof r === 'number' ? r : 1;   // ノードに属さないレシピ・Tier の指定が無いときは罰なし
     },
