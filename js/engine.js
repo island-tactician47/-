@@ -662,7 +662,7 @@
     },
     // ゴールの金額：コロニーとAI防衛システム（goal.projects）の、各1基の年間利益の和の profitMultiplier 倍（名目。物価指数で増える）
     goalBase1950() { const cfg = this.goalCfg(); return cfg ? (cfg.projects || ['colony']).reduce((a, k) => a + this.chainProfit1950(k), 0) : 0; },
-    goalTarget(s) { const cfg = this.goalCfg(); return cfg ? (cfg.target ? cfg.target : cfg.profitMultiplier * this.goalBase1950()) * this.priceIndex(s) : 0; },
+    goalTarget(s) { const cfg = this.goalCfg(); return cfg ? (cfg.target ? cfg.target : cfg.profitMultiplier * this.goalBase1950() * this.priceIndex(s)) : 0; },
     // ゴールの条件の最終プロジェクト（goal.projects＝コロニーとAI防衛システム）のうち、1基でも完成させたもの。すべて完成させたら colonyBuilt が true（洋上プラットフォームは数えない）
     projectsBuilt(s) { const pt = (s.stats && s.stats.producedTotal) || {}, cfg = this.goalCfg(); return ((cfg && cfg.projects) || ['colony']).filter(k => (pt[k] || 0) >= 1); },
     colonyBuilt(s) { const cfg = this.goalCfg(), ps = (cfg && cfg.projects) || ['colony']; return this.projectsBuilt(s).length === ps.length; },
