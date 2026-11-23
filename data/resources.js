@@ -71,7 +71,7 @@ GAME_DATA.resources = {
   aiDefense:     { name: 'AI防衛システム', unit: '式', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 200, basePrice: 30000000, volatility: 0.35, marketDepth: 20, color: '#5a6a8a' },
   // ---- 電機ライン（銅）と光・通信ライン（ガラス）：Tier 3→4→5 の独立した2本。Tier 5 の発電・送電設備と通信衛星・通信網は、AI防衛システムの材料になる
   cable:         { name: '電線・ケーブル', unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 1100, volatility: 0.04, marketDepth: 3000, color: '#b5651d' },
-  opticFiber:    { name: '光学ガラス・光ファイバー', unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 700, volatility: 0.05, marketDepth: 2500, color: '#7fc4de' },
+  opticFiber:    { name: '光ファイバー', unit: 't', kind: 'material', tier: 4, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 520, volatility: 0.05, marketDepth: 2500, color: '#7fc4de' },
   motor:         { name: 'モーター・変圧器', unit: 't', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 3500, volatility: 0.07, marketDepth: 1200, color: '#c77b30' },
   commGear:      { name: '通信機器', unit: 't', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 4000, volatility: 0.08, marketDepth: 900, color: '#3a8fb7' },
   powerEquip:    { name: '発電・送電設備', unit: '式', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 5, basePrice: 14000, volatility: 0.12, marketDepth: 150, color: '#2f9e44' },

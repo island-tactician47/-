@@ -3332,36 +3332,36 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/commGearFactory_r0.png",
     "w": 395.0,
-    "h": 314.0,
+    "h": 301.5,
     "ax": 197.5,
-    "ay": 222.6,
+    "ay": 210.1,
     "fw": 6,
     "fd": 6
    },
    {
     "file": "../assets/bl/commGearFactory_r1.png",
     "w": 395.0,
-    "h": 271.0,
+    "h": 258.5,
     "ax": 197.5,
-    "ay": 179.6,
+    "ay": 167.1,
     "fw": 6,
     "fd": 6
    },
    {
     "file": "../assets/bl/commGearFactory_r2.png",
     "w": 395.0,
-    "h": 222.5,
+    "h": 215.0,
     "ax": 197.5,
-    "ay": 131.1,
+    "ay": 123.6,
     "fw": 6,
     "fd": 6
    },
    {
     "file": "../assets/bl/commGearFactory_r3.png",
     "w": 395.0,
-    "h": 265.0,
+    "h": 244.0,
     "ax": 197.5,
-    "ay": 173.6,
+    "ay": 152.6,
     "fw": 6,
     "fd": 6
    }
@@ -3406,6 +3406,90 @@ window.GAME_DATA.spritesBL = {
     "ay": 155.6,
     "fw": 8,
     "fd": 8
+   }
+  ]
+ },
+ "cableFactory": {
+  "fw": 6,
+  "fd": 5,
+  "r": [
+   {
+    "file": "../assets/bl/cableFactory_r0.png",
+    "w": 363.0,
+    "h": 192.5,
+    "ax": 181.5,
+    "ay": 108.6,
+    "fw": 6,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/cableFactory_r1.png",
+    "w": 363.0,
+    "h": 192.5,
+    "ax": 181.5,
+    "ay": 108.6,
+    "fw": 5,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/cableFactory_r2.png",
+    "w": 363.0,
+    "h": 192.5,
+    "ax": 181.5,
+    "ay": 108.6,
+    "fw": 6,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/cableFactory_r3.png",
+    "w": 363.0,
+    "h": 192.5,
+    "ax": 181.5,
+    "ay": 108.6,
+    "fw": 5,
+    "fd": 6
+   }
+  ]
+ },
+ "fiberFactory": {
+  "fw": 5,
+  "fd": 5,
+  "r": [
+   {
+    "file": "../assets/bl/fiberFactory_r0.png",
+    "w": 331.0,
+    "h": 198.0,
+    "ax": 165.5,
+    "ay": 121.1,
+    "fw": 5,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/fiberFactory_r1.png",
+    "w": 331.0,
+    "h": 178.5,
+    "ax": 165.5,
+    "ay": 101.6,
+    "fw": 5,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/fiberFactory_r2.png",
+    "w": 331.0,
+    "h": 203.5,
+    "ax": 165.5,
+    "ay": 126.6,
+    "fw": 5,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/fiberFactory_r3.png",
+    "w": 331.0,
+    "h": 229.5,
+    "ax": 165.5,
+    "ay": 152.6,
+    "fw": 5,
+    "fd": 5
    }
   ]
  }

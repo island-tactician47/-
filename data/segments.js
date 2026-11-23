@@ -31,8 +31,8 @@ GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 't
   set(R, 'mega', 'offshore aiDefense');
   set(R, 'electric', 'motor commGear powerEquip comsat');
   set(B, 'oil', 'oilWell crudeTank refinery refineryLarge distillation tank_gasoline tank_diesel tank_naphtha tank_heavy chemPlant fineChemPlant explosivesFactory');
-  set(B, 'metal', 'steelMill aluminumSmelter copperSmelter');
-  set(B, 'ceramics', 'kiln');
+  set(B, 'metal', 'steelMill aluminumSmelter copperSmelter cableFactory');
+  set(B, 'ceramics', 'kiln fiberFactory');
   set(B, 'forestry', 'sawmill paperMill');
   set(B, 'consumer', 'detergentFactory garmentFactory pharmaFactory buildmatFactory');
   set(B, 'transport', 'carFactory shipyard aircraftFactory evFactory');

@@ -72,16 +72,16 @@ GAME_DATA.tree = {
     colony:    { x: 790, color: '#c28a1e', name: '宇宙コロニー', icon: '🛰️', tier: 6, tickets: 3, needs: ['steel', 'pharma', 'pc', 'ev', 'weapon', 'rocket', 'car', 'buildmat', 'detergent', 'clothing', 'paper'],
                  buildings: ['colonyFactory'], recipes: ['colony'], resources: ['colony'] },
     // 最終プロジェクト（コロニーの仲間）：船・航空機・半導体を、1つずつ主役にする。前提がそろえば現れる（選べるのは、素材の余りがそろったとき）
-    // 電機ライン（銅）：Tier 3 電線・ケーブル → Tier 4 モーター・変圧器 → Tier 5 発電・送電設備。Tier 3 は非鉄製錬所の追加レシピ（建物なし。選択権は supply で）
-    wire:      { x: 520, color: '#b5651d', name: '電線・ケーブル', icon: '🔗', tier: 3, tickets: 1, needs: ['copper'], supply: { building: 'copperSmelter', recipe: 'cable' },
-                 buildings: [], recipes: ['cable'], resources: ['cable'] },
+    // 電機ライン（銅）：Tier 3 電線・ケーブル（電線工場）→ Tier 4 モーター・変圧器 → Tier 5 発電・送電設備
+    wire:      { x: 520, color: '#b5651d', name: '電線・ケーブル', icon: '🔗', tier: 3, tickets: 1, needs: ['copper'],
+                 buildings: ['cableFactory'], recipes: ['cable'], resources: ['cable'] },
     motor:     { x: 250, color: '#c77b30', name: 'モーター・変圧器', icon: '🔌', tier: 4, tickets: 2, needs: ['wire', 'steel'],
                  buildings: ['motorFactory'], recipes: ['motor'], resources: ['motor'] },
     power:     { x: 1870, color: '#2f9e44', name: '発電・送電設備', icon: '🌬️', tier: 5, tickets: 2, needs: ['motor', 'kiln'],
                  buildings: ['powerEquipFactory'], recipes: ['powerEquip'], resources: ['powerEquip'] },
-    // 光・通信ライン（ガラス）：Tier 3 光学ガラス・光ファイバー → Tier 4 通信機器 → Tier 5 通信衛星・通信網。Tier 3 は窯業工場の追加レシピ
-    optic:     { x: 760, color: '#5aa9c9', name: '光ファイバー', icon: '💡', tier: 3, tickets: 1, needs: ['kiln'], supply: { building: 'kiln', recipe: 'opticFiber' },
-                 buildings: [], recipes: ['opticFiber'], resources: ['opticFiber'] },
+    // 光・通信ライン（ガラス）：Tier 3 光ファイバー（光ファイバー工場）→ Tier 4 通信機器 → Tier 5 通信衛星・通信網
+    optic:     { x: 760, color: '#5aa9c9', name: '光ファイバー', icon: '💡', tier: 3, tickets: 1, needs: ['kiln'],
+                 buildings: ['fiberFactory'], recipes: ['opticFiber'], resources: ['opticFiber'] },
     comm:      { x: 1500, color: '#3a8fb7', name: '通信機器', icon: '📡', tier: 4, tickets: 2, needs: ['optic', 'copper', 'semi'],
                  buildings: ['commGearFactory'], recipes: ['commGear'], resources: ['commGear'] },
     sat:       { x: 2140, color: '#7b61c4', name: '通信衛星・通信網', icon: '🛰️', tier: 5, tickets: 2, needs: ['comm', 'semi'],
