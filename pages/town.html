@@ -312,7 +312,7 @@ function renderSheet(s) {
       ${types.map(t => { const b = G.buildings[t], chk = E.canBuild(s, t), cant = !chk.ok && !/資金不足/.test(chk.msg || ''); return `<button class="btn tbtn" ${cant ? 'disabled' : ''} onclick="startPlacing('${t}')">${b.icon || ''} ${b.name}　${M(E.costOf(s, t))}・${E.buildText(b.months)}${cant ? `<div class="sub">${chk.msg}</div>` : (!chk.ok ? `<div class="sub warn">${chk.msg}</div>` : '')}</button>`; }).join('') || '<div class="sub">解放済みの設備はまだない</div>'}</div>`);
   } else {
     const n = (iso.ents || []).length;
-    out.push(`<div class="card sub">建物をタップすると詳しく、空き地をタップするとそこに建てられます。${n ? `（建物 ${n}）` : ''}　油井は<a href="field.html">採掘地</a>で建てます。<div class="btns" style="margin-top:6px"><button class="btn small" ${E.blueprintUnlocked(s) ? '' : 'disabled'} onclick="bpOpen()">📐 ブループリント</button></div>${E.blueprintUnlocked(s) ? '' : `<div class="sub">${E.BLUEPRINT_LOCK}</div>`}</div>`);
+    out.push(`<div class="card sub">建物をタップすると詳しく、空き地をタップするとそこに建てられます。${n ? `（建物 ${n}）` : ''}　油井は<a href="field.html">採掘地</a>で建てます。${E.blueprintUnlocked(s) ? `<div class="btns" style="margin-top:6px"><button class="btn small" onclick="bpOpen()">📐 ブループリント</button></div>` : ''}</div>`);
   }
   setSheet(out.join(''));
 }
