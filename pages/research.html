@@ -83,9 +83,10 @@ function nodeCard(s, id) {
 }
 
 // 技術ツリー（図）：Tier ごとの段に、描くノードだけを並べ、前提→ノードの線を引く。段の中の並びは、前提の位置の平均に合わせて線の交差を減らす。横にスクロールできる
-let selId = null, centered = false, treeX0 = 0;
+let selId = null, focusOn = false, centered = false, treeX0 = 0;   // focusOn：ノードをタップして、関連だけを強調している間 true。何もないところをタップすると false（全部ふつうの濃さに戻る）
 try { selId = localStorage.getItem('factorySim.ui.researchSel') || null; } catch (e) {}
-function selectNodeUI(id) { selId = id; try { localStorage.setItem('factorySim.ui.researchSel', id); } catch (e) {} UI.refresh(); }
+function clearFocus() { focusOn = false; UI.refresh(); }
+function selectNodeUI(id) { selId = id; focusOn = true; try { localStorage.setItem('factorySim.ui.researchSel', id); } catch (e) {} UI.refresh(); }
 function treeSvg(s, ids) {
   // 図の作り（docs/技術ツリー案.png と同じ）：Tier ごとの段、ノードは固定の横位置（data/tree.js の x）、線は元のノードの色。描くノードだけを詰めて並べる
   const NW = 150, NH = 62, ROWGAP = 190, TOP = 40, TIERCOL = { 1: '#6b7b8c', 2: '#4f7f64', 3: '#4d6fa3', 4: '#7a4f9a', 5: '#a34d4d', 6: '#c28a1e' };
@@ -155,10 +156,10 @@ function treeSvg(s, ids) {
   const trkY = (ta, ti) => ry[ta] + NH + 24 + TRK * ti;
   // 選んだノードにつながる線を濃く（前提の側は先祖すべて、先の側は子孫すべて）。ほかは薄く
   const desc = sel => { const o = new Set(); for (const id of ids) if (anc(id).has(sel)) o.add(id); return o; };
-  const up = selId ? new Set([selId, ...anc(selId)]) : null, down = selId ? new Set([selId, ...desc(selId)]) : null;
-  const rel = (p, c) => !selId || up.has(c) || down.has(p);
+  const foc = focusOn && selId, up = foc ? new Set([selId, ...anc(selId)]) : null, down = foc ? new Set([selId, ...desc(selId)]) : null;
+  const rel = (p, c) => !foc || up.has(c) || down.has(p);
   let edges_svg = '';
-  const seg = (pts, col, on, dim) => `<path d="M${pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' L')}" fill="none" stroke="${col}" stroke-width="${dim ? 2.5 : (selId ? 5 : 4)}" stroke-linejoin="round" opacity="${dim ? 0.13 : on ? 0.95 : 0.5}" ${on ? '' : 'stroke-dasharray="8 6"'}/>`;
+  const seg = (pts, col, on, dim) => `<path d="M${pts.map(q => q[0].toFixed(1) + ',' + q[1].toFixed(1)).join(' L')}" fill="none" stroke="${col}" stroke-width="${dim ? 2.5 : (foc ? 5 : 4)}" stroke-linejoin="round" opacity="${dim ? 0.13 : on ? 0.95 : 0.5}" ${on ? '' : 'stroke-dasharray="8 6"'}/>`;
   for (const p in kids) {
     const col = E.nodeDef(p).color || '#888', on = E.nodeUnlocked(s, p), tp = tierOf(p), cs = kids[p], tmax = Math.max(...cs.map(tierOf));
     const path = tiers.filter(tr => tr >= tp && tr <= tmax), anyRel = cs.some(c => rel(p, c));
@@ -182,13 +183,13 @@ function treeSvg(s, ids) {
     const fill = st.unlocked ? '#e4f3ea' : st.canUnlock ? '#fde9c8' : st.selectable ? '#dcebf6' : '#fffdf8';
     const sub = st.unlocked ? '開いた' : st.auto ? '自動で開く' : st.canUnlock ? `選べる・解放権${st.tickets.need}枚` : st.selectable ? `選択権あり・解放権${st.tickets.need}枚` : `解放権${st.tickets.need}枚`;
     const subc = st.unlocked ? '#1f6a3f' : st.canUnlock ? '#8a5200' : st.selectable ? '#1f5a7d' : tc;
-    const dimN = selId && !up.has(id) && !down.has(id);
+    const dimN = foc && !up.has(id) && !down.has(id);
     nodes += `<g onclick="selectNodeUI('${id}')" style="cursor:pointer" opacity="${dimN ? 0.3 : 1}"><rect x="${x.toFixed(1)}" y="${y}" width="${NW}" height="${NH}" rx="12" fill="${fill}" stroke="${id === selId ? '#26221e' : tc}" stroke-width="${id === selId ? 6 : 4}"/>
       <text x="${(x + 12).toFixed(1)}" y="${y + 28}" font-size="23" font-weight="700" fill="#26221e">${d.name.length > 7 ? d.name.slice(0, 7) : d.name}</text>
       <text x="${(x + 12).toFixed(1)}" y="${y + 50}" font-size="15" fill="${subc}">${sub}</text></g>`;
   }
   const sc = +UI.tab('res-zoom', '0.55');
-  return `<div id="treesc" style="overflow:auto;max-height:70vh;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior:contain;border:1px solid var(--line);border-radius:10px;background:#f2ede4"><svg width="${(W * sc).toFixed(0)}" height="${(H * sc).toFixed(0)}" viewBox="0 0 ${W.toFixed(0)} ${H}" style="display:block">${heads}${edges_svg}${nodes}</svg></div>`;
+  return `<div id="treesc" style="overflow:auto;max-height:70vh;-webkit-overflow-scrolling:touch;touch-action:pan-x pan-y;overscroll-behavior:contain;border:1px solid var(--line);border-radius:10px;background:#f2ede4"><svg width="${(W * sc).toFixed(0)}" height="${(H * sc).toFixed(0)}" viewBox="0 0 ${W.toFixed(0)} ${H}" style="display:block"><rect x="0" y="0" width="${W.toFixed(0)}" height="${H}" fill="transparent" onclick="clearFocus()"/>${heads}<g pointer-events="none">${edges_svg}</g>${nodes}</svg></div>`;
 }
 
 function render(s) {
