@@ -143,7 +143,8 @@ GAME_DATA.power = {
 GAME_DATA.distillModes = {
   standard: { name: '標準',         yields: { gasoline: 0.25, naphtha: 0.13, diesel: 0.27, heavy: 0.33 } },
   gasoline: { name: 'ガソリン重視', yields: { gasoline: 0.31, naphtha: 0.09, diesel: 0.23, heavy: 0.35 } },
-  diesel:   { name: '軽油重視',     yields: { gasoline: 0.20, naphtha: 0.12, diesel: 0.34, heavy: 0.32 } }
+  diesel:   { name: '軽油重視',     yields: { gasoline: 0.20, naphtha: 0.12, diesel: 0.34, heavy: 0.32 } },
+  naphtha:  { name: 'ナフサ重視',   yields: { gasoline: 0.06, naphtha: 0.80, diesel: 0.04, heavy: 0.08 } }   // ナフサを8割（化学の原料向け。1bblあたりの売値は標準より少し高い）
 };
 
 // 建築期間の倍率（設備・増設モジュール・鉱山・貯鉱場・港の改修）。months は元の値のまま、日数だけこの倍率で縮める。研究は対象外
