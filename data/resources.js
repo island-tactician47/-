@@ -79,7 +79,7 @@ GAME_DATA.resources = {
   commGear:      { name: '通信機器', unit: 't', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 4000, volatility: 0.08, marketDepth: 900, color: '#3a8fb7' },
   powerEquip:    { name: '発電・送電設備', unit: '式', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 5, basePrice: 14000, volatility: 0.12, marketDepth: 150, color: '#2f9e44' },
   comsat:        { name: '通信衛星・通信網', unit: '式', kind: 'product', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'goods', storeVol: 20, basePrice: 450000, volatility: 0.15, marketDepth: 25, color: '#7b61c4' },
-  rocket:        { name: 'ロケット',     unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 100, basePrice: 2000000, volatility: 0.1, marketDepth: 1, color: '#9a8fd0' },
+  rocket:        { name: 'ロケット',     unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 100, basePrice: 2400000, volatility: 0.1, marketDepth: 1, color: '#9a8fd0' },
   weapon:        { name: '兵器',         unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 2400, volatility: 0.08, marketDepth: 900, color: '#6a7a5a' },
   ev:            { name: '電池・EV',     unit: '台',   kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 3,    storage: 'goods', storeVol: 3,   basePrice: 2500,    volatility: 0.1, marketDepth: 1040, color: '#3aa17e' },
 };
