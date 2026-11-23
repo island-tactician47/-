@@ -111,8 +111,7 @@ GAME_DATA.buildings = {
   fineChemPlant:     { name: '精密化学工場',     icon: '🧪', category: 'factory', tier: 6, cost: 1000000, months: 24, fixedPerMonth: 4000, desc: 'ナフサから医薬原料（製薬の入口）。ステンレスの反応釜と精留塔' },
   explosivesFactory: { name: '火薬工場',         icon: '💥', category: 'factory', tier: 6, cost: 900000, months: 18, fixedPerMonth: 3600, desc: '天然ガスから火薬（兵器・ロケットの入口）。盛り土で囲んだ貯蔵庫と柵' },
   colonyFactory:     { name: '宇宙コロニー工場', icon: '🛰️', category: 'factory', tier: 6, cost: 10000000, months: 48, fixedPerMonth: 40000, desc: '船と航空機以外のすべての最終製品と合金から、葉巻型の宇宙コロニーを組み立てる（増設モジュールなし。まとめて高く売れるが、年に1基ほど。相場は特に荒い）' },
-  offshoreFactory:   { name: '洋上プラットフォーム工場', icon: '🛢️', category: 'factory', tier: 6, cost: 8000000, months: 42, fixedPerMonth: 32000, desc: '船・鋼材・合金・セメント・ガラス・PCから、洋上の資源基地・発電所を組み立てる（増設モジュールなし。まとめて高く売れるが、年に1基ほど。安定した相場）' },
-  supersonicFactory: { name: '超音速旅客機工場', icon: '✈️', category: 'factory', tier: 6, cost: 8000000, months: 42, fixedPerMonth: 32000, desc: '航空機・合金・アルミ・EV・銅・PC・プラスチックから、超音速旅客機を組み立てる（増設モジュールなし。まとめて高く売れるが、年に2機ほど。景気に左右される）' },
+  offshoreFactory:   { name: '洋上プラットフォーム工場', icon: '🛢️', category: 'factory', tier: 6, cost: 5000000, months: 36, fixedPerMonth: 20000, desc: 'セメント・ガラス・PC・鋼材・合金から、洋上の資源基地・発電所を組み立てる（増設モジュールなし。まとめて高く売れるが、年に2基ほど。安定した相場）' },
   aiDefenseFactory:  { name: 'AI防衛システム工場', icon: '🛡️', category: 'factory', tier: 6, cost: 9000000, months: 48, fixedPerMonth: 36000, desc: '半導体・兵器・ロケット・火薬・PC・合金から、AI防衛システムを組み立てる（増設モジュールなし。まとめて高く売れるが、年に1式ほど。戦争のイベントで相場が荒れる）' },
   evFactory:         { name: '電池・EV工場',     icon: '🔋', category: 'factory', tier: 6, cost: 3500000, months: 30, fixedPerMonth: 14000, desc: '鋼材・アルミ・合成ゴム・リチウム・半導体・銅から電池・EV' }
 };

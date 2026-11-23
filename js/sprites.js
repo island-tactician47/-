@@ -37,7 +37,6 @@
     explosivesFactory: { color: '#b8a98a', h: 8, bunker: true, stacks: 1 },
     colonyFactory:    { color: '#dfe4e8', h: 40, glass: true, clean: true },
     offshoreFactory:  { color: '#9fb4c4', h: 22, glass: true },
-    supersonicFactory: { color: '#d6dde4', h: 18, glass: true, clean: true },
     aiDefenseFactory: { color: '#7d8a9a', h: 16, bunker: true, glass: true }
   };
   const TANKCOL = { crudeTank: '#7a5a3a', tank_gasoline: '#e0b84a', tank_diesel: '#4f86b8', tank_naphtha: '#9a6fb8', tank_heavy: '#4a4540' };

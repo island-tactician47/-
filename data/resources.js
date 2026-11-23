@@ -67,8 +67,7 @@ GAME_DATA.resources = {
   explosive:     { name: '火薬',         unit: 't', kind: 'material', tier: 6, canBuy: true, canSell: true, shipVol: 1, storage: 'bulk', basePrice: 1000, volatility: 0.035, marketDepth: 400, color: '#c9663a' },
   pharma:        { name: '医薬品',       unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 6000, volatility: 0.09, marketDepth: 280, color: '#d46a8f' },
   colony:        { name: '宇宙コロニー', unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 600, basePrice: 25000000, volatility: 0.25, marketDepth: 20, color: '#d8b04a' },
-  offshore:      { name: '洋上プラットフォーム', unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 500, basePrice: 14000000, volatility: 0.12, marketDepth: 20, color: '#4a7f9a' },
-  supersonic:    { name: '超音速旅客機', unit: '機', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 150, basePrice: 9000000, volatility: 0.2, marketDepth: 20, color: '#c9d4de' },
+  offshore:      { name: '洋上プラットフォーム', unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 500, basePrice: 6000000, volatility: 0.12, marketDepth: 20, color: '#4a7f9a' },
   aiDefense:     { name: 'AI防衛システム', unit: '式', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 200, basePrice: 22000000, volatility: 0.35, marketDepth: 20, color: '#5a6a8a' },
   rocket:        { name: 'ロケット',     unit: '基', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 0.1, storage: 'goods', storeVol: 100, basePrice: 2000000, volatility: 0.1, marketDepth: 1, color: '#9a8fd0' },
   weapon:        { name: '兵器',         unit: 't', kind: 'product', tier: 6, canBuy: false, canSell: true, shipVol: 1, storage: 'goods', storeVol: 1, basePrice: 2400, volatility: 0.08, marketDepth: 900, color: '#6a7a5a' },
@@ -94,7 +93,7 @@ GAME_DATA.productOrder = ['crude', 'gasoline', 'diesel', 'naphtha', 'heavy',
   'plastic', 'rubber', 'surfactant', 'fiber', 'steel', 'aluminum', 'copper', 'glass', 'cement', 'lumber', 'paper',
   'detergent', 'buildmat', 'clothing', 'car',
   'rareMetal', 'lithiumOre', 'alloy', 'silicon', 'lithium', 'ship', 'aircraft', 'semiconductor', 'pc', 'ev',
-  'naturalGas', 'pharmaMat', 'explosive', 'pharma', 'rocket', 'weapon', 'colony', 'offshore', 'supersonic', 'aiDefense'];
+  'naturalGas', 'pharmaMat', 'explosive', 'pharma', 'rocket', 'weapon', 'colony', 'offshore', 'aiDefense'];
 
 // 取引先（契約）：最終製品（買えず、どのレシピの入力にもならない品目）だけ。契約すると毎月ノルマの数量を、市場より高い固定プレミアムで自動納品する
 // （市場の飽和を進めず、売却手数料もかからない）。足りない月は 不足分×単価×penaltyRate の違約金。契約は翌月から、毎月ノルマは自社設備の日量×30×share に更新

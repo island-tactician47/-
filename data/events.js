@@ -49,8 +49,6 @@ GAME_DATA.events = {
     { id: 'spacerace', segment: 'advanced', weight: 2, title: '宇宙開発ブーム', text: '国家プロジェクトで、ロケットの発注が増えている。', effects: { rocket: 1.3 }, months: 12 },
     { id: 'offshoreboom', segment: 'mega', building: 'offshoreFactory', weight: 2, title: '洋上開発ブーム', text: '資源・エネルギー会社が洋上開発に乗り出し、プラットフォームの引き合いが強い。', effects: { offshore: 1.25 }, months: 18 },
     { id: 'offshoreslump', segment: 'mega', building: 'offshoreFactory', weight: 2, title: '洋上開発の見直し', text: '資源価格の下落で洋上の新規開発が見送られ、プラットフォームの発注が減っている。', effects: { offshore: 0.8 }, months: 18 },
-    { id: 'jetboom', segment: 'mega', building: 'supersonicFactory', weight: 2, title: '航空需要の急回復', text: '長距離路線の需要が急回復し、超音速旅客機の引き合いが強い。', effects: { supersonic: 1.4 }, months: 18 },
-    { id: 'jetslump', segment: 'mega', building: 'supersonicFactory', weight: 2, title: '航空不況', text: '航空各社が新造機の発注を絞っており、超音速旅客機の需要が冷え込んでいる。', effects: { supersonic: 0.65 }, months: 18 },
     { id: 'aidefboom', segment: 'mega', building: 'aiDefenseFactory', weight: 2, title: '国際緊張の高まり', text: '各国が防衛網の刷新を急ぎ、AI防衛システムの引き合いが急増している。', effects: { aiDefense: 1.6 }, months: 18 },
     { id: 'aidefslump', segment: 'mega', building: 'aiDefenseFactory', weight: 2, title: '軍縮の機運', text: '軍縮交渉が進み、AI防衛システムの発注が大きく減っている。', effects: { aiDefense: 0.6 }, months: 18 },
     { id: 'colonyboom', segment: 'space', weight: 2, title: '宇宙移住ブーム', text: '各国が宇宙居住に乗り出し、コロニーの引き合いが強い。', effects: { colony: 1.4 }, months: 18 },

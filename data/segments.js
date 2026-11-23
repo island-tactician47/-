@@ -27,7 +27,7 @@ GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 't
   set(R, 'transport', 'car ship aircraft ev');
   set(R, 'advanced', 'semiconductor pc rocket weapon');
   set(R, 'space', 'colony');
-  set(R, 'mega', 'offshore supersonic aiDefense');
+  set(R, 'mega', 'offshore aiDefense');
   set(B, 'oil', 'oilWell crudeTank refinery refineryLarge distillation tank_gasoline tank_diesel tank_naphtha tank_heavy chemPlant fineChemPlant explosivesFactory');
   set(B, 'metal', 'steelMill aluminumSmelter copperSmelter');
   set(B, 'ceramics', 'kiln');
@@ -36,6 +36,6 @@ GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 't
   set(B, 'transport', 'carFactory shipyard aircraftFactory evFactory');
   set(B, 'advanced', 'semiconductorFactory pcFactory rocketFactory munitionsFactory');
   set(B, 'space', 'colonyFactory');
-  set(B, 'mega', 'offshoreFactory supersonicFactory aiDefenseFactory');
+  set(B, 'mega', 'offshoreFactory aiDefenseFactory');
   GAME_DATA.segmentOf = { resources: R, buildings: B };   // 倉庫・研究棟は本部に属さない（全社）
 })();

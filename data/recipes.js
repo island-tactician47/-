@@ -49,8 +49,7 @@ GAME_DATA.recipes = {
   rocket: { name: 'ロケット', inputs: { alloy: 400, semiconductor: 60, explosive: 300, aluminum: 100 }, outputs: { rocket: 1 }, opexPerUnit: 69841.7, energyShare: 0.05 },
   weapon: { name: '兵器', inputs: { steel: 1.0, alloy: 0.5, semiconductor: 0.05, explosive: 0.4 }, outputs: { weapon: 1 }, opexPerUnit: 77.9, energyShare: 0.07 },
   colony: { name: '宇宙コロニー', inputs: { paper: 1500, buildmat: 4000, car: 300, detergent: 250, clothing: 1500, pharma: 150, pc: 1000, ev: 200, weapon: 50, rocket: 2, alloy: 1000 }, outputs: { colony: 1 }, opexPerUnit: 5727935.3, energyShare: 0.05 },
-  offshore: { name: '洋上プラットフォーム', inputs: { ship: 1, steel: 15000, alloy: 1500, cement: 20000, glass: 1000, pc: 500 }, outputs: { offshore: 1 }, opexPerUnit: 3525929.2, energyShare: 0.06 },
-  supersonic: { name: '超音速旅客機', inputs: { aircraft: 1, alloy: 800, aluminum: 3000, ev: 100, copper: 500, pc: 200, plastic: 1000 }, outputs: { supersonic: 1 }, opexPerUnit: 1982318.0, energyShare: 0.05 },
+  offshore: { name: '洋上プラットフォーム', inputs: { steel: 5000, alloy: 1500, cement: 20000, glass: 1000, pc: 500 }, outputs: { offshore: 1 }, opexPerUnit: 1833756.0, energyShare: 0.06 },
   aiDefense: { name: 'AI防衛システム', inputs: { semiconductor: 2000, weapon: 100, rocket: 1, explosive: 500, pc: 800, alloy: 600 }, outputs: { aiDefense: 1 }, opexPerUnit: 5495201.9, energyShare: 0.07 }
 };
 GAME_DATA.plants = {
@@ -76,7 +75,6 @@ GAME_DATA.plants = {
   fineChemPlant: { recipes: ['pharmaMat'], throughput: 10 },
   explosivesFactory: { recipes: ['explosive'], throughput: 10 },
   colonyFactory: { recipes: ['colony'], throughput: 0.0028 },
-  offshoreFactory: { recipes: ['offshore'], throughput: 0.0028 },
-  supersonicFactory: { recipes: ['supersonic'], throughput: 0.0056 },
+  offshoreFactory: { recipes: ['offshore'], throughput: 0.0056 },
   aiDefenseFactory: { recipes: ['aiDefense'], throughput: 0.0028 }
 };

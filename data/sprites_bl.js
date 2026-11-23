@@ -3199,48 +3199,6 @@ window.GAME_DATA.spritesBL = {
    }
   ]
  },
- "supersonicFactory": {
-  "fw": 10,
-  "fd": 8,
-  "r": [
-   {
-    "file": "../assets/bl/supersonicFactory_r0.png",
-    "w": 587.0,
-    "h": 313.0,
-    "ax": 293.5,
-    "ay": 178.6,
-    "fw": 10,
-    "fd": 8
-   },
-   {
-    "file": "../assets/bl/supersonicFactory_r1.png",
-    "w": 587.0,
-    "h": 297.0,
-    "ax": 293.5,
-    "ay": 162.6,
-    "fw": 8,
-    "fd": 10
-   },
-   {
-    "file": "../assets/bl/supersonicFactory_r2.png",
-    "w": 587.0,
-    "h": 297.0,
-    "ax": 293.5,
-    "ay": 162.6,
-    "fw": 10,
-    "fd": 8
-   },
-   {
-    "file": "../assets/bl/supersonicFactory_r3.png",
-    "w": 587.0,
-    "h": 297.0,
-    "ax": 293.5,
-    "ay": 162.6,
-    "fw": 8,
-    "fd": 10
-   }
-  ]
- },
  "aiDefenseFactory": {
   "fw": 9,
   "fd": 9,
