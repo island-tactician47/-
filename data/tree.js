@@ -23,7 +23,7 @@ GAME_DATA.tree = {
     supplyMonths: 3,          // 選択権：直近3か月の実績の平均で、輸入なしで回る余剰を測る
     supplyModules: 0,         // 必要な量：その設備に、増設モジュールを何個付けて全開で回す量か（0＝増設なしの1基。上限は map.js の modules.max）
     supplyFactor: 1.0,        // 必要な量にかける係数（バランス調整用）
-    finalProducts: ['colony', 'offshore', 'aiDefense'],   // 最終プロジェクトの品目。どれか1基を完成させるのがゴールの条件
+    finalProducts: ['colony', 'offshore', 'aiDefense'],   // 最終プロジェクトの品目（材料に船・航空機を使わない等のデータ検査の対象）。ゴールの条件に要るのは goal.projects（コロニーとAI防衛システムを1基ずつ）
     colonyReveal: { node: 'colony', tier: 5, count: 4 }   // 例外：コロニーは Tier 5 のうち4つが開いたら描く
   },
   nodes: {

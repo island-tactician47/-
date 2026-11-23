@@ -663,13 +663,14 @@
     // ゴールの金額：コロニーとAI防衛システム（goal.projects）の、各1基の年間利益の和の profitMultiplier 倍（名目。物価指数で増える）
     goalBase1950() { const cfg = this.goalCfg(); return cfg ? (cfg.projects || ['colony']).reduce((a, k) => a + this.chainProfit1950(k), 0) : 0; },
     goalTarget(s) { const cfg = this.goalCfg(); return cfg ? cfg.profitMultiplier * this.goalBase1950() * this.priceIndex(s) : 0; },
-    // 最終プロジェクト（コロニー・洋上プラットフォーム・超音速旅客機・AI防衛システム）のどれかを、1基でも完成させたか（tree.js の finalProducts）
-    colonyBuilt(s) { const pt = (s.stats && s.stats.producedTotal) || {}; return (this.treeCfg().finalProducts || ['colony']).some(k => (pt[k] || 0) >= 1); },
+    // ゴールの条件の最終プロジェクト（goal.projects＝コロニーとAI防衛システム）のうち、1基でも完成させたもの。すべて完成させたら colonyBuilt が true（洋上プラットフォームは数えない）
+    projectsBuilt(s) { const pt = (s.stats && s.stats.producedTotal) || {}, cfg = this.goalCfg(); return ((cfg && cfg.projects) || ['colony']).filter(k => (pt[k] || 0) >= 1); },
+    colonyBuilt(s) { const cfg = this.goalCfg(), ps = (cfg && cfg.projects) || ['colony']; return this.projectsBuilt(s).length === ps.length; },
     // 進み具合：{ profit12（直近12か月の純利益）, target, ratio, colonyBuilt（コロニーを1基完成させたか）, eq（純資産。スコア用）, reached }
     goalProgress(s) {
       const cfg = this.goalCfg(); if (!cfg) return null;
       const target = this.goalTarget(s), p12 = this.profit12(s);
-      return { profit12: p12, target, ratio: target > 0 ? p12 / target : 0, colonyBuilt: this.colonyBuilt(s), eq: this.equity(s), reached: !!s.goal };
+      return { profit12: p12, target, ratio: target > 0 ? p12 / target : 0, colonyBuilt: this.colonyBuilt(s), built: this.projectsBuilt(s), eq: this.equity(s), reached: !!s.goal };
     },
     // 直近12か月の営業利益率（営業利益＝売上−原料−操業費−維持費−研究費−違約金）
     operatingMargin12(s) {
@@ -690,7 +691,7 @@
       const rk = cfg.ranks.find(r => total >= r.min) || cfg.ranks[cfg.ranks.length - 1];
       return { speed, equityRatio, margin, penalty, total, rank: rk.rank, title: rk.title, years, equity: eq };
     },
-    // 年末（12月の決算）に判定：その年の純利益が目標の金額以上で、最終プロジェクト（コロニーなど）を1基完成させていれば達成（初めてだけ。スコアを出して知らせる。続けて遊べる）。届いたら true
+    // 年末（12月の決算）に判定：その年の純利益が目標の金額以上で、コロニーとAI防衛システムを1基ずつ完成させていれば達成（初めてだけ。スコアを出して知らせる。続けて遊べる）。届いたら true
     checkGoal(s) {
       const cfg = this.goalCfg(); if (!cfg || s.goal) return false;
       const h = s.history || [], last = h[h.length - 1];
@@ -703,7 +704,7 @@
       const f = v => v.toFixed(0);
       s.pendingEvents.push({
         title: '🏆 目標達成', modal: true,
-        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、年間の純利益 <b>${this.fmtMoney(yp)}</b>（コロニーとAI防衛システムの年間利益の和の${cfg.profitMultiplier}倍）に届き、最終プロジェクトを完成させた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
+        text: `<b>${name}</b>は創業から <b>${sc.years.toFixed(1)}年</b>で、年間の純利益 <b>${this.fmtMoney(yp)}</b>（コロニーとAI防衛システムの年間利益の和の${cfg.profitMultiplier}倍）に届き、コロニーとAI防衛システムを完成させた。<br><br>ランク <b>${sc.rank}「${sc.title}」</b>・スコア <b>${s.goal.score}点</b><br>早さ ${f(sc.speed)}／自己資本比率 ${f(sc.equityRatio)}／営業利益率 ${f(sc.margin)}${sc.penalty ? '／減点 −' + f(sc.penalty) : ''}<br><br>このまま続けて遊べる。記録はランチャーに残る。`,
         goal: { company: name, diff: s.difficulty, years: Math.round(sc.years * 10) / 10, score: s.goal.score, rank: sc.rank, title: sc.title, profit: Math.round(yp), at: Date.now() }
       });
       return true;
@@ -712,9 +713,9 @@
     nodeCounts(s) { let n = 0, all = 0; for (const id in this.treeNodes()) { all++; if (this.nodeUnlocked(s, id)) n++; } return { open: n, all }; },
     // 次の目標の文（ヘッダーに出す）：選べるノード → 解放権をためる → 素材を増やす → すべて開いた
     nodeGoal(s) {
-      const fin = this.colonyBuilt(s) ? (this.treeCfg().finalProducts || []) : [];   // 最終プロジェクトを1つ完成させたら、ほかの最終プロジェクトのノードは目標に出さない
+      const fin = [];
       const ids = Object.keys(this.treeNodes()).filter(id => !this.nodeUnlocked(s, id) && !this.nodeDef(id).auto && !fin.includes(id) && (this.nodeDef(id).needs || []).every(n => this.nodeUnlocked(s, n)));   // 前提がそろっているノード
-      if (!ids.length) { const g = this.goalProgress(s); return g && !g.reached ? (g.colonyBuilt ? `目標：年末の純利益 ${this.fmtMoney(g.target)}（いま直近12か月 ${this.fmtMoney(g.profit12)}）` : `目標：最終プロジェクト（コロニーなど）を1基完成させ、年末の純利益 ${this.fmtMoney(g.target)} に届く`) : '目標：すべてのノードを開いた'; }
+      if (!ids.length) { const g = this.goalProgress(s); return g && !g.reached ? (g.colonyBuilt ? `目標：年末の純利益 ${this.fmtMoney(g.target)}（いま直近12か月 ${this.fmtMoney(g.profit12)}）` : `目標：${(this.goalCfg().projects || ['colony']).filter(k => !g.built.includes(k)).map(k => D().resources[k].name).join('と')}を1基ずつ完成させ、年末の純利益 ${this.fmtMoney(g.target)} に届く`) : '目標：すべてのノードを開いた'; }
       const sts = ids.map(id => ({ id, st: this.nodeState(s, id) }));
       const c = sts.find(x => x.st.canUnlock); if (c) return `目標：研究タブで「${this.nodeName(c.id)}」を開ける（解放権${c.st.tickets.need}枚）`;
       const sel = sts.find(x => x.st.selectable); if (sel) { const nx = this.ticketSteps()[this.ticketsEarned(s)]; return `目標：解放権をためて「${this.nodeName(sel.id)}」を開く${nx ? '（次は直近12か月の利益 ' + this.fmtMoney(nx) + '）' : ''}`; }
