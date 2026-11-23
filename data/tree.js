@@ -85,7 +85,7 @@ GAME_DATA.tree = {
     // 光・通信ライン（ガラス）：Tier 3 光ファイバー（光ファイバー工場）→ Tier 4 通信機器 → Tier 5 通信衛星・通信網
     optic:     { x: 350, color: '#5aa9c9', name: '光ファイバー', icon: '💡', tier: 2, tickets: 1, needs: ['kiln'],
                  buildings: ['fiberFactory'], recipes: ['opticFiber'], resources: ['opticFiber'] },
-    battery:   { x: 1975, color: '#e0b43c', name: '電池', icon: '🔋', tier: 4, tickets: 2, needs: ['copper', 'aluminum', 'semi'],
+    battery:   { x: 1975, color: '#e0b43c', name: '電池', icon: '🔋', tier: 4, tickets: 2, needs: ['copper', 'aluminum'],
                  buildings: ['batteryFactory'], recipes: ['battery'], resources: ['battery'] },
     comm:      { x: 475, color: '#3a8fb7', name: '通信機器', icon: '📡', tier: 4, tickets: 2, needs: ['optic', 'copper', 'semi'],
                  buildings: ['commGearFactory'], recipes: ['commGear'], resources: ['commGear'] },
