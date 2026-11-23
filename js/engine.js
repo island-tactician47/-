@@ -96,6 +96,8 @@
       if (s.goal !== undefined && (!s.goal || typeof s.goal !== 'object' || typeof s.goal.rank !== 'string' || !Number.isFinite(s.goal.score))) delete s.goal;
       if (s.nodes !== undefined) { if (!s.nodes || typeof s.nodes !== 'object' || Array.isArray(s.nodes)) delete s.nodes; else for (const id in s.nodes) if (s.nodes[id] !== true || !this.nodeDef(id)) delete s.nodes[id]; }
       if (s.tickets !== undefined) { const t0 = s.tickets; if (!t0 || typeof t0 !== 'object' || !Number.isFinite(t0.earned) || t0.earned < 0) delete s.tickets; else { if (!Number.isFinite(t0.spent) || t0.spent < 0) t0.spent = 0; t0.earned = Math.floor(t0.earned); t0.spent = Math.min(Math.floor(t0.spent), t0.earned); } }
+      // AI防衛システムを開いていた古いセーブ：新しい材料（発電・送電設備・通信衛星）のノードと、その前提の電機・光通信ラインも開いたことにする
+      if (s.nodes && s.nodes.aiDefense) for (const id of ['wire', 'motor', 'power', 'optic', 'comm', 'sat']) s.nodes[id] = true;
       // データからレシピが消えていたら先頭のレシピに戻す
       for (const p of s.plants) {
         const pd = this.plantDef(p);

@@ -13,8 +13,8 @@ GAME_DATA.segments = {
   transport: { name: '輸送機本部', icon: '🚗', group: 'product' },
   advanced:  { name: '先端・防衛本部', icon: '💾', group: 'product' },
   space:     { name: '宇宙事業', icon: '🛰️', group: 'product' },
-  mega:      { name: '大型プロジェクト', icon: '🏗️', group: 'product' },
-  electric:  { name: '電機・通信本部', icon: '🔌', group: 'product' }   // 洋上プラットフォーム・超音速旅客機・AI防衛システムの工場（コロニーの仲間）   // コロニー工場だけ。損益を分けて数える
+  mega:      { name: '大型プロジェクト', icon: '🏗️', group: 'product' },   // 洋上プラットフォーム・AI防衛システムの工場（コロニーの仲間）
+  electric:  { name: '電機・通信本部', icon: '🔌', group: 'product' }   // 電機ライン・光通信ラインの工場（モーター・発電設備・通信機器・衛星）   // コロニー工場だけ。損益を分けて数える
 };
 GAME_DATA.segmentOrder = ['oil', 'metal', 'ceramics', 'forestry', 'consumer', 'transport', 'advanced', 'space', 'mega', 'electric'];
 (function () {
