@@ -1132,7 +1132,49 @@
     // 加工設備1基の、いまの稼働の月あたりの流れ（マップの建物の詳細用。状態は変えない）。
     // 生産量は昨日の実績（p.last.t。まだ動いていなければ 能力×稼働率）を30日ぶんにしたもの。
     // 入力は、買った割合ぶんを買値、残りを自社在庫（売値換算）で数える（買った割合＝昨日実際に買った割合。まだ動いていなければ、在庫が1か月ぶんに足りない割合。在庫があれば在庫を先に使う）
-    plantFlow(s, p) {
+    // 画面用：自社で使う原料の受け渡しは「原価」で数える（2026-11-23）。作る工場は、自社で使う分の売上＝その分の費用（利益0）、使う工場は、自社品の在庫ぶんの原料代＝作った工場の1単位あたりの費用。
+    // 工場の利益を足し合わせると、会社の本当の利益と合う。実際のお金・財務は変わらない（見積もりの表示だけ）。raw＝true なら受け渡しを調整しない（もとの見積もり）
+    plantFlow(s, p, raw, depth) {
+      const f0 = this._plantFlowRaw(s, p);
+      if (!f0 || raw) return f0;
+      return this._inhouseAdjust(s, p, f0, depth || 0);
+    },
+    // 自社の工場が使った量÷作った量（直近3か月）。使われていない・記録が無ければ0
+    inhouseShare(s, k) {
+      const hs = (s.history || []).slice(-3); let pr = 0, co = 0;
+      for (const h of hs) { pr += (h.produced || {})[k] || 0; co += (h.consumed || {})[k] || 0; }
+      return pr > 1e-9 ? Math.min(1, co / pr) : 0;
+    },
+    // 品目 k の、自社の工場での1単位あたりの費用（原料・操業費・維持費・輸入の罰。自社品の原料は原価で）。作っていなければ null
+    unitCost(s, k, depth) {
+      let cost = 0, units = 0;
+      for (const q of s.plants) {
+        const rc = D().recipes[q.recipe]; if (!rc || !rc.outputs[k] || !q.last || !(q.last.t > 1e-9)) continue;
+        const f = depth >= 4 ? this.plantFlow(s, q, true) : this.plantFlow(s, q, false, depth + 1); if (!f) continue;
+        const o = f.outs.find(x => x.k === k); if (!o) continue;
+        cost += f.inCost + f.fee + f.opex + f.fixed; units += o.qty;
+      }
+      return units > 1e-9 ? cost / units : null;
+    },
+    _inhouseAdjust(s, p, f, depth) {
+      const R = D().resources; let inCost = 0;
+      const ins = f.ins.map(i => {
+        const uc = this.unitCost(s, i.k, depth);
+        if (uc === null || i.share >= 0.99) { inCost += i.cost; return i; }
+        const cost = i.qty * (i.share * Market.buyPrice(s, i.k) + (1 - i.share) * uc);
+        inCost += cost; return Object.assign({}, i, { cost, inhouse: true, unitCost: uc });
+      });
+      const total = inCost + f.fee + f.opex + f.fixed;
+      let revenue = 0;
+      const outs = f.outs.map((o, n) => {
+        const sh = n === 0 ? this.inhouseShare(s, o.k) : 0;
+        if (sh <= 0.005) { revenue += o.value; return o; }
+        const v = (1 - sh) * o.value + sh * total; revenue += v;   // 自社で使う分は、費用と同額で受け渡し（利益0）
+        return Object.assign({}, o, { value: v, inhouse: sh });
+      });
+      return Object.assign({}, f, { ins, outs, inCost, revenue, profit: revenue - inCost - f.fee - f.opex - f.fixed });
+    },
+    _plantFlowRaw(s, p) {
       const rec = D().recipes[p.recipe], def = this.plantDef(p), b = D().buildings[p.type], R = D().resources;
       if (!rec || !def || !b) return null;
       const idx = this.priceIndex(s), MC = this.moduleCfg() || {}, nm = p.modules || 0;
