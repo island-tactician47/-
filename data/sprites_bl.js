@@ -4500,5 +4500,89 @@ window.GAME_DATA.spritesBL = {
     "fd": 4
    }
   ]
+ },
+ "module_fineChemPlant": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/module_fineChemPlant_r0.png",
+    "w": 203.0,
+    "h": 136.0,
+    "ax": 101.5,
+    "ay": 87.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_fineChemPlant_r1.png",
+    "w": 203.0,
+    "h": 150.0,
+    "ax": 101.5,
+    "ay": 101.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_fineChemPlant_r2.png",
+    "w": 203.0,
+    "h": 183.0,
+    "ax": 101.5,
+    "ay": 134.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_fineChemPlant_r3.png",
+    "w": 203.0,
+    "h": 169.0,
+    "ax": 101.5,
+    "ay": 120.6,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "module_explosivesFactory": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/module_explosivesFactory_r0.png",
+    "w": 203.0,
+    "h": 124.0,
+    "ax": 101.5,
+    "ay": 75.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_explosivesFactory_r1.png",
+    "w": 203.0,
+    "h": 104.5,
+    "ax": 101.5,
+    "ay": 56.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_explosivesFactory_r2.png",
+    "w": 203.0,
+    "h": 124.0,
+    "ax": 101.5,
+    "ay": 75.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/module_explosivesFactory_r3.png",
+    "w": 203.0,
+    "h": 109.5,
+    "ax": 101.5,
+    "ay": 61.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
  }
 };
