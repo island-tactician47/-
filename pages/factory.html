@@ -187,7 +187,7 @@ function renderPlants(s, seg, info) {
       <div class="sub">いまの相場：売値$${num(ec.revenue)} − 原料$${num(ec.inputCostBuy)}（買う）− 操業$${num(ec.opex)} ＝ ${sg(ec.marginBuy)}　自社在庫を使うと ${sg(ec.marginOwn)}</div>
       <div class="sub">能力${qty(E.plantCapOf(p))}${unit}/日${p.modules ? `（増設モジュール${p.modules}個込み）` : ''}　${isFinite(ec.paybackYearsBuy) ? `回収目安${num(ec.paybackYearsBuy, 1)}年` : '回収できない'}</div>
       ${ec.unbuyable.length ? `<div class="sub warn">${ec.unbuyable.map(k => G.resources[k].name).join('・')}は市場で買えない（自社で作るしかない）</div>` : ''}
-      ${E.moduleCfg().max && E.hasModule(p.type) ? `<div class="row" style="margin-top:4px"><span class="sub">🧱 増設モジュール ${E.moduleCount(s, p)}/${E.moduleCfg().max}（日量+${Math.round(E.moduleCfg().gain * 100)}%/個・${E.fmtMoney(E.moduleCost(s, p))}）</span><button class="btn small" ${E.canBuildModule(s, p).ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?module=${p.id}'">マップで置く</button></div>` : ''}
+      ${E.moduleMax(p.type) && E.hasModule(p.type) ? `<div class="row" style="margin-top:4px"><span class="sub">🧱 増設モジュール ${E.moduleCount(s, p)}/${E.moduleMax(p.type)}（日量+${Math.round(E.moduleCfg().gain * 100)}%/個・${E.fmtMoney(E.moduleCost(s, p))}）</span><button class="btn small" ${E.canBuildModule(s, p).ok ? '' : 'disabled'} onclick="UI.save();location.href='town.html?module=${p.id}'">マップで置く</button></div>` : ''}
       ${p.last && p.last.t > 0 ? `<div class="sub">昨日の生産 ${qty(p.last.t)}${unit}</div>` : ''}`);
   }
 }

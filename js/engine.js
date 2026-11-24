@@ -422,7 +422,7 @@
     },
     canPlaceModule(s, p, x, y, occ, rot, skipMax) {   // rot 省略＝親と同じ向き。skipMax＝置き直し（個数は増えない）
       if (!this.moduleCfg() || !this.plantDef(p) || !this.hasModule(p.type)) return { ok: false, msg: 'モジュールを置けない設備' };
-      if (!skipMax && this.moduleCount(s, p) >= this.moduleCfg().max) return { ok: false, msg: `増設モジュールは最大${this.moduleCfg().max}個` };
+      if (!skipMax && this.moduleCount(s, p) >= this.moduleMax(p.type)) return { ok: false, msg: `増設モジュールは最大${this.moduleMax(p.type)}個` };
       this.ensureMap(s);
       const prot = rot === undefined ? this.parentRot(s, p) : (((rot | 0) % 4) + 4) % 4, pc = this.canPlace(s, 'module', x, y, occ, prot, p.type); if (!pc.ok) return pc;
       const [w, d] = this.footprintOf('module', prot, p.type), rects = this.plantRects(s, p);
@@ -445,7 +445,7 @@
     canBuildModule(s, p) {
       if (!p) return { ok: false, msg: '設備がない' };
       if (!this.moduleCfg() || !this.plantDef(p) || !this.hasModule(p.type)) return { ok: false, msg: 'モジュールを置けない設備' };
-      if (this.moduleCount(s, p) >= this.moduleCfg().max) return { ok: false, msg: `増設モジュールは最大${this.moduleCfg().max}個` };
+      if (this.moduleCount(s, p) >= this.moduleMax(p.type)) return { ok: false, msg: `増設モジュールは最大${this.moduleMax(p.type)}個` };
       const cost = this.moduleCost(s, p); if (s.cash < cost) return { ok: false, msg: `資金不足（${this.fmtMoney(cost)}）` };
       return { ok: true, cost };
     },
@@ -825,7 +825,7 @@
     importCapDaily(p) {
       if (this.importRatio(p.recipe) >= 1) return Infinity;
       const rec = D().recipes[p.recipe], def = this.plantDef(p), MC = this.moduleCfg() || {};
-      return rec && def ? this.plantCap(def, rec) * (1 + (this.hasModule(p.type) ? (MC.gain || 0) * (MC.max || 0) : 0)) : Infinity;
+      return rec && def ? this.plantCap(def, rec) * (1 + (this.hasModule(p.type) ? (MC.gain || 0) * this.moduleMax(p.type) : 0)) : Infinity;
     },
     // ---------- ノードの解放：解放権（会社の利益で貯まる）と選択権（輸入なしで回る素材の余剰） ----------
     ticketSteps() { return this.treeCfg().ticketSteps || []; },
@@ -856,7 +856,7 @@
       const type = (d.supply && d.supply.building) || (d.buildings && d.buildings[0]), pd = type && D().plants[type];
       const rid = (d.supply && d.supply.recipe) || (pd && pd.recipes[0]), rec = rid && D().recipes[rid];
       if (!pd || !rec) return [];
-      const MC = this.moduleCfg() || {}, full = this.plantCap(pd, rec) * (this.hasModule(type) ? 1 + (MC.gain || 0) * Math.min(this.treeCfg().supplyModules || 0, MC.max || 0) : 1) * (this.treeCfg().supplyFactor || 1), made = this._plantMade(), out = [];
+      const MC = this.moduleCfg() || {}, full = this.plantCap(pd, rec) * (this.hasModule(type) ? 1 + (MC.gain || 0) * Math.min(this.treeCfg().supplyModules || 0, this.moduleMax(type)) : 1) * (this.treeCfg().supplyFactor || 1), made = this._plantMade(), out = [];
       for (const k in rec.inputs) if (made[k]) out.push({ k, need: rec.inputs[k] * full });
       return out;
     },
@@ -1672,6 +1672,7 @@
     plantCap(def, rec) { return def.throughput * (rec.speed || 1); },
     // 増設モジュールを含めた設備の日量（モジュールが無ければ plantCap と同じ）
     // その設備に増設モジュールを置けるか（造船所はドックの増設が難しいので置けない＝map.js の modules.exclude）
+    moduleMax(type) { const c = this.moduleCfg(), o = c.maxBy && c.maxBy[type]; return c.max ? Math.max(c.max, o || 0) : 0; },   // 設備ごとの増設モジュールの上限（data/map.js の modules.maxBy。無ければ max）
     hasModule(type) { const c = this.moduleCfg(); return !!c && !(c.exclude && c.exclude[type]); },
     moduleCfg() { return (D().map && D().map.modules) || { max: 0, gain: 0, costMul: 1, monthsMul: 1, fixedMul: 0 }; },   // マップのデータが無いと増設は0個
     plantCapOf(p) { const def = this.plantDef(p), rec = D().recipes[p.recipe], MC = this.moduleCfg(); return this.plantCap(def, rec) * (1 + (p.modules || 0) * MC.gain); },
