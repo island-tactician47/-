@@ -216,7 +216,7 @@
     const q = document.getElementById('queue');
     if (!q) return;
     if (!s.construction.length) { UI.html(q, ''); return; }
-    const onMap = !!q.closest('#townwrap'), all = s.construction.slice().sort((a, b) => a.daysLeft - b.daysLeft), shown = onMap ? all.slice(0, 3) : all;   // 町の地図の上では、残りの短い3件だけ（地図を隠さない）
+    const onMap = !!document.getElementById('townwrap'), all = s.construction.slice().sort((a, b) => a.daysLeft - b.daysLeft), shown = onMap ? all.slice(0, 3) : all;   // 町の地図の上では、残りの短い3件だけ（地図を隠さない）
     UI.html(q, `<div class="card"><div class="row"><h3>🚧 建設中 ${s.construction.length}件</h3>${onMap && all.length > shown.length ? `<span class="sub">ほか${all.length - shown.length}件</span>` : ''}</div>` +
       shown.map(c =>
         `<div class="qrow"><div class="row"><span>${Engine.constructionLabel(c, s)}</span><span class="sub">残り${Engine.fmtDuration(c.daysLeft)}</span></div>
