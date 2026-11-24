@@ -1132,12 +1132,25 @@
     // 加工設備1基の、いまの稼働の月あたりの流れ（マップの建物の詳細用。状態は変えない）。
     // 生産量は昨日の実績（p.last.t。まだ動いていなければ 能力×稼働率）を30日ぶんにしたもの。
     // 入力は、買った割合ぶんを買値、残りを自社在庫（売値換算）で数える（買った割合＝昨日実際に買った割合。まだ動いていなければ、在庫が1か月ぶんに足りない割合。在庫があれば在庫を先に使う）
-    // 画面用：自社で使う原料の受け渡しは「原価」で数える（2026-11-23）。作る工場は、自社で使う分の売上＝その分の費用（利益0）、使う工場は、自社品の在庫ぶんの原料代＝作った工場の1単位あたりの費用。
-    // 工場の利益を足し合わせると、会社の本当の利益と合う。実際のお金・財務は変わらない（見積もりの表示だけ）。raw＝true なら受け渡しを調整しない（もとの見積もり）
-    plantFlow(s, p, raw, depth) {
+    // 表示の切り替え（opt.cost）：false/未指定＝自社で使う原料も市場の売値で数える（従来）。true＝自社で使う原料は「原価」で受け渡す：
+    //   作る工場は自社で使う分の売上＝その分の費用（利益0）、使う工場は自社品の在庫ぶんの原料代＝作った工場の1単位あたりの費用（原料・操業費・維持費・輸入の罰）。
+    //   作った品が複数あるときは費用を売値の比で割る。油井・鉱山・製油所など工場でない供給元の品は市場の価格のまま。実際のお金・財務は変わらない（見積もりの表示だけ）。
+    //   工場の利益を足すと、受け渡しが打ち消し合う（上流の売上＝下流の原料代）ので、どちらの数え方でも合計はほぼ同じ。
+    plantFlow(s, p, opt) {
       const f0 = this._plantFlowRaw(s, p);
-      if (!f0 || raw) return f0;
-      return this._inhouseAdjust(s, p, f0, depth || 0);
+      if (!f0 || !(opt && opt.cost)) return f0;
+      const a = this._costTable(s).adj.get(p); if (!a) return f0;
+      return Object.assign({}, a, { ins: a.ins.map((i, n) => Object.assign({}, i, { stockDays: f0.ins[n].stockDays })) });   // 在庫の日数は、キャッシュの古さが出ないよう毎回の値
+    },
+    // 全工場の合計を本部ごとに（見積もり）。{ 本部id: { profit, revenue, plants } }
+    plantFlowBySegment(s, opt) {
+      const out = {};
+      for (const p of s.plants) {
+        const f = this.plantFlow(s, p, opt); if (!f) continue;
+        const o = out[this.segmentOfBuilding(p.type) || 'corp'] || (out[this.segmentOfBuilding(p.type) || 'corp'] = { profit: 0, revenue: 0, plants: 0 });
+        o.profit += f.profit; o.revenue += f.revenue; o.plants++;
+      }
+      return out;
     },
     // 自社の工場が使った量÷作った量（直近3か月）。使われていない・記録が無ければ0
     inhouseShare(s, k) {
@@ -1145,34 +1158,50 @@
       for (const h of hs) { pr += (h.produced || {})[k] || 0; co += (h.consumed || {})[k] || 0; }
       return pr > 1e-9 ? Math.min(1, co / pr) : 0;
     },
-    // 品目 k の、自社の工場での1単位あたりの費用（原料・操業費・維持費・輸入の罰。自社品の原料は原価で）。作っていなければ null
-    unitCost(s, k, depth) {
-      let cost = 0, units = 0;
-      for (const q of s.plants) {
-        const rc = D().recipes[q.recipe]; if (!rc || !rc.outputs[k] || !q.last || !(q.last.t > 1e-9)) continue;
-        const f = depth >= 4 ? this.plantFlow(s, q, true) : this.plantFlow(s, q, false, depth + 1); if (!f) continue;
-        const o = f.outs.find(x => x.k === k); if (!o) continue;
-        cost += f.inCost + f.fee + f.opex + f.fixed; units += o.qty;
+    // 原価で数えた全工場の表（日・工場の構成が変わるまで使い回す。状態には入れない）。unit＝品目ごとの1単位あたりの費用、adj＝工場→調整後の流れ
+    _costTable(s) {
+      const sig = s.day + '|' + s.plants.map(q => q.id + q.recipe + (q.autoBuy ? 1 : 0) + (q.modules || 0) + (q.runRate === undefined ? '' : q.runRate) + (q.last ? Math.round(q.last.t * 100) : '')).join(',');
+      const c = this._costCache || (this._costCache = new WeakMap()), hit = c.get(s);
+      if (hit && hit.sig === sig) return hit;
+      const raw = new Map(), plants = [];
+      for (const q of s.plants) { const f = this._plantFlowRaw(s, q); if (f) { raw.set(q, f); plants.push(q); } }
+      // 出力ごとの費用の割り当て比（売値の比。売れない品は0。全部売れないなら量の比）
+      const frac = new Map();
+      for (const q of plants) {
+        const f = raw.get(q), sum = f.outs.reduce((a, o) => a + o.value, 0), qs = f.outs.reduce((a, o) => a + o.qty, 0);
+        frac.set(q, f.outs.map(o => sum > 1e-9 ? o.value / sum : qs > 1e-9 ? o.qty / qs : 0));
       }
-      return units > 1e-9 ? cost / units : null;
-    },
-    _inhouseAdjust(s, p, f, depth) {
-      const R = D().resources; let inCost = 0;
-      const ins = f.ins.map(i => {
-        const uc = this.unitCost(s, i.k, depth);
-        if (uc === null || i.share >= 0.99) { inCost += i.cost; return i; }
-        const cost = i.qty * (i.share * Market.buyPrice(s, i.k) + (1 - i.share) * uc);
-        inCost += cost; return Object.assign({}, i, { cost, inhouse: true, unitCost: uc });
-      });
-      const total = inCost + f.fee + f.opex + f.fixed;
-      let revenue = 0;
-      const outs = f.outs.map((o, n) => {
-        const sh = n === 0 ? this.inhouseShare(s, o.k) : 0;
-        if (sh <= 0.005) { revenue += o.value; return o; }
-        const v = (1 - sh) * o.value + sh * total; revenue += v;   // 自社で使う分は、費用と同額で受け渡し（利益0）
-        return Object.assign({}, o, { value: v, inhouse: sh });
-      });
-      return Object.assign({}, f, { ins, outs, inCost, revenue, profit: revenue - inCost - f.fee - f.opex - f.fixed });
+      const costOf = (f, unit) => f.ins.reduce((a, i) => { const u = unit[i.k]; return a + (u === undefined || i.share >= 0.99 ? i.cost : i.qty * (i.share * (i.boughtCost / Math.max(1e-12, i.qty * i.share)) + (1 - i.share) * u)); }, 0) + f.fee + f.opex + f.fixed;
+      let unit = {};
+      for (let it = 0; it < 6; it++) {   // 連鎖の深さぶん繰り返す（循環があっても有限回で止める）
+        const cost = {}, qty = {};
+        for (const q of plants) {
+          const f = raw.get(q); if (!f.ran || !(f.t > 1e-9)) continue;
+          const tot = costOf(f, unit), fr = frac.get(q);
+          f.outs.forEach((o, n) => { if (o.qty > 0) { cost[o.k] = (cost[o.k] || 0) + tot * fr[n]; qty[o.k] = (qty[o.k] || 0) + o.qty; } });
+        }
+        const nu = {}; for (const k in qty) if (qty[k] > 1e-9) nu[k] = cost[k] / qty[k];
+        unit = nu;
+      }
+      const adj = new Map(), share = {};
+      for (const q of plants) {
+        const f = raw.get(q), fr = frac.get(q);
+        const ins = f.ins.map(i => {
+          const u = unit[i.k]; if (u === undefined || i.share >= 0.99) return i;
+          const buyUnit = i.share > 0 && i.qty > 0 ? i.boughtCost / (i.qty * i.share) : 0;
+          return Object.assign({}, i, { cost: i.qty * (i.share * buyUnit + (1 - i.share) * u), inhouse: true, unitCost: u });
+        });
+        const inCost = ins.reduce((a, i) => a + i.cost, 0), total = inCost + f.fee + f.opex + f.fixed;
+        let revenue = 0;
+        const outs = f.outs.map((o, n) => {
+          const sh = share[o.k] !== undefined ? share[o.k] : (share[o.k] = this.inhouseShare(s, o.k));
+          if (sh <= 0.005 || !(unit[o.k] !== undefined)) { revenue += o.value; return o; }
+          const v = (1 - sh) * o.value + sh * total * fr[n]; revenue += v;   // 自社で使う分は、費用と同額で受け渡し（利益0）
+          return Object.assign({}, o, { value: v, inhouse: sh });
+        });
+        adj.set(q, Object.assign({}, f, { ins, outs, inCost, revenue, profit: revenue - inCost - f.fee - f.opex - f.fixed }));
+      }
+      const r = { sig, unit, adj }; c.set(s, r); return r;
     },
     _plantFlowRaw(s, p) {
       const rec = D().recipes[p.recipe], def = this.plantDef(p), b = D().buildings[p.type], R = D().resources;

@@ -70,6 +70,13 @@
     },
     // 描画したときの開閉（data-o）と同じなら、解析時に出る toggle イベントなので何もしない（既定の開閉を保存してしまわないため）。ユーザーの操作のときだけ保存する
     toggled(key, el) { const v = el.open; if (el.dataset.o === (v ? '1' : '0')) return; el.dataset.o = v ? '1' : '0'; foldState[key] = v; try { localStorage.setItem('factorySim.ui.fold', JSON.stringify(foldState)); } catch (e) {} UI.refresh(); },
+    // 工場の利益の数え方（見積もりの表示だけ。セーブには入れない）：false＝自社で使う原料も市場の売値で数える（従来）／true＝自社で使う原料は原価で受け渡す
+    costMode() { try { return localStorage.getItem('factorySim.ui.costMode') === '1'; } catch (e) { return false; } },
+    setCostMode(v) { try { localStorage.setItem('factorySim.ui.costMode', v ? '1' : '0'); } catch (e) {} UI.refresh(); },
+    costToggle() {
+      const on = UI.costMode();
+      return `<div class="chips" style="margin:4px 0"><span class="chip ${on ? '' : 'on'}" onclick="UI.setCostMode(false)">売値で数える</span><span class="chip ${on ? 'on' : ''}" onclick="UI.setCostMode(true)">原価で受け渡す</span></div><div class="sub">${on ? '自社で使う原料は、作った工場の費用（原料＋操業費＋維持費）で受け渡す。作る工場は自社分の利益0、最終の工場に利益が集まる。工場でない供給元（油井・鉱山・製油所）の品は市場の価格のまま。' : '自社で使う原料も、市場の売値で数える（作る工場の利益に、売値ぶんが入る）。'}（見積もりの表示だけ。実際のお金は変わらない）</div>`;
+    },
     // 本部のタブ：page ごとに選択を保存。items = [{ id, label, badge? }]
     tab(page, def) { try { return localStorage.getItem('factorySim.ui.tab.' + page) || def; } catch (e) { return def; } },
     setTab(page, id) { try { localStorage.setItem('factorySim.ui.tab.' + page, id); } catch (e) {} UI.refresh(); },
