@@ -181,7 +181,7 @@
         else if (t === 'port') col = chk ? '#a29b8c' : '#9b9486';
         else {
           col = chk ? landA : landB;
-          if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => E.terrainAt(s, tx + dx, ty + dy) === 'sea')) col = chk ? '#cdc298' : '#c6bb90';   // 砂浜
+          if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => E.terrainAt(s, tx + dx, ty + dy) === 'sea')) col = chk ? '#b2afa4' : '#aba89d';   // 護岸の舗装（コンクリート）
         }
         poly([ptv(vx, vy, 0), ptv(vx + 1, vy, 0), ptv(vx + 1, vy + 1, 0), ptv(vx, vy + 1, 0)], col, col);
         if (t === 'road' && !far) {
@@ -192,8 +192,39 @@
         if (t === 'land' && !far && ((tx * 7 + ty * 13) % 11 === 0)) g.prism(tx + 0.4, ty + 0.4, 0.2, 0.2, 0, 1, '#6f9a5a');   // 草むら
         if (t === 'land' && !far && !I.noDeco) deco(tx, ty, occ, era);
       }
-      // 陸の縁（海に面した側の崖）
-      for (let tx = 0; tx < M.w; tx++) { const cy = E.coastY(tx); const t = E.terrainAt(s, tx, cy - 1); if (t && t !== 'sea') { const a = pt(tx, cy, 0); if (a[0] < -60 || a[0] > I.w + 60 || a[1] < -60 || a[1] > I.h + 60) continue; g.prism(tx, cy - 0.001, 1, 0.001, -4, 0, '#8d7e66'); } }
+      // 護岸（コンクリートの岸壁）：海に面した陸のタイルの縁ごとに、壁・天端（てんば）・目地・係船柱・防舷材・水際の白波。建物の下のタイル・港は除く
+      {
+        const edges = [], SIDES = [['S', 0, 1], ['N', 0, -1], ['E', 1, 0], ['W', -1, 0]];
+        for (let tx = 0; tx < M.w; tx++) {
+          const c0 = E.coastY(tx);
+          for (let ty = Math.max(0, c0 - 3); ty < Math.min(M.h, c0 + 22); ty++) {
+            const t = E.terrainAt(s, tx, ty); if (t !== 'land' && t !== 'road') continue;
+            if (occ[tx + ',' + ty]) continue;
+            const sides = SIDES.filter(([, dx, dy]) => E.terrainAt(s, tx + dx, ty + dy) === 'sea').map(q => q[0]);
+            if (!sides.length) continue;
+            const a = pt(tx, ty, 0); if (a[0] < -80 || a[0] > I.w + 80 || a[1] < -80 || a[1] > I.h + 80) continue;
+            const q = rectToView(tx, ty, 1, 1);
+            edges.push({ tx, ty, sides, k: q[0] + q[1] });
+          }
+        }
+        edges.sort((p1, p2) => p1.k - p2.k);
+        const FACE = '#a7a59d', CAP = '#cdcac0', JOINT = '#8c8982', BOL = '#2c2d30', FEND = '#232427';
+        for (const { tx, ty, sides } of edges) for (const sd of sides) {
+          const ns = sd === 'S' || sd === 'N';                       // 壁が x 方向に延びる（南北の縁）か、y 方向か
+          const wr = sd === 'S' ? [tx, ty + 0.84, 1, 0.16] : sd === 'N' ? [tx, ty, 1, 0.16] : sd === 'E' ? [tx + 0.84, ty, 0.16, 1] : [tx, ty, 0.16, 1];
+          const cr = sd === 'S' ? [tx - 0.01, ty + 0.78, 1.02, 0.22] : sd === 'N' ? [tx - 0.01, ty, 1.02, 0.22] : sd === 'E' ? [tx + 0.78, ty - 0.01, 0.22, 1.02] : [tx, ty - 0.01, 0.22, 1.02];
+          g.prism(wr[0], wr[1], wr[2], wr[3], -6.5, 0, FACE);          // 壁の面（水面の下まで）
+          g.prism(cr[0], cr[1], cr[2], cr[3], 0, 1.7, CAP);            // 天端（少し高く、手前に出た帯）
+          if (!far) {
+            const i0 = ns ? tx : ty;
+            if (i0 % 2 === 0) { const jr = ns ? [tx, cr[1], 0.025, cr[3]] : [cr[0], ty, cr[2], 0.025]; g.prism(jr[0], jr[1], jr[2], jr[3], 1.7, 1.85, JOINT); }   // 目地（2タイルごと）
+            if (i0 % 5 === 2) { const br = ns ? [tx + 0.42, cr[1] + (sd === 'S' ? 0.05 : 0.07), 0.14, 0.14] : [cr[0] + (sd === 'E' ? 0.05 : 0.07), ty + 0.42, 0.14, 0.14]; g.prism(br[0], br[1], br[2], br[3], 1.7, 5, BOL); g.prism(br[0] - 0.015, br[1] - 0.015, br[2] + 0.03, br[3] + 0.03, 4.4, 5.4, '#454649'); }   // 係船柱（ボラード）
+            if (i0 % 3 === 1) { const fr = sd === 'S' ? [tx + 0.3, ty + 1.0, 0.4, 0.07] : sd === 'N' ? [tx + 0.3, ty - 0.07, 0.4, 0.07] : sd === 'E' ? [tx + 1.0, ty + 0.3, 0.07, 0.4] : [tx - 0.07, ty + 0.3, 0.07, 0.4]; g.prism(fr[0], fr[1], fr[2], fr[3], -5.5, -1.2, FEND); }   // 防舷材（ゴム）
+            const fo = sd === 'S' ? [[tx, ty + 1], [tx + 1, ty + 1], [tx + 1, ty + 1.13], [tx, ty + 1.13]] : sd === 'N' ? [[tx, ty - 0.13], [tx + 1, ty - 0.13], [tx + 1, ty], [tx, ty]] : sd === 'E' ? [[tx + 1, ty], [tx + 1.13, ty], [tx + 1.13, ty + 1], [tx + 1, ty + 1]] : [[tx - 0.13, ty], [tx, ty], [tx, ty + 1], [tx - 0.13, ty + 1]];
+            ctx.globalAlpha = 0.6; poly(fo.map(([x, y]) => pt(x, y, 0)), '#e6f2f6'); ctx.globalAlpha = 1;   // 水際の白波
+          }
+        }
+      }
     }
 
     // 海を行き来する船（Blender の絵。港のグレードが上がると、大きな船も増える）。建物と同じ奥→手前の順に描くため、一覧にして frame() の並べ替えに入れる
