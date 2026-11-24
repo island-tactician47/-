@@ -4332,5 +4332,173 @@ window.GAME_DATA.spritesBL = {
     "fd": 12
    }
   ]
+ },
+ "port_gantry": {
+  "fw": 3,
+  "fd": 7,
+  "r": [
+   {
+    "file": "../assets/bl/port_gantry_r0.png",
+    "w": 239.5,
+    "h": 220.5,
+    "ax": 132.5,
+    "ay": 187.1,
+    "fw": 3,
+    "fd": 7
+   },
+   {
+    "file": "../assets/bl/port_gantry_r1.png",
+    "w": 239.5,
+    "h": 223.0,
+    "ax": 132.5,
+    "ay": 197.1,
+    "fw": 7,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/port_gantry_r2.png",
+    "w": 239.5,
+    "h": 223.0,
+    "ax": 107.0,
+    "ay": 197.1,
+    "fw": 3,
+    "fd": 7
+   },
+   {
+    "file": "../assets/bl/port_gantry_r3.png",
+    "w": 239.5,
+    "h": 218.5,
+    "ax": 107.0,
+    "ay": 187.1,
+    "fw": 7,
+    "fd": 3
+   }
+  ]
+ },
+ "port_jetty": {
+  "fw": 3,
+  "fd": 9,
+  "r": [
+   {
+    "file": "../assets/bl/port_jetty_r0.png",
+    "w": 358.0,
+    "h": 183.0,
+    "ax": 189.5,
+    "ay": 94.6,
+    "fw": 3,
+    "fd": 9
+   },
+   {
+    "file": "../assets/bl/port_jetty_r1.png",
+    "w": 361.5,
+    "h": 201.0,
+    "ax": 193.0,
+    "ay": 125.6,
+    "fw": 9,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/port_jetty_r2.png",
+    "w": 358.0,
+    "h": 201.0,
+    "ax": 168.5,
+    "ay": 125.6,
+    "fw": 3,
+    "fd": 9
+   },
+   {
+    "file": "../assets/bl/port_jetty_r3.png",
+    "w": 361.5,
+    "h": 181.5,
+    "ax": 168.5,
+    "ay": 94.6,
+    "fw": 9,
+    "fd": 3
+   }
+  ]
+ },
+ "port_fish": {
+  "fw": 5,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/port_fish_r0.png",
+    "w": 187.5,
+    "h": 121.0,
+    "ax": 104.0,
+    "ay": 73.1,
+    "fw": 5,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/port_fish_r1.png",
+    "w": 218.5,
+    "h": 101.5,
+    "ax": 107.0,
+    "ay": 64.6,
+    "fw": 4,
+    "fd": 5
+   },
+   {
+    "file": "../assets/bl/port_fish_r2.png",
+    "w": 187.5,
+    "h": 125.5,
+    "ax": 83.5,
+    "ay": 76.6,
+    "fw": 5,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/port_fish_r3.png",
+    "w": 218.5,
+    "h": 108.5,
+    "ax": 111.5,
+    "ay": 61.6,
+    "fw": 4,
+    "fd": 5
+   }
+  ]
+ },
+ "port_yard": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/port_yard_r0.png",
+    "w": 245.5,
+    "h": 171.0,
+    "ax": 122.5,
+    "ay": 115.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/port_yard_r1.png",
+    "w": 245.5,
+    "h": 157.5,
+    "ax": 123.0,
+    "ay": 102.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/port_yard_r2.png",
+    "w": 246.0,
+    "h": 157.0,
+    "ax": 123.0,
+    "ay": 102.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/port_yard_r3.png",
+    "w": 245.5,
+    "h": 158.0,
+    "ax": 122.5,
+    "ay": 103.1,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
  }
 };
