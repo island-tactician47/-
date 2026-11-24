@@ -3425,27 +3425,27 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_cableFactory_r1.png",
     "w": 139.0,
-    "h": 79.0,
+    "h": 84.0,
     "ax": 69.5,
-    "ay": 45.1,
+    "ay": 50.1,
     "fw": 2,
     "fd": 2
    },
    {
     "file": "../assets/bl/module_cableFactory_r2.png",
     "w": 139.0,
-    "h": 95.5,
+    "h": 95.0,
     "ax": 69.5,
-    "ay": 61.6,
+    "ay": 61.1,
     "fw": 2,
     "fd": 2
    },
    {
     "file": "../assets/bl/module_cableFactory_r3.png",
     "w": 139.0,
-    "h": 90.0,
+    "h": 95.5,
     "ax": 69.5,
-    "ay": 56.1,
+    "ay": 61.6,
     "fw": 2,
     "fd": 2
    }
@@ -3458,36 +3458,36 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_fiberFactory_r0.png",
     "w": 139.0,
-    "h": 133.0,
+    "h": 118.5,
     "ax": 69.5,
-    "ay": 99.1,
+    "ay": 84.6,
     "fw": 2,
     "fd": 2
    },
    {
     "file": "../assets/bl/module_fiberFactory_r1.png",
     "w": 139.0,
-    "h": 123.0,
+    "h": 103.0,
     "ax": 69.5,
-    "ay": 89.1,
+    "ay": 69.1,
     "fw": 2,
     "fd": 2
    },
    {
     "file": "../assets/bl/module_fiberFactory_r2.png",
     "w": 139.0,
-    "h": 138.5,
+    "h": 123.5,
     "ax": 69.5,
-    "ay": 104.6,
+    "ay": 89.6,
     "fw": 2,
     "fd": 2
    },
    {
     "file": "../assets/bl/module_fiberFactory_r3.png",
     "w": 139.0,
-    "h": 148.5,
+    "h": 139.0,
     "ax": 69.5,
-    "ay": 114.6,
+    "ay": 105.1,
     "fw": 2,
     "fd": 2
    }
@@ -3626,18 +3626,18 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_satelliteFactory_r0.png",
     "w": 203.0,
-    "h": 139.5,
+    "h": 132.5,
     "ax": 101.5,
-    "ay": 91.1,
+    "ay": 84.1,
     "fw": 3,
     "fd": 3
    },
    {
     "file": "../assets/bl/module_satelliteFactory_r1.png",
     "w": 203.0,
-    "h": 119.5,
+    "h": 114.0,
     "ax": 101.5,
-    "ay": 71.1,
+    "ay": 65.6,
     "fw": 3,
     "fd": 3
    },
@@ -3653,9 +3653,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_satelliteFactory_r3.png",
     "w": 203.0,
-    "h": 136.5,
+    "h": 146.0,
     "ax": 101.5,
-    "ay": 88.1,
+    "ay": 97.6,
     "fw": 3,
     "fd": 3
    }
@@ -3752,18 +3752,18 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_tireFactory_r0.png",
     "w": 203.0,
-    "h": 124.5,
+    "h": 133.5,
     "ax": 101.5,
-    "ay": 76.1,
+    "ay": 85.1,
     "fw": 3,
     "fd": 3
    },
    {
     "file": "../assets/bl/module_tireFactory_r1.png",
     "w": 203.0,
-    "h": 107.5,
+    "h": 103.5,
     "ax": 101.5,
-    "ay": 59.1,
+    "ay": 55.1,
     "fw": 3,
     "fd": 3
    },
@@ -3779,9 +3779,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_tireFactory_r3.png",
     "w": 203.0,
-    "h": 124.5,
+    "h": 126.5,
     "ax": 101.5,
-    "ay": 76.1,
+    "ay": 78.1,
     "fw": 3,
     "fd": 3
    }
@@ -3794,18 +3794,18 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_batteryFactory_r0.png",
     "w": 171.0,
-    "h": 114.5,
+    "h": 115.5,
     "ax": 85.5,
-    "ay": 73.1,
+    "ay": 74.1,
     "fw": 2,
     "fd": 3
    },
    {
     "file": "../assets/bl/module_batteryFactory_r1.png",
     "w": 171.0,
-    "h": 97.0,
+    "h": 98.5,
     "ax": 85.5,
-    "ay": 55.6,
+    "ay": 57.1,
     "fw": 3,
     "fd": 2
    },
@@ -3821,9 +3821,9 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/module_batteryFactory_r3.png",
     "w": 171.0,
-    "h": 114.5,
+    "h": 116.0,
     "ax": 85.5,
-    "ay": 73.1,
+    "ay": 74.6,
     "fw": 3,
     "fd": 2
    }
