@@ -49,7 +49,6 @@
 const $ = id => document.getElementById(id);
 const E = Engine, M = E.fmtMoney;
 const KINDS = [{ id: 'pl', label: '損益計算書' }, { id: 'bs', label: '貸借対照表' }, { id: 'cf', label: 'キャッシュ・フロー' }];
-const UNITS = [{ id: 'year', label: '年次（決算）' }, { id: 'month', label: '月次' }];
 const m = v => v === null || v === undefined ? '—' : M(v);
 const pct = (a, b) => b > 0 ? (a / b * 100).toFixed(1) + '%' : '—';
 // 前の期（古い方）との比（増減率）。前が0以下・無いときは出さない
@@ -82,9 +81,9 @@ function cfTable(p, q) {
 
 function render(s) {
   $('co').textContent = '🏢 ' + E.companyName(s);
-  const kind = UI.tab('stmt-kind', 'pl'), unit = UI.tab('stmt-unit', 'year');
-  UI.html('ctl', UI.chips('stmt-kind', KINDS, kind) + UI.chips('stmt-unit', UNITS, unit));
-  const fin = E.financials(s, unit);   // 新しい期から
+  const kind = UI.tab('stmt-kind', 'pl'), unit = 'year';   // 年次だけ（月次は持たない）。直近10年（途中の年があれば、それを加えて11期）
+  UI.html('ctl', UI.chips('stmt-kind', KINDS, kind));
+  const fin0 = E.financials(s, unit), fin = fin0.slice(0, fin0.length && fin0[0].ongoing ? 11 : 10);   // 新しい期から
   if (!fin.length) { UI.html('list', '<div class="card sub">まだ決算がありません（1か月たつと、月次の記録ができます）。</div>'); return; }
   const f = kind === 'pl' ? plTable : kind === 'bs' ? bsTable : cfTable;
   UI.html('list', fin.map((p, i) => `<div class="card stmt"><div class="hd"><h3>${p.label}${p.ongoing ? ' <span class="sub">途中</span>' : ''}</h3><span class="sub">${kind === 'bs' ? '期末' : unit === 'year' ? '通年' : '月間'}${i < fin.length - 1 ? '・前の期比' : ''}</span></div>${f(p, fin[i + 1])}</div>`).join(''));

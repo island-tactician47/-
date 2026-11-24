@@ -145,6 +145,31 @@
       }
     },
 
+    // 推移のグラフ（年ごと）。pts = [{ y, v }]（v が null の年は線を引かない）。縦に目盛り線と数値、横に年。opts = { fmt, zero, note（最初の値の位置に出す注記）}
+    trendChart(canvas, pts, color, opts) {
+      opts = opts || {};
+      const dpr = window.devicePixelRatio || 1, w = canvas.clientWidth, h = canvas.clientHeight;
+      if (!w || !h) return;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      const c = canvas.getContext('2d'); c.scale(dpr, dpr); c.clearRect(0, 0, w, h);
+      const fmt = opts.fmt || (v => String(Math.round(v))), L = 52, R = 8, T = 8, B = 16;
+      const vs = pts.map(p => p.v).filter(v => v !== null && v !== undefined);
+      if (!vs.length) { c.fillStyle = '#7a6f62'; c.font = '11px sans-serif'; c.fillText('データ待ち', 6, h / 2); return; }
+      let min = Math.min(...vs), max = Math.max(...vs); if (opts.zero !== false) min = Math.min(0, min); if (max - min < 1e-9) { max = min + 1; }
+      const raw = (max - min) / 3, pw = Math.pow(10, Math.floor(Math.log10(raw))), st = [1, 2, 2.5, 5, 10].map(m => m * pw).find(v => v >= raw) || raw;
+      const lo = Math.floor(min / st) * st, hi = Math.ceil(max / st) * st;
+      const n = pts.length, x = i => L + (w - L - R) * (n === 1 ? 0.5 : i / (n - 1)), y = v => T + (h - T - B) * (1 - (v - lo) / (hi - lo));
+      c.font = '10px sans-serif'; c.textBaseline = 'middle'; c.textAlign = 'right';
+      for (let v = lo; v <= hi + st * 0.01; v += st) { c.strokeStyle = v === 0 ? '#bdb3a2' : '#e6dfd0'; c.lineWidth = 1; c.beginPath(); c.moveTo(L, y(v)); c.lineTo(w - R, y(v)); c.stroke(); c.fillStyle = '#7a6f62'; c.fillText(fmt(v), L - 4, y(v)); }
+      c.textBaseline = 'alphabetic'; c.textAlign = 'center';
+      const span = pts[n - 1].y - pts[0].y, xs = [1, 2, 5, 10, 20, 25, 50].find(v => span / v <= 5) || 50;
+      let lastX = -99; for (let i = 0; i < n; i++) { if (pts[i].y % xs !== 0 && i !== 0) continue; const px = x(i); if (px - lastX < 34) continue; c.fillStyle = '#7a6f62'; c.fillText(String(pts[i].y), Math.min(Math.max(px, L + 10), w - R - 12), h - 3); c.strokeStyle = '#e6dfd0'; c.beginPath(); c.moveTo(px, T); c.lineTo(px, h - B); c.stroke(); lastX = px; }
+      c.strokeStyle = color; c.lineWidth = 2; c.beginPath(); let pen = false;
+      pts.forEach((p, i) => { if (p.v === null || p.v === undefined) { pen = false; return; } pen ? c.lineTo(x(i), y(p.v)) : c.moveTo(x(i), y(p.v)); pen = true; }); c.stroke();
+      if (n <= 40) { c.fillStyle = color; pts.forEach((p, i) => { if (p.v !== null && p.v !== undefined) { c.beginPath(); c.arc(x(i), y(p.v), 2.2, 0, 7); c.fill(); } }); }
+      if (opts.note) { const i0 = pts.findIndex(p => p.v !== null && p.v !== undefined); if (i0 > 0) { c.fillStyle = '#7a6f62'; c.textAlign = 'left'; c.font = '10px sans-serif'; c.fillText(opts.note, Math.min(x(i0) + 4, w - 60), Math.max(y(pts[i0].v) - 6, 12)); } }
+    },
+
     goal(s) {
       if (!s.flags.refineryRunning) return (Engine.constructing(s, 'refinery') || Engine.constructing(s, 'refineryLarge')) ? '目標：製油所の完成を待つ' : '目標：製油所を建てる（用地・蒸留塔・製品タンク込み）';
       for (let t = 3; t <= 6; t++) {
@@ -191,8 +216,9 @@
     const q = document.getElementById('queue');
     if (!q) return;
     if (!s.construction.length) { UI.html(q, ''); return; }
-    UI.html(q, `<div class="card"><div class="row"><h3>🚧 建設中 ${s.construction.length}件</h3></div>` +
-      s.construction.slice().sort((a, b) => a.daysLeft - b.daysLeft).map(c =>
+    const onMap = !!q.closest('#townwrap'), all = s.construction.slice().sort((a, b) => a.daysLeft - b.daysLeft), shown = onMap ? all.slice(0, 3) : all;   // 町の地図の上では、残りの短い3件だけ（地図を隠さない）
+    UI.html(q, `<div class="card"><div class="row"><h3>🚧 建設中 ${s.construction.length}件</h3>${onMap && all.length > shown.length ? `<span class="sub">ほか${all.length - shown.length}件</span>` : ''}</div>` +
+      shown.map(c =>
         `<div class="qrow"><div class="row"><span>${Engine.constructionLabel(c, s)}</span><span class="sub">残り${Engine.fmtDuration(c.daysLeft)}</span></div>
         <div class="bar"><i style="width:${(1 - c.daysLeft / c.totalDays) * 100}%"></i></div></div>`).join('') + '</div>');
   }

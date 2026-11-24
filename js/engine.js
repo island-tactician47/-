@@ -53,6 +53,7 @@
       }
       for (const id in D().leases) if (!s.leases[id] || typeof s.leases[id] !== 'object') s.leases[id] = { owned: false, revealed: false };   // 鉱区が増えても古いセーブを読めるように
       Market.ensure(s);
+      this.ensureSeries(s);
       if (!s.plants) s.plants = [];
       if (!s.nextPlantId) s.nextPlantId = 1;
       if (!s.tiers) s.tiers = {};
@@ -692,7 +693,8 @@
       const speed = 100 * clamp01((cfg.speedWorst - adj) / (cfg.speedWorst - cfg.speedBest));
       const assets = s.cash + this.inventoryValue(s) + this.assetValue(s), eq = this.equity(s), equityRatio = 100 * clamp01(assets > 0 ? eq / assets : 0);
       const margin = 100 * clamp01(this.operatingMargin12(s) / cfg.marginFull);
-      const odMonths = (s.history || []).filter(x => x.odDraw > 0).length;
+      let odMonths = (s.history || []).filter(x => x.odDraw > 0).length;
+      { const h0 = (s.history || [])[0]; if (s.series && h0) for (const r of s.series) if (r[0] * 12 + r[1] < h0.y * 12 + h0.m) odMonths += (+r[7] || 0); }   // 履歴から落ちた古い月（履歴が600か月を超えた分・セーブを軽くして切り詰めた分）
       const penalty = (s.restructured ? cfg.restructurePenalty : 0) + Math.min(cfg.overdraftPenaltyMax, odMonths * cfg.overdraftPenaltyPerMonth);
       const W = cfg.weights, total = Math.max(0, Math.min(100, speed * W.speed + equityRatio * W.equity + margin * W.margin - penalty));
       const rk = cfg.ranks.find(r => total >= r.min) || cfg.ranks[cfg.ranks.length - 1];
@@ -1037,6 +1039,26 @@
         prevClose = close;
       }
       return out.reverse();
+    },
+    // ---------- 長期の推移（s.series）：月ごとの [年, 月, 売上, 利益, 総資産, 資金, 従業員数（不明は null）, 当座貸越の月か(0/1)]。1行は約60バイトで、履歴（s.history）より桁違いに軽い ----------
+    seriesRow(s, h) {
+      const has = h.bs && h.bs.inv !== undefined;
+      return [h.y, h.m, Math.round(h.revenue || 0), Math.round(h.profit || 0), has ? Math.round(h.cash + h.bs.inv + h.bs.fixed) : null, Math.round(h.cash || 0), s.history[s.history.length - 1] === h ? this.staffTotal(s).total : null, h.odDraw > 0 ? 1 : 0];
+    },
+    // 古いセーブ：残っている月次履歴から作る（従業員数は記録が無かったので null）
+    ensureSeries(s) {
+      if (s.series && !Array.isArray(s.series)) s.series = null;
+      if (s.series || !s.history || !s.history.length) return;
+      s.series = s.history.filter(h => h.y !== undefined && h.m !== undefined).map(h => this.seriesRow(s, h));
+    },
+    // 年ごとの推移（古い年から）：{ y, rev（年間の売上）, profit（年間の利益）, assets/cash/staff（年末。staff は記録が無ければ null）, n（月数） }
+    trend(s) {
+      const out = [], by = {};
+      for (const r of s.series || []) {
+        let o = by[r[0]]; if (!o) { o = by[r[0]] = { y: r[0], rev: 0, profit: 0, assets: null, cash: null, staff: null, n: 0 }; out.push(o); }
+        o.rev += r[2]; o.profit += r[3]; if (r[4] !== null) o.assets = r[4]; o.cash = r[5]; if (r[6] !== null) o.staff = r[6]; o.n++;
+      }
+      return out;
     },
     // 設備の評価額（再調達額＝建設費×物価指数、減価なし。港の改修は含めない）
     assetValue(s) {
@@ -2066,6 +2088,7 @@
         costs: { purchase: m.purchase, opex: m.opex, fixed: m.fixed, interest: m.interest, research: m.research || 0, refund: m.refund || 0, ...(m.penalty ? { penalty: m.penalty } : {}), ...(tax > 0 ? { tax } : {}) }, segPL: this.roundSegPL(m.seg)
       });
       if (s.history.length > 600) s.history.shift();
+      { const hb = s.history[s.history.length - 1]; (s.series || (s.series = [])).push(this.seriesRow(s, hb)); }   // 長期の推移（創業から。履歴が削られても残る）
       if (m.lostCrude > 1) this.log(s, `⚠️ 原油タンクが満杯で ${this.fmtNum(m.lostCrude)}bbl を採り損ねた`);
       s.month = emptyMonth();
       const ev = Market.monthly(s);

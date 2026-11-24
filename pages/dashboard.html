@@ -12,6 +12,15 @@
 <main>
   <h2>📊 経営ダッシュボード</h2>
   <div class="card" id="summary"></div>
+  <div class="card" id="trendcard">
+    <div class="row"><h3>📈 創業からの推移</h3><span class="sub" id="trendsub"></span></div>
+    <div id="trendctl"></div>
+    <div class="sub">売上高（年間）</div><canvas class="chart tchart" id="tr-rev"></canvas>
+    <div class="sub">利益（年間・研究費・利息込み）</div><canvas class="chart tchart" id="tr-profit"></canvas>
+    <div class="sub">総資産（年末。資金＋在庫＋設備）</div><canvas class="chart tchart" id="tr-assets"></canvas>
+    <div class="sub">資金（年末）</div><canvas class="chart tchart" id="tr-cash"></canvas>
+    <div class="sub">従業員数（年末）</div><canvas class="chart tchart" id="tr-staff"></canvas>
+  </div>
   <div class="card">
     <div class="row"><h3>売上と利益</h3><span class="sub">直近36か月</span></div>
     <div class="sub">月次の売上</div><canvas class="chart" id="revChart"></canvas>
@@ -226,8 +235,21 @@ function renderInvest(s) {
   UI.html('invest', false ? `<div class="card sub">🔬 研究中：${E.researchName(s.research.active.id)}（月 ${M(E.researchMonthly(s, s.research.active.id))}）</div>` : '');
 }
 
+const TRANGES = [{ id: '10', label: '10年' }, { id: '50', label: '50年' }, { id: 'all', label: '最大' }];
+function renderTrend(s) {
+  const r = UI.tab('trend-range', '10'), all = E.trend(s), yrs = r === 'all' ? all : all.slice(-(+r));
+  UI.html('trendctl', UI.chips('trend-range', TRANGES, r));
+  UI.html('trendsub', yrs.length ? `${yrs[0].y}〜${yrs[yrs.length - 1].y}年${all.length && all[0].y > G.startYear ? '（記録は' + all[0].y + '年から）' : ''}` : '');
+  const pts = k => yrs.map(y => ({ y: y.y, v: y[k] }));
+  UI.trendChart($('tr-rev'), pts('rev'), '#2f6f8f', { fmt: M });
+  UI.trendChart($('tr-profit'), pts('profit'), '#2e7d4f', { fmt: M });
+  UI.trendChart($('tr-assets'), pts('assets'), '#7a4fa3', { fmt: M });
+  UI.trendChart($('tr-cash'), pts('cash'), '#c77d1e', { fmt: M });
+  UI.trendChart($('tr-staff'), pts('staff'), '#a34f4f', { fmt: v => Math.round(v).toLocaleString() + '人', note: '記録開始' });
+}
+
 function render(s) {
-  renderSummary(s); renderDeals(s); renderSegs(s); renderInvest(s);
+  renderSummary(s); renderDeals(s); renderSegs(s); renderInvest(s); renderTrend(s);
   const h = s.history.slice(-36);
   UI.spark($('revChart'), h.map(x => x.revenue), '#2f6f8f', { labels: true, fmt: M });
   UI.spark($('profChart'), h.map(x => x.profit), '#2e7d4f', { zero: true, labels: true, fmt: M });
