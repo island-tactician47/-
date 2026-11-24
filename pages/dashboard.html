@@ -176,11 +176,11 @@ function segBody(s, o, pl) {
 }
 
 function renderSegs(s) {
-  const info = collect(s), pl = E.segmentPL(s, 12), fl = E.plantFlowBySegment(s, { cost: UI.costMode() });
+  const info = collect(s), pl = E.segmentPL(s, 12), fl = E.plantFlowBySegment(s, { cost: !!(UI.costMode && UI.costMode()) });
   const visible = E.segmentIds().filter(id => id === 'oil' || info[id].plants.length || info[id].recipes.length);
-  UI.html('segs', UI.costToggle() + visible.map(id => {
+  UI.html('segs', (UI.costToggle ? UI.costToggle() : '') + visible.map(id => {
     const o = info[id], d = G.segments[id];
-    const head = `<span><b>${d.icon} ${E.segmentName(s, id)}</b>${pl[id] ? `<span class="sub">　${pl.months}か月の利益 <b class="${pl[id].profit >= 0 ? 'good' : 'bad'}">${M(pl[id].profit)}</b></span>` : ''}<div class="sub">${id === 'oil' ? `油井${s.wells.length}本・${E.refineryOnline(s) ? '製油所稼働' : '製油所なし'}・化学${o.plants.length}基` : `${o.plants.length}基`}${o.bad ? ` <b class="bad">⚠止まっている${o.bad}</b>` : ''}${o.plants.length ? `・月の粗利 ${M(o.monthly)}` : ''}${fl[id] ? `・稼働の月の収支（${UI.costMode() ? '原価' : '売値'}） <b class="${fl[id].profit >= 0 ? 'good' : 'bad'}">${M(fl[id].profit)}</b>` : ''}・評価額 ${M(o.assetValue)}</div></span>`;
+    const head = `<span><b>${d.icon} ${E.segmentName(s, id)}</b>${pl[id] ? `<span class="sub">　${pl.months}か月の利益 <b class="${pl[id].profit >= 0 ? 'good' : 'bad'}">${M(pl[id].profit)}</b></span>` : ''}<div class="sub">${id === 'oil' ? `油井${s.wells.length}本・${E.refineryOnline(s) ? '製油所稼働' : '製油所なし'}・化学${o.plants.length}基` : `${o.plants.length}基`}${o.bad ? ` <b class="bad">⚠止まっている${o.bad}</b>` : ''}${o.plants.length ? `・月の粗利 ${M(o.monthly)}` : ''}${fl[id] ? `・稼働の月の収支（${UI.costMode && UI.costMode() ? '原価' : '売値'}） <b class="${fl[id].profit >= 0 ? 'good' : 'bad'}">${M(fl[id].profit)}</b>` : ''}・評価額 ${M(o.assetValue)}</div></span>`;
     return UI.fold('f-seg-' + id, head, segBody(s, o, pl), o.bad > 0);
   }).join('') + (pl.corp ? UI.fold('f-seg-corp', `<span><b>🏢 全社（倉庫・研究・電力など）</b><div class="sub">本部に属さない費用</div></span>`, plTable(s, 'corp', pl) + `<div class="sub" style="margin-top:6px">支払利息（直近${pl.months}か月 ${M(s.history.slice(-pl.months).reduce((a, h) => a + ((h.costs && h.costs.interest) || 0), 0))}）は本部に配分しない。本部の利益の合計−利息−（払い戻しを含めた）全社の費用＝経営の利益</div>`, false) : '') || '<div class="card sub">解放済みの加工がまだない</div>');
   for (const id of visible) {
