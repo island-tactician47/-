@@ -24,7 +24,7 @@
   try { foldState = JSON.parse(localStorage.getItem('factorySim.ui.fold') || '{}') || {}; } catch (e) { foldState = {}; }
   let state = null, renderFn = null, acc = 0, lastT = 0, dirty = true, lastSave = 0, modalOpen = false;
   // 押している最中に再描画するとボタンが作り直されてクリックが消えるため、押下中は描画を止める
-  let noSave = false, warnedSave = false;
+  let noSave = false, warnedSave = false, queueOpen = false;
   let pressing = false, releaseTimer = null;
   // スマホ：画面をスクロールし始めると pointercancel が来るが、指はまだ画面に触れている。そのまま再描画すると、メニューが作り直されてスクロールが止まる
   // （地図のメニューなど）。指が1本でも触れている間は、描画を止める（touches で数える）
@@ -85,6 +85,7 @@
     },
     html(el, str) { if (typeof el === 'string') el = document.getElementById(el); if (el && el._h !== str) { el.innerHTML = str; el._h = str; } },
 
+    toggleQueue() { queueOpen = !queueOpen; UI.refresh(); },
     save() { if (state && !noSave) { const ok = Save.save(state); lastSave = performance.now(); if (!ok && !warnedSave) { warnedSave = true; UI.toast("⚠️ セーブできません（" + (Save.why || "不明") + "）。メニューの書き出しで控えを取ってください", 9000); } } },
     // 取り込み（import）直後に reload するとき、メモリ上の古い state で上書きされないようにする
     blockSave() { noSave = true; },
@@ -215,9 +216,15 @@
   function renderQueue(s) {
     const q = document.getElementById('queue');
     if (!q) return;
+    if (document.getElementById('townwrap')) {   // 町のページ：高さ一定の1行の帯（建設が増えても地図が下がらない）。タップで、地図に重ねて全件の一覧を開く
+      const all = s.construction.slice().sort((a, b) => a.daysLeft - b.daysLeft), n = all.length;
+      const bar = `<div class="qbar${n ? '' : ' none'}" onclick="UI.toggleQueue()">🚧 ${n ? `建設中 ${n}件　最短 残り${Engine.fmtDuration(all[0].daysLeft)}` : '建設中はありません'}<span class="qarrow">${n ? (queueOpen ? '▲' : '▼') : ''}</span></div>`;
+      const list = queueOpen && n ? `<div class="qlist card">` + all.map(c => `<div class="qrow"><div class="row"><span>${Engine.constructionLabel(c, s)}</span><span class="sub">残り${Engine.fmtDuration(c.daysLeft)}</span></div><div class="bar"><i style="width:${(1 - c.daysLeft / c.totalDays) * 100}%"></i></div></div>`).join('') + '</div>' : '';
+      UI.html(q, bar + list); return;
+    }
     if (!s.construction.length) { UI.html(q, ''); return; }
-    const onMap = !!document.getElementById('townwrap'), all = s.construction.slice().sort((a, b) => a.daysLeft - b.daysLeft), shown = onMap ? all.slice(0, 3) : all;   // 町の地図の上では、残りの短い3件だけ（地図を隠さない）
-    UI.html(q, `<div class="card"><div class="row"><h3>🚧 建設中 ${s.construction.length}件</h3>${onMap && all.length > shown.length ? `<span class="sub">ほか${all.length - shown.length}件</span>` : ''}</div>` +
+    const onMap = false, all = s.construction.slice().sort((a, b) => a.daysLeft - b.daysLeft), shown = all;
+    UI.html(q, `<div class="card"><div class="row"><h3>🚧 建設中 ${s.construction.length}件</h3></div>` +
       shown.map(c =>
         `<div class="qrow"><div class="row"><span>${Engine.constructionLabel(c, s)}</span><span class="sub">残り${Engine.fmtDuration(c.daysLeft)}</span></div>
         <div class="bar"><i style="width:${(1 - c.daysLeft / c.totalDays) * 100}%"></i></div></div>`).join('') + '</div>');
