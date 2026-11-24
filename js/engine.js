@@ -1566,10 +1566,28 @@
       }
       return { ok: true };
     },
+    // ---------- 国の景気対策融資（大不況：events の relief）。s.relief={amount,bonus,until} は最初の赤字まで作らない。融資は別枠 s.loans.govRelief ----------
+    // 大不況の月が赤字なら、その赤字＋$1M（物価に合わせる）まで借りられる枠を開く。上乗せの$1Mは不況1回につき1度だけ（その後の赤字は赤字ぶんだけ足す）。不況が終わって6か月で枠は消える
+    reliefCheck(s, profit) {
+      const act = s.activeEvents.find(a => { const d = D().events.list.find(e => e.id === a.id); return d && d.relief; });
+      if (act && profit < 0) {
+        const r = s.relief || (s.relief = { amount: 0, bonus: false, until: 0 }), first = !(r.amount > 0);
+        r.amount += -profit + (r.bonus ? 0 : D().reliefBonus * this.priceIndex(s)); r.bonus = true; r.until = s.day + (act.monthsLeft + 6) * DAYS_PER_MONTH;
+        if (first) s.pendingEvents.push({ title: '🏛 国の景気対策融資が使える', text: `大不況で赤字になった。経営画面から ${this.fmtMoney(r.amount)} まで、格安で借りられる。` });
+      } else if (s.relief) { if (!act) s.relief.bonus = false; if (s.day > s.relief.until) delete s.relief; }   // 不況が終わったら、次の不況でまた上乗せの$1Mが付く
+    },
+    takeRelief(s) {
+      const r = s.relief; if (!r || !(r.amount >= 1)) return { ok: false, msg: '借りられる枠が無い' };
+      const L = D().loans.govRelief, amt = Math.round(r.amount), loan = s.loans.govRelief;
+      if (loan) { loan.principal += amt; loan.monthly = loan.principal / (L.years * 12); } else s.loans.govRelief = { principal: amt, monthly: amt / (L.years * 12) };
+      s.cash += amt; s.month.borrowed += amt; r.amount = 0;
+      this.log(s, `🏛 ${L.name}から ${this.fmtMoney(amt)} を借入（年利${(L.rate * 100).toFixed(1)}%・${L.years}年）`);
+      return { ok: true };
+    },
     // ---------- 債務の再編（救済）。s.restructured={day,from} は初めて使うまで作らない。再建融資は s.loans.rebuild ----------
     debtService(s) { let v = (s.overdraft || 0) * D().overdraftRate / 12; for (const id in s.loans) { const l = s.loans[id], r = D().loans[id].rate; v += l.monthly + l.principal * r / 12; } return v; },
     restructureState(s) {   // 苦しい状態か、再編できるか
-      const R = D().restructure, debt = this.totalDebt(s), rev = this.revenue12(s), svc = this.debtService(s);
+      const R = D().restructure, debt = this.totalDebt(s) - (s.loans.govRelief ? s.loans.govRelief.principal : 0), rev = this.revenue12(s), gl = s.loans.govRelief, svc = this.debtService(s) - (gl ? gl.monthly + gl.principal * D().loans.govRelief.rate / 12 : 0);
       if (!(debt > 0)) return { ok: false, distressed: false, msg: '借入が無い' };
       const room = 0.25 * rev, over = (s.overdraft || 0) > 0 && s.overdraft >= room * 0.8, heavy = rev > 0 ? svc >= R.distressRatio * rev / 12 : svc > 0 && (s.overdraft || 0) > 0;
       const distressed = over || heavy;
@@ -1579,8 +1597,8 @@
     },
     restructureDebt(s) {
       const st = this.restructureState(s); if (!st.ok) return st;
-      const R = D().restructure; let principal = this.totalDebt(s); const fee = Math.round(principal * R.fee);
-      s.loans = {}; s.overdraft = 0;
+      const R = D().restructure, gov = s.loans.govRelief; let principal = this.totalDebt(s) - (gov ? gov.principal : 0); const fee = Math.round(principal * R.fee);   // 国の景気対策融資は別枠のまま残す
+      s.loans = {}; s.overdraft = 0; if (gov) s.loans.govRelief = gov;
       if (s.cash >= fee) s.cash -= fee; else { principal += fee - Math.max(0, s.cash); s.cash = Math.max(0, s.cash - fee); }   // 手数料を払えなければ元本に足す
       s.month.interest += fee;
       s.loans.rebuild = { principal, monthly: principal / (R.years * 12) };
@@ -2092,11 +2110,12 @@
       if (s.history.length > 600) s.history.shift();
       { const hb = s.history[s.history.length - 1]; (s.series || (s.series = [])).push(this.seriesRow(s, hb)); }   // 長期の推移（創業から。履歴が削られても残る）
       if (m.lostCrude > 1) this.log(s, `⚠️ 原油タンクが満杯で ${this.fmtNum(m.lostCrude)}bbl を採り損ねた`);
+      this.reliefCheck(s, s.history[s.history.length - 1].profit);   // 大不況の赤字なら、国の景気対策融資の枠を開く（イベントの更新より前）
       s.month = emptyMonth();
       const ev = Market.monthly(s);
       if (ev) {
         this.log(s, `📰 ${ev.title}`);
-        s.pendingEvents.push({ title: ev.title, text: ev.text, effects: ev.effects, months: ev.months });
+        s.pendingEvents.push({ title: ev.title, text: ev.text, effects: ev.effects, all: ev.all, months: ev.months });
       }
       this.updateTickets(s); this.checkTiers(s);   // 解放権・ティアの知らせは、時間を止めない
       if (this.checkGoal(s)) stop = true;   // 目標の達成は、スコアを出すので止める

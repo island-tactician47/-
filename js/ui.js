@@ -244,7 +244,8 @@
   // ほかの出来事（相場のイベント・ノードの解放・解放権・大規模製油所など）は、時間を止めずに、画面の下にさっと出す（記録は経営画面のログに残る）
   function eventToast(ev) {
     let msg = ev.title;
-    if (ev.effects) msg += ' ' + Object.entries(ev.effects).map(([k, v]) => `${GAME_DATA.resources[k].name}${v > 1 ? '↑' : '↓'}${Math.round(Math.abs(v - 1) * 100)}%`).join('・');
+    if (ev.all) msg += ` 全品目の需要${ev.all > 1 ? '↑' : '↓'}${Math.round(Math.abs(ev.all - 1) * 100)}%`;
+    else if (ev.effects) msg += ' ' + Object.entries(ev.effects).map(([k, v]) => `${GAME_DATA.resources[k].name}${v > 1 ? '↑' : '↓'}${Math.round(Math.abs(v - 1) * 100)}%`).join('・');
     else if (ev.text) msg += '：' + String(ev.text).replace(/<[^>]*>/g, '').slice(0, 36) + (String(ev.text).length > 36 ? '…' : '');
     UI.toast(msg, 3600);
   }
@@ -254,7 +255,7 @@
     if (!state.pendingEvents.length) return;
     const ev = state.pendingEvents.shift();
     let html = `<p>${ev.text}</p>`;
-    if (ev.effects) {
+    if (ev.effects && !ev.all) {
       html += '<p class="sub">' + Object.entries(ev.effects).map(([k, v]) =>
         `${GAME_DATA.resources[k].name} ${v > 1 ? '↑' : '↓'}${Math.round(Math.abs(v - 1) * 100)}%`).join('　') + `（約${ev.months}か月かけて元に戻る）</p>`;
     }

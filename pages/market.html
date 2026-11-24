@@ -75,7 +75,7 @@ function renderPort(s) {
 function renderEvents(s) {
   UI.html('events', s.activeEvents.map(ev => {
     const d = G.events.list.find(e => e.id === ev.id);
-    return `<div class="card"><b>📰 ${d.title}</b> <span class="sub">あと${ev.monthsLeft}か月</span><div class="sub">${Object.entries(d.effects).map(([k, v]) => `${G.resources[k].name}${v > 1 ? '↑' : '↓'}`).join(' ')}</div></div>`;
+    return `<div class="card"><b>📰 ${d.title}</b> <span class="sub">あと${ev.monthsLeft}か月</span><div class="sub">${d.all ? `全品目の需要${d.all > 1 ? '↑' : '↓'}${Math.round(Math.abs(d.all - 1) * 100)}%` : ''}${Object.entries(d.effects).map(([k, v]) => `${G.resources[k].name}${v > 1 ? '↑' : '↓'}`).join(' ')}</div></div>`;
   }).join(''));
 }
 

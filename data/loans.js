@@ -6,6 +6,7 @@ GAME_DATA.loans = {
   chigin:   { name: '地方銀行',     limit: 300000,  rate: 0.055, years: 10, cond: { wells: 3 }, condText: '油井3本以上' },
   kaigin:   { name: '開発銀行（産業振興融資）', limit: 500000, rate: 0.035, years: 15, cond: { revenue12: 100000 }, condText: '直近12か月の売上 $100k以上' },
   rebuild:  { name: '再建融資（メインバンク）', limit: 0, rate: 0.005, years: 20, cond: null, condText: '債務の再編でのみ', special: true },   // 債務の再編（GAME_DATA.restructure）でだけ生まれる枠。通常は借りられない
+  govRelief: { name: '国の景気対策融資', limit: 0, rate: 0.005, years: 15, cond: null, condText: '大不況で赤字になったとき', special: true },   // 大不況の赤字のときだけ（Engine.reliefCheck / takeRelief）
   toshigin: { name: '都市銀行',     limit: 1500000, rate: 0.045, years: 10, cond: { refinery: true, revenue12: 800000 }, condText: '製油所が稼働中かつ直近12か月の売上 $800k以上' }
 };
 // 債務の再編（借金で首が回らなくなったときの救済）：すべての借入と当座貸越を、メインバンクの「再建融資」1本にまとめる。
@@ -13,4 +14,6 @@ GAME_DATA.loans = {
 // 条件（苦しいとき）：当座貸越が枠いっぱい（売上の25%）に近い、または月々の返済（元金＋利息）が直近の月平均売上の distressRatio 以上。
 GAME_DATA.restructure = { name: '再建融資（メインバンク）', rate: 0.005, years: 20, fee: 0.02, lockMonths: 60, cooldownMonths: 60, distressRatio: 0.5 };
 // 資金がマイナスになったときに自動で入る当座貸越（高金利。資金がプラスになれば自動で返す）
+// 国の景気対策融資の上乗せ額（1950年価格。物価に合わせて増える）
+GAME_DATA.reliefBonus = 1000000;
 GAME_DATA.overdraftRate = 0.12;
