@@ -41,6 +41,8 @@ window.GAME_DATA.map = {
     rocketFactory: [6, 6], munitionsFactory: [9, 8], fineChemPlant: [6, 5], tireFactory: [6, 5], batteryFactory: [6, 5], explosivesFactory: [6, 6], colonyFactory: [12, 12], offshoreFactory: [10, 10], cableFactory: [6, 5], fiberFactory: [6, 5], motorFactory: [7, 6], powerEquipFactory: [9, 8], commGearFactory: [6, 6], satelliteFactory: [9, 8], aiDefenseFactory: [12, 12],   // NT に無い型（手続き描画 js/sprites2.js）は小さめ
     powerPlant: [8, 8], researchLab: [4, 4], headquarters: [4, 4], warehouse_bulk: [4, 4], warehouse_goods: [4, 4],
     // 船の絵（港の船・海を行き来する船。町の建物ではない。末尾 _w は船首が -gx 側）
+    // 街づくりの布石：超高層ビル・高層ビル・マンション・高層マンション（絵だけ。まだゲームに出ない。selftest の絵の足あと一致のための登録）
+    city_sky_1: [4, 4], city_sky_2: [4, 4], city_sky_3: [4, 4], city_sky_4: [4, 4], city_sky_5: [4, 4], city_sky_6: [4, 4], city_high_1: [3, 3], city_high_2: [3, 3], city_high_3: [3, 3], city_high_4: [3, 3], city_high_5: [3, 3], city_high_6: [3, 3], city_apt_1: [3, 3], city_apt_2: [3, 3], city_apt_3: [3, 3], city_apt_4: [3, 3], city_apt_5: [3, 3], city_apt_6: [3, 3], city_aptT_1: [3, 3], city_aptT_2: [3, 3], city_aptT_3: [3, 3], city_aptT_4: [3, 3], city_aptT_5: [3, 3], city_aptT_6: [3, 3],
     ship_fishing: [4, 2], ship_fishing_w: [4, 2], ship_coaster: [6, 3], ship_coaster_w: [6, 3], ship_freighter: [8, 3], ship_freighter_w: [8, 3], ship_tanker: [10, 4], ship_tanker_w: [10, 4], ship_container: [12, 4], ship_container_w: [12, 4], port_gantry: [3, 7], port_yard: [4, 4], port_jetty: [3, 9], port_fish: [5, 4]
   }
 };
