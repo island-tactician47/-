@@ -329,6 +329,7 @@ function render(s) {
     iso.start();
     const qp = new URLSearchParams(location.search);   // 確認用：?era=2&zoom=0.6&cx=15&cy=15（時代・拡大・中心を固定）
     if (qp.get('era') || qp.get('zoom')) iso.buildAll = true;   // 確認用：構築の枠を使わず、最初のフレームで全部描く
+    if (qp.get('portgrade') != null) iso.portOverride = Math.max(0, Math.min(5, Math.round(+qp.get('portgrade')) || 0));   // 確認用：?portgrade=0〜5（港のグレードを固定）
     if (qp.get('era')) iso.eraOverride = Math.max(1, Math.min(6, Math.round(+qp.get('era')) || 1));
     if (qp.get('zoom')) { iso.cam.z = +qp.get('zoom'); iso.center(+(qp.get('cx') || 15), +(qp.get('cy') || 15)); }
     if (qp.get('view')) { iso.resize && iso.resize(); iso.setView(+qp.get('view') || 0); }   // 確認用：?view=0〜3（視点の向き）

@@ -196,13 +196,30 @@
       for (let tx = 0; tx < M.w; tx++) { const cy = E.coastY(tx); const t = E.terrainAt(s, tx, cy - 1); if (t && t !== 'sea') { const a = pt(tx, cy, 0); if (a[0] < -60 || a[0] > I.w + 60 || a[1] < -60 || a[1] > I.h + 60) continue; g.prism(tx, cy - 0.001, 1, 0.001, -4, 0, '#8d7e66'); } }
     }
 
+    // 海を行き来する船（Blender の絵。港のグレードが上がると、大きな船も増える）。建物と同じ奥→手前の順に描くため、一覧にして frame() の並べ替えに入れる
+    const SHIPDIM = { fishing: [4, 2, 0.7], coaster: [6, 3, 0.55], freighter: [8, 3, 0.45], tanker: [10, 4, 0.35], container: [12, 4, 0.4] }, SHIPSET = ['fishing', 'coaster', 'freighter', 'tanker', 'container'];
+    function portGradeNow(s) { return I.portOverride != null ? I.portOverride : s.portGrade; }
+    function ambientShips(s) {
+      const out = [], M = GAME_DATA.map, T = I.t, gr = portGradeNow(s);
+      if (I.cam.z < 0.2) return out;   // 遠景では省く
+      const types = SHIPSET.slice(0, Math.min(SHIPSET.length, 1 + (gr >= 1) + (gr >= 2) + (gr >= 3) + (gr >= 4)));
+      for (let k = 0; k < Math.max(4, Math.round(M.w / 16)); k++) {
+        const t = types[k % types.length], [fw, fd, sp] = SHIPDIM[t], dir = k % 2 ? 1 : -1, pos = (((k * 19 + T * sp * dir) % M.w) + M.w) % M.w;
+        const ty = Math.min(M.h - 1 - fd / 2, E.coastY(Math.floor(pos)) + 6 + fd / 2 + (k % 3) * 2.6);
+        if (pos + fw / 2 > M.port.x0 - 2 && pos - fw / 2 < M.port.x1 + 2 && ty - fd / 2 < E.portTop() + M.port.depth + 15) continue;   // 港の前の水域（係留・荷役）は通らない
+        let ok = true;   // 全長・全幅のどこも海であること（長い船が陸や埋め立て地に乗らない）
+        for (let u = -fw / 2; u <= fw / 2 && ok; u += 1) for (const v of [-fd / 2, 0, fd / 2]) if (E.terrainAt(s, Math.floor(pos + u), Math.floor(ty + v)) !== 'sea') { ok = false; break; }
+        if (ok) out.push({ sprite: 'ship_' + t + (dir > 0 ? '' : '_w'), cx: pos, cy: ty, fw, fd });
+      }
+      return out;
+    }
     // 港（固定のランドマーク）：桟橋・上屋・クレーン・係留する船
     function portEntity(s) {
       const M = GAME_DATA.map, x0 = M.port.x0, x1 = M.port.x1, cy = Math.round((E.coastY(x0 + 3) + E.coastY(x0 + 4)) / 2);
       return { type: '_port', x: x0, y: E.portTop(), fw: x1 - x0 + 1, fd: M.port.depth + 4, key: '_port', cy, grade: s.portGrade };
     }
     function drawPort(e, s) {
-      const M = GAME_DATA.map, x0 = e.x, cy = e.cy, grade = s.portGrade;
+      const M = GAME_DATA.map, x0 = e.x, cy = e.cy, grade = portGradeNow(s);
       // 桟橋と係留する船（海側。大きな足あとに合わせて拡大）
       g.prism(x0 + 4, cy - 1, 3, 9, 0, 3.4, '#8d7653');
       for (let i = 0; i < 5; i++) g.prism(x0 + 4 + (i % 2) * 2.8, cy + i * 1.9, 0.25, 0.25, -3, 3.4, '#5d4a30');
@@ -239,6 +256,7 @@
     }
     // 建物 → Blender の絵の名前（増設モジュールは親ごと、研究棟は段階ごと）
     function blName(e) {
+      if (e.sprite) return e.sprite;   // 船など、種類でなく絵の名前で指定するもの
       if (e.type === 'module') return e.parentType ? 'module_' + e.parentType : null;
       if (e.type === 'researchLab') return e.level >= 3 ? 'researchLab_L3' : e.level === 2 ? 'researchLab_L2' : 'researchLab';
       return e.type;
@@ -311,13 +329,6 @@
         if (alongX) { const x = pos - L / 2, y = line + 0.5 + lane - Wd / 2; g.prism(x, y, L, Wd, 0.5, big ? 5 : 3, c); if (!big) g.prism(x + L * 0.25, y + 0.03, L * 0.5, Wd - 0.06, 3, 5, '#cfd8dc'); else g.prism(x + (dir > 0 ? L - 0.16 : 0), y, 0.16, Wd, 0.5, 6.5, '#d9d6c8'); }
         else { const y = pos - L / 2, x = line + 0.5 + lane - Wd / 2; g.prism(x, y, Wd, L, 0.5, big ? 5 : 3, c); if (!big) g.prism(x + 0.03, y + L * 0.25, Wd - 0.06, L * 0.5, 3, 5, '#cfd8dc'); else g.prism(x, y + (dir > 0 ? L - 0.16 : 0), Wd, 0.16, 0.5, 6.5, '#d9d6c8'); }
       }
-      for (let k = 0; k < Math.max(4, Math.round(M.w / 16)); k++) {   // 船
-        const dir = k % 2 ? 1 : -1, pos = (((k * 19 + T * 0.45 * dir) % M.w) + M.w) % M.w, tx = Math.floor(pos), ty = Math.min(M.h - 2, E.coastY(tx) + 6 + k * 2.5);
-        if (E.terrainAt(s, tx, ty) !== 'sea' || E.terrainAt(s, Math.floor(pos + 1.5), ty) !== 'sea' || E.terrainAt(s, Math.floor(pos - 1.5), ty) !== 'sea') continue;
-        const hull = ['#3f5a70', '#7a3f35', '#41594a', '#5a5f66'][k % 4];
-        g.prism(pos - 0.8, ty + 0.2, 1.6, 0.6, 0, 3, hull); g.prism(pos - 0.4 * dir - 0.25, ty + 0.3, 0.5, 0.4, 3, 7, '#eceae0'); g.prism(pos + 0.5 * dir - 0.08, ty + 0.4, 0.16, 0.2, 3, 5, '#d8d3c4');
-        g.line([[pos - 0.8 * dir, ty + 0.5, 0.2], [pos - 2.2 * dir, ty + 0.5, 0.2]], 'rgba(255,255,255,.55)', 1);   // 航跡
-      }
       // 灯台（海岸の東端の道路より海側でない空き地。建物と重なるなら出さない）
       const lx = ((M.origin && M.origin.x) || 0) + 66, ly = E.coastY(lx) - 2;   // 旧マップの東端（x=66）のまま
       if (E.terrainAt(s, lx, ly) === 'land' && !(I.ents || []).some(e => lx + 1 > e.x - 1 && lx < e.x + e.fw + 1 && ly + 1 > e.y - 1 && ly < e.y + e.fd + 1)) {
@@ -349,10 +360,12 @@
       I.ents = E.mapEntities(s); I.vents = I.ents.map(viewOf);   // ents＝世界の座標、vents＝回したあとの座標（描画・タップ判定用）
       drawAmbient(s, era);   // 車・船・灯台は建物より先に描く（手前の建物が重なって隠す）
       const items = I.vents.map(e => ({ e, key: e.x + e.fw / 2 + e.y + e.fd / 2 }));
+      for (const sh of ambientShips(s)) { const v = viewOf({ type: '_ship', sprite: sh.sprite, x: sh.cx - sh.fw / 2, y: sh.cy - sh.fd / 2, fw: sh.fw, fd: sh.fd, rot: 0, building: false }); items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); }
       const pe = portEntity(s), pv = viewOf({ x: pe.x, y: pe.y, fw: pe.fw, fd: pe.fd }); items.push({ e: pe, key: pv.x + pv.fw / 2 + pv.y + pv.fd / 2 - 1.5 });
       items.sort((a, b) => a.key - b.key);
       for (const { e } of items) {
         if (e.type === '_port') { drawPort(e, s); continue; }
+        if (e.type === '_ship') { drawEntity(e, { era, t: I.t, running: false }); continue; }
         const o = { era, t: I.t, running: running(s, e) };
         if (I.selected === e.key) outline(e, '#ffe08a', 2.2);
         else if (I.multi && I.multi.has(e.key)) outline(e, '#7fd0ff', 2.2);   // ブループリントで選んでいる建物

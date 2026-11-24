@@ -3912,5 +3912,425 @@ window.GAME_DATA.spritesBL = {
     "fd": 2
    }
   ]
+ },
+ "ship_coaster": {
+  "fw": 6,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/ship_coaster_r0.png",
+    "w": 168.5,
+    "h": 102.5,
+    "ax": 91.5,
+    "ay": 68.1,
+    "fw": 6,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/ship_coaster_r1.png",
+    "w": 168.5,
+    "h": 103.0,
+    "ax": 77.0,
+    "ay": 68.1,
+    "fw": 3,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/ship_coaster_r2.png",
+    "w": 168.5,
+    "h": 98.0,
+    "ax": 77.0,
+    "ay": 57.1,
+    "fw": 6,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/ship_coaster_r3.png",
+    "w": 168.5,
+    "h": 98.0,
+    "ax": 91.5,
+    "ay": 57.1,
+    "fw": 3,
+    "fd": 6
+   }
+  ]
+ },
+ "ship_freighter": {
+  "fw": 8,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/ship_freighter_r0.png",
+    "w": 240.0,
+    "h": 142.5,
+    "ax": 127.5,
+    "ay": 92.1,
+    "fw": 8,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/ship_freighter_r1.png",
+    "w": 240.0,
+    "h": 142.5,
+    "ax": 112.5,
+    "ay": 92.1,
+    "fw": 3,
+    "fd": 8
+   },
+   {
+    "file": "../assets/bl/ship_freighter_r2.png",
+    "w": 240.0,
+    "h": 134.5,
+    "ax": 112.5,
+    "ay": 77.1,
+    "fw": 8,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/ship_freighter_r3.png",
+    "w": 240.0,
+    "h": 134.5,
+    "ax": 127.5,
+    "ay": 77.1,
+    "fw": 3,
+    "fd": 8
+   }
+  ]
+ },
+ "ship_tanker": {
+  "fw": 10,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/ship_tanker_r0.png",
+    "w": 304.5,
+    "h": 178.0,
+    "ax": 160.0,
+    "ay": 113.1,
+    "fw": 10,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/ship_tanker_r1.png",
+    "w": 304.5,
+    "h": 178.0,
+    "ax": 144.5,
+    "ay": 113.1,
+    "fw": 4,
+    "fd": 10
+   },
+   {
+    "file": "../assets/bl/ship_tanker_r2.png",
+    "w": 304.5,
+    "h": 162.5,
+    "ax": 144.5,
+    "ay": 90.6,
+    "fw": 10,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/ship_tanker_r3.png",
+    "w": 304.5,
+    "h": 162.5,
+    "ax": 160.0,
+    "ay": 90.6,
+    "fw": 4,
+    "fd": 10
+   }
+  ]
+ },
+ "ship_container": {
+  "fw": 12,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/ship_container_r0.png",
+    "w": 359.0,
+    "h": 193.5,
+    "ax": 187.5,
+    "ay": 116.6,
+    "fw": 12,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/ship_container_r1.png",
+    "w": 359.0,
+    "h": 189.5,
+    "ax": 171.5,
+    "ay": 112.6,
+    "fw": 4,
+    "fd": 12
+   },
+   {
+    "file": "../assets/bl/ship_container_r2.png",
+    "w": 359.0,
+    "h": 194.5,
+    "ax": 171.5,
+    "ay": 110.6,
+    "fw": 12,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/ship_container_r3.png",
+    "w": 359.0,
+    "h": 194.5,
+    "ax": 187.5,
+    "ay": 110.6,
+    "fw": 4,
+    "fd": 12
+   }
+  ]
+ },
+ "ship_fishing": {
+  "fw": 4,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/ship_fishing_r0.png",
+    "w": 93.0,
+    "h": 54.5,
+    "ax": 53.5,
+    "ay": 36.6,
+    "fw": 4,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/ship_fishing_r1.png",
+    "w": 93.0,
+    "h": 54.5,
+    "ax": 39.5,
+    "ay": 36.6,
+    "fw": 2,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/ship_fishing_r2.png",
+    "w": 93.0,
+    "h": 57.5,
+    "ax": 39.5,
+    "ay": 33.6,
+    "fw": 4,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/ship_fishing_r3.png",
+    "w": 93.0,
+    "h": 57.5,
+    "ax": 53.5,
+    "ay": 33.6,
+    "fw": 2,
+    "fd": 4
+   }
+  ]
+ },
+ "ship_fishing_w": {
+  "fw": 4,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/ship_fishing_w_r0.png",
+    "w": 93.0,
+    "h": 57.5,
+    "ax": 39.5,
+    "ay": 33.6,
+    "fw": 4,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/ship_fishing_w_r1.png",
+    "w": 93.0,
+    "h": 57.5,
+    "ax": 53.5,
+    "ay": 33.6,
+    "fw": 2,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/ship_fishing_w_r2.png",
+    "w": 93.0,
+    "h": 54.5,
+    "ax": 53.5,
+    "ay": 36.6,
+    "fw": 4,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/ship_fishing_w_r3.png",
+    "w": 93.0,
+    "h": 54.5,
+    "ax": 39.5,
+    "ay": 36.6,
+    "fw": 2,
+    "fd": 4
+   }
+  ]
+ },
+ "ship_coaster_w": {
+  "fw": 6,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/ship_coaster_w_r0.png",
+    "w": 168.5,
+    "h": 98.0,
+    "ax": 77.0,
+    "ay": 57.1,
+    "fw": 6,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/ship_coaster_w_r1.png",
+    "w": 168.5,
+    "h": 98.0,
+    "ax": 91.5,
+    "ay": 57.1,
+    "fw": 3,
+    "fd": 6
+   },
+   {
+    "file": "../assets/bl/ship_coaster_w_r2.png",
+    "w": 168.5,
+    "h": 102.5,
+    "ax": 91.5,
+    "ay": 68.1,
+    "fw": 6,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/ship_coaster_w_r3.png",
+    "w": 168.5,
+    "h": 102.5,
+    "ax": 77.0,
+    "ay": 68.1,
+    "fw": 3,
+    "fd": 6
+   }
+  ]
+ },
+ "ship_freighter_w": {
+  "fw": 8,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/ship_freighter_w_r0.png",
+    "w": 240.0,
+    "h": 134.5,
+    "ax": 112.5,
+    "ay": 77.1,
+    "fw": 8,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/ship_freighter_w_r1.png",
+    "w": 240.0,
+    "h": 134.5,
+    "ax": 127.5,
+    "ay": 77.1,
+    "fw": 3,
+    "fd": 8
+   },
+   {
+    "file": "../assets/bl/ship_freighter_w_r2.png",
+    "w": 240.0,
+    "h": 142.5,
+    "ax": 127.5,
+    "ay": 92.1,
+    "fw": 8,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/ship_freighter_w_r3.png",
+    "w": 240.0,
+    "h": 142.5,
+    "ax": 112.5,
+    "ay": 92.1,
+    "fw": 3,
+    "fd": 8
+   }
+  ]
+ },
+ "ship_tanker_w": {
+  "fw": 10,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/ship_tanker_w_r0.png",
+    "w": 304.5,
+    "h": 162.5,
+    "ax": 144.5,
+    "ay": 90.6,
+    "fw": 10,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/ship_tanker_w_r1.png",
+    "w": 304.5,
+    "h": 162.5,
+    "ax": 160.0,
+    "ay": 90.6,
+    "fw": 4,
+    "fd": 10
+   },
+   {
+    "file": "../assets/bl/ship_tanker_w_r2.png",
+    "w": 304.5,
+    "h": 178.0,
+    "ax": 160.0,
+    "ay": 113.1,
+    "fw": 10,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/ship_tanker_w_r3.png",
+    "w": 304.5,
+    "h": 178.0,
+    "ax": 144.5,
+    "ay": 113.1,
+    "fw": 4,
+    "fd": 10
+   }
+  ]
+ },
+ "ship_container_w": {
+  "fw": 12,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/ship_container_w_r0.png",
+    "w": 359.0,
+    "h": 198.5,
+    "ax": 171.5,
+    "ay": 114.6,
+    "fw": 12,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/ship_container_w_r1.png",
+    "w": 359.0,
+    "h": 197.5,
+    "ax": 187.5,
+    "ay": 113.6,
+    "fw": 4,
+    "fd": 12
+   },
+   {
+    "file": "../assets/bl/ship_container_w_r2.png",
+    "w": 359.0,
+    "h": 191.0,
+    "ax": 187.5,
+    "ay": 114.1,
+    "fw": 12,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/ship_container_w_r3.png",
+    "w": 359.0,
+    "h": 188.5,
+    "ax": 171.5,
+    "ay": 111.6,
+    "fw": 4,
+    "fd": 12
+   }
+  ]
  }
 };
