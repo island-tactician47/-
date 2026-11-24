@@ -5,7 +5,7 @@
 // layoutVer：足あとやマップの大きさを変えたら上げる。古いセーブは町を開いたときに置き直される（手で置いた位置は失われる）。
 window.GAME_DATA = window.GAME_DATA || {};
 window.GAME_DATA.map = {
-  layoutVer: 9,
+  layoutVer: 10,
   w: 160, h: 160,                  // 旧 72×72 → 128×128（mapVer 2）→ 160×160（mapVer 3。面積は128の約1.6倍）。広げるたびに、旧セーブの位置を mapShifts ぶんずらす（ensureMap）
   mapVer: 3, mapShifts: { 2: 32, 3: 16 },   // mapShifts[v]＝その版で、既存のマップの左上（0,0）が（x・y とも）何タイルずれたか。ブロック（16）の倍数にして、道路の線をそろえる
   origin: { x: 48, y: 48 },        // 合計のずれ＝旧72×72のマップの左上（0,0）が、いまのマップのどこか（mapShifts の合計）
@@ -37,8 +37,8 @@ window.GAME_DATA.map = {
     crudeTank: [4, 4], tank_gasoline: [2, 2], tank_diesel: [2, 2], tank_naphtha: [2, 2], tank_heavy: [2, 2],
     steelMill: [12, 12], aluminumSmelter: [6, 6], copperSmelter: [4, 4], kiln: [4, 4], sawmill: [4, 4], paperMill: [4, 4],
     detergentFactory: [4, 4], garmentFactory: [4, 4], buildmatFactory: [6, 6],
-    carFactory: [7, 5], shipyard: [5, 8], aircraftFactory: [6, 5], semiconductorFactory: [6, 6], pcFactory: [7, 6], evFactory: [8, 8], pharmaFactory: [6, 5],
-    rocketFactory: [6, 6], munitionsFactory: [7, 8], fineChemPlant: [6, 5], tireFactory: [6, 5], batteryFactory: [5, 5], explosivesFactory: [6, 6], colonyFactory: [12, 12], offshoreFactory: [10, 10], cableFactory: [6, 5], fiberFactory: [5, 5], motorFactory: [7, 6], powerEquipFactory: [9, 8], commGearFactory: [6, 6], satelliteFactory: [8, 8], aiDefenseFactory: [12, 12],   // NT に無い型（手続き描画 js/sprites2.js）は小さめ
+    carFactory: [9, 5], shipyard: [5, 8], aircraftFactory: [6, 5], semiconductorFactory: [6, 6], pcFactory: [7, 6], evFactory: [9, 8], pharmaFactory: [6, 5],
+    rocketFactory: [6, 6], munitionsFactory: [9, 8], fineChemPlant: [6, 5], tireFactory: [6, 5], batteryFactory: [6, 5], explosivesFactory: [6, 6], colonyFactory: [12, 12], offshoreFactory: [10, 10], cableFactory: [6, 5], fiberFactory: [6, 5], motorFactory: [7, 6], powerEquipFactory: [9, 8], commGearFactory: [6, 6], satelliteFactory: [9, 8], aiDefenseFactory: [12, 12],   // NT に無い型（手続き描画 js/sprites2.js）は小さめ
     powerPlant: [8, 8], researchLab: [4, 4], warehouse_bulk: [4, 4], warehouse_goods: [4, 4]
   }
 };

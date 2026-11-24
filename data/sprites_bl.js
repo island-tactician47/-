@@ -860,44 +860,44 @@ window.GAME_DATA.spritesBL = {
   ]
  },
  "carFactory": {
-  "fw": 7,
+  "fw": 9,
   "fd": 5,
   "r": [
    {
     "file": "../assets/bl/carFactory_r0.png",
-    "w": 396.0,
-    "h": 225.5,
-    "ax": 197.5,
-    "ay": 134.1,
-    "fw": 7,
+    "w": 459.0,
+    "h": 245.0,
+    "ax": 229.5,
+    "ay": 139.6,
+    "fw": 9,
     "fd": 5
    },
    {
     "file": "../assets/bl/carFactory_r1.png",
-    "w": 395.0,
-    "h": 217.0,
-    "ax": 197.5,
-    "ay": 125.6,
+    "w": 459.0,
+    "h": 245.0,
+    "ax": 229.5,
+    "ay": 139.6,
     "fw": 5,
-    "fd": 7
+    "fd": 9
    },
    {
     "file": "../assets/bl/carFactory_r2.png",
-    "w": 396.5,
-    "h": 215.5,
-    "ax": 199.0,
-    "ay": 124.1,
-    "fw": 7,
+    "w": 459.0,
+    "h": 245.0,
+    "ax": 229.5,
+    "ay": 139.6,
+    "fw": 9,
     "fd": 5
    },
    {
     "file": "../assets/bl/carFactory_r3.png",
-    "w": 395.0,
-    "h": 218.5,
-    "ax": 197.5,
-    "ay": 127.1,
+    "w": 459.0,
+    "h": 245.0,
+    "ax": 229.5,
+    "ay": 139.6,
     "fw": 5,
-    "fd": 7
+    "fd": 9
    }
   ]
  },
@@ -2234,44 +2234,44 @@ window.GAME_DATA.spritesBL = {
   ]
  },
  "evFactory": {
-  "fw": 8,
+  "fw": 9,
   "fd": 8,
   "r": [
    {
     "file": "../assets/bl/evFactory_r0.png",
-    "w": 523.0,
-    "h": 332.0,
-    "ax": 261.5,
+    "w": 555.0,
+    "h": 339.0,
+    "ax": 277.5,
     "ay": 212.1,
-    "fw": 8,
+    "fw": 9,
     "fd": 8
    },
    {
     "file": "../assets/bl/evFactory_r1.png",
-    "w": 523.0,
-    "h": 272.0,
-    "ax": 261.5,
-    "ay": 152.1,
+    "w": 555.0,
+    "h": 286.0,
+    "ax": 277.5,
+    "ay": 159.1,
     "fw": 8,
-    "fd": 8
+    "fd": 9
    },
    {
     "file": "../assets/bl/evFactory_r2.png",
-    "w": 523.0,
-    "h": 272.0,
-    "ax": 261.5,
-    "ay": 152.1,
-    "fw": 8,
+    "w": 555.0,
+    "h": 286.0,
+    "ax": 277.5,
+    "ay": 159.1,
+    "fw": 9,
     "fd": 8
    },
    {
     "file": "../assets/bl/evFactory_r3.png",
-    "w": 523.0,
-    "h": 290.5,
-    "ax": 261.5,
+    "w": 555.0,
+    "h": 297.5,
+    "ax": 277.5,
     "ay": 170.6,
     "fw": 8,
-    "fd": 8
+    "fd": 9
    }
   ]
  },
@@ -2486,44 +2486,44 @@ window.GAME_DATA.spritesBL = {
   ]
  },
  "munitionsFactory": {
-  "fw": 7,
+  "fw": 9,
   "fd": 8,
   "r": [
    {
     "file": "../assets/bl/munitionsFactory_r0.png",
-    "w": 491.0,
-    "h": 253.5,
-    "ax": 245.5,
-    "ay": 140.6,
-    "fw": 7,
+    "w": 555.0,
+    "h": 282.0,
+    "ax": 277.5,
+    "ay": 155.1,
+    "fw": 9,
     "fd": 8
    },
    {
     "file": "../assets/bl/munitionsFactory_r1.png",
-    "w": 491.0,
-    "h": 274.5,
-    "ax": 245.5,
-    "ay": 161.6,
+    "w": 555.0,
+    "h": 303.0,
+    "ax": 277.5,
+    "ay": 176.1,
     "fw": 8,
-    "fd": 7
+    "fd": 9
    },
    {
     "file": "../assets/bl/munitionsFactory_r2.png",
-    "w": 491.0,
-    "h": 281.5,
-    "ax": 245.5,
-    "ay": 168.6,
-    "fw": 7,
+    "w": 555.0,
+    "h": 299.0,
+    "ax": 277.5,
+    "ay": 172.1,
+    "fw": 9,
     "fd": 8
    },
    {
     "file": "../assets/bl/munitionsFactory_r3.png",
-    "w": 491.0,
-    "h": 287.5,
-    "ax": 245.5,
-    "ay": 174.6,
+    "w": 555.0,
+    "h": 305.0,
+    "ax": 277.5,
+    "ay": 178.1,
     "fw": 8,
-    "fd": 7
+    "fd": 9
    }
   ]
  },
@@ -3284,44 +3284,44 @@ window.GAME_DATA.spritesBL = {
   ]
  },
  "satelliteFactory": {
-  "fw": 8,
+  "fw": 9,
   "fd": 8,
   "r": [
    {
     "file": "../assets/bl/satelliteFactory_r0.png",
-    "w": 523.0,
-    "h": 294.5,
-    "ax": 261.5,
-    "ay": 174.6,
-    "fw": 8,
+    "w": 555.0,
+    "h": 304.5,
+    "ax": 277.5,
+    "ay": 177.6,
+    "fw": 9,
     "fd": 8
    },
    {
     "file": "../assets/bl/satelliteFactory_r1.png",
-    "w": 523.0,
-    "h": 254.0,
-    "ax": 261.5,
-    "ay": 134.1,
+    "w": 555.0,
+    "h": 285.5,
+    "ax": 277.5,
+    "ay": 158.6,
     "fw": 8,
-    "fd": 8
+    "fd": 9
    },
    {
     "file": "../assets/bl/satelliteFactory_r2.png",
-    "w": 523.0,
-    "h": 268.5,
-    "ax": 261.5,
-    "ay": 148.6,
-    "fw": 8,
+    "w": 555.0,
+    "h": 285.5,
+    "ax": 277.5,
+    "ay": 158.6,
+    "fw": 9,
     "fd": 8
    },
    {
     "file": "../assets/bl/satelliteFactory_r3.png",
-    "w": 523.0,
-    "h": 275.5,
-    "ax": 261.5,
-    "ay": 155.6,
+    "w": 555.0,
+    "h": 296.5,
+    "ax": 277.5,
+    "ay": 169.6,
     "fw": 8,
-    "fd": 8
+    "fd": 9
    }
   ]
  },
@@ -3332,80 +3332,80 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/cableFactory_r0.png",
     "w": 363.0,
-    "h": 192.5,
+    "h": 200.5,
     "ax": 181.5,
-    "ay": 108.6,
+    "ay": 116.6,
     "fw": 6,
     "fd": 5
    },
    {
     "file": "../assets/bl/cableFactory_r1.png",
     "w": 363.0,
-    "h": 192.5,
+    "h": 194.0,
     "ax": 181.5,
-    "ay": 108.6,
+    "ay": 110.1,
     "fw": 5,
     "fd": 6
    },
    {
     "file": "../assets/bl/cableFactory_r2.png",
     "w": 363.0,
-    "h": 192.5,
+    "h": 194.0,
     "ax": 181.5,
-    "ay": 108.6,
+    "ay": 110.1,
     "fw": 6,
     "fd": 5
    },
    {
     "file": "../assets/bl/cableFactory_r3.png",
     "w": 363.0,
-    "h": 192.5,
+    "h": 232.5,
     "ax": 181.5,
-    "ay": 108.6,
+    "ay": 148.6,
     "fw": 5,
     "fd": 6
    }
   ]
  },
  "fiberFactory": {
-  "fw": 5,
+  "fw": 6,
   "fd": 5,
   "r": [
    {
     "file": "../assets/bl/fiberFactory_r0.png",
-    "w": 331.0,
-    "h": 198.0,
-    "ax": 165.5,
-    "ay": 121.1,
-    "fw": 5,
+    "w": 363.0,
+    "h": 194.0,
+    "ax": 181.5,
+    "ay": 110.1,
+    "fw": 6,
     "fd": 5
    },
    {
     "file": "../assets/bl/fiberFactory_r1.png",
-    "w": 331.0,
-    "h": 178.5,
-    "ax": 165.5,
-    "ay": 101.6,
+    "w": 363.0,
+    "h": 194.0,
+    "ax": 181.5,
+    "ay": 110.1,
     "fw": 5,
-    "fd": 5
+    "fd": 6
    },
    {
     "file": "../assets/bl/fiberFactory_r2.png",
-    "w": 331.0,
-    "h": 203.5,
-    "ax": 165.5,
-    "ay": 126.6,
-    "fw": 5,
+    "w": 363.0,
+    "h": 225.0,
+    "ax": 181.5,
+    "ay": 141.1,
+    "fw": 6,
     "fd": 5
    },
    {
     "file": "../assets/bl/fiberFactory_r3.png",
-    "w": 331.0,
-    "h": 229.5,
-    "ax": 165.5,
-    "ay": 152.6,
+    "w": 363.0,
+    "h": 250.5,
+    "ax": 181.5,
+    "ay": 166.6,
     "fw": 5,
-    "fd": 5
+    "fd": 6
    }
   ]
  },
@@ -3668,16 +3668,16 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/tireFactory_r0.png",
     "w": 363.0,
-    "h": 194.5,
+    "h": 211.5,
     "ax": 181.5,
-    "ay": 110.1,
+    "ay": 127.6,
     "fw": 6,
     "fd": 5
    },
    {
     "file": "../assets/bl/tireFactory_r1.png",
     "w": 363.0,
-    "h": 194.5,
+    "h": 194.0,
     "ax": 181.5,
     "ay": 110.1,
     "fw": 5,
@@ -3686,62 +3686,62 @@ window.GAME_DATA.spritesBL = {
    {
     "file": "../assets/bl/tireFactory_r2.png",
     "w": 363.0,
-    "h": 194.5,
+    "h": 197.0,
     "ax": 181.5,
-    "ay": 110.1,
+    "ay": 113.1,
     "fw": 6,
     "fd": 5
    },
    {
     "file": "../assets/bl/tireFactory_r3.png",
     "w": 363.0,
-    "h": 207.0,
+    "h": 250.0,
     "ax": 181.5,
-    "ay": 122.6,
+    "ay": 166.1,
     "fw": 5,
     "fd": 6
    }
   ]
  },
  "batteryFactory": {
-  "fw": 5,
+  "fw": 6,
   "fd": 5,
   "r": [
    {
     "file": "../assets/bl/batteryFactory_r0.png",
-    "w": 331.0,
-    "h": 186.0,
-    "ax": 165.5,
-    "ay": 109.1,
-    "fw": 5,
+    "w": 363.0,
+    "h": 195.5,
+    "ax": 181.5,
+    "ay": 111.6,
+    "fw": 6,
     "fd": 5
    },
    {
     "file": "../assets/bl/batteryFactory_r1.png",
-    "w": 331.0,
-    "h": 180.0,
-    "ax": 165.5,
-    "ay": 103.1,
+    "w": 363.0,
+    "h": 194.0,
+    "ax": 181.5,
+    "ay": 110.1,
     "fw": 5,
-    "fd": 5
+    "fd": 6
    },
    {
     "file": "../assets/bl/batteryFactory_r2.png",
-    "w": 331.0,
-    "h": 180.0,
-    "ax": 165.5,
-    "ay": 103.1,
-    "fw": 5,
+    "w": 363.0,
+    "h": 196.5,
+    "ax": 181.5,
+    "ay": 112.6,
+    "fw": 6,
     "fd": 5
    },
    {
     "file": "../assets/bl/batteryFactory_r3.png",
-    "w": 331.0,
-    "h": 215.0,
-    "ax": 165.5,
-    "ay": 138.1,
+    "w": 363.0,
+    "h": 235.5,
+    "ax": 181.5,
+    "ay": 151.6,
     "fw": 5,
-    "fd": 5
+    "fd": 6
    }
   ]
  },
