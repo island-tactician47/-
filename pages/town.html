@@ -221,9 +221,9 @@ function flowHtml(s, p, key) {
   const row = (a, b, c) => `<div class="row" style="gap:6px"><span class="sub" style="flex:1">${a}</span><span class="sub num">${b}</span><span class="sub num" style="min-width:5.2em;text-align:right">${c || ''}</span></div>`;
   const body = `${why}${impNote}
     <div class="sub" style="margin-top:4px"><b>使う（月）</b>　${f.ran ? '昨日の実績×30日' : '能力×稼働率×30日'}</div>
-    ${f.ins.map(i => row(`${R[i.k].name}${i.share >= 0.99 ? '（買う）' : i.buy ? `（${i.inhouse ? '自社品' : '在庫'}＋買う${Math.round(i.share * 100)}%）` : i.inhouse ? '（自社品・原価）' : '（在庫）'}`, `${fq(i.qty)}${R[i.k].unit}`, `${M(i.cost)}${isFinite(i.stockDays) && i.share < 0.99 ? `<br><span class="${i.stockDays < 3 ? 'bad' : ''}">在庫${i.stockDays >= 100 ? '100日超' : fq(i.stockDays) + '日分'}</span>` : ''}`)).join('')}
+    ${f.ins.map(i => row(`${R[i.k].name}${i.share >= 0.99 ? '（買う）' : i.buy ? `（在庫＋買う${Math.round(i.share * 100)}%）` : '（在庫）'}`, `${fq(i.qty)}${R[i.k].unit}`, `${M(i.cost)}${isFinite(i.stockDays) && i.share < 0.99 ? `<br><span class="${i.stockDays < 3 ? 'bad' : ''}">在庫${i.stockDays >= 100 ? '100日超' : fq(i.stockDays) + '日分'}</span>` : ''}`)).join('')}
     <div class="sub" style="margin-top:4px"><b>作る（月）</b></div>
-    ${f.outs.map(o => row(R[o.k].name + (o.inhouse ? `（うち自社で使う${Math.round(o.inhouse * 100)}%＝原価で受け渡し）` : ''), `${fq(o.qty)}${R[o.k].unit}`, o.sellable || o.inhouse ? M(o.value) : '売れない')).join('')}
+    ${f.outs.map(o => row(R[o.k].name, `${fq(o.qty)}${R[o.k].unit}`, o.sellable ? M(o.value) : '売れない')).join('')}
     <div class="sub" style="margin-top:4px"><b>収支（月）</b></div>
     ${row('売上', '', M(f.revenue))}${row('原料', '', '-' + M(f.inCost))}${f.fee !== 0 ? row('輸入の罰（買った原料の割合ぶん。買値の割増は含む。Tier ' + E.nodeDef(E.nodeOfRecipe(p.recipe)).tier + '）', '', (f.fee > 0 ? '-' : '+') + M(Math.abs(f.fee))) : ''}${row('操業費', '', '-' + M(f.opex))}${row('維持費', '', '-' + M(f.fixed))}
     <div class="row" style="margin-top:2px"><b>利益</b><span class="num">${sgn(f.profit)}</span></div>`;
