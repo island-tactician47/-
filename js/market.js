@@ -126,7 +126,7 @@
       const E = D().events;
       if (rng() < E.monthlyChance) {
         // その本部の事業をしていないときは、その本部のイベントは起こさない。本部（と景気全般＝segment 無し）を均等に選んでから、その中で重みで選ぶ
-        const ok = e => !(e.minYears && state.day < e.minYears * 360) && !state.activeEvents.some(a => a.id === e.id || (e.excl && (D().events.list.find(d => d.id === a.id) || {}).excl === e.excl)) && (!e.segment || !window.Engine || !Engine.segmentActive || Engine.segmentActive(state, e.segment)) && (!e.building || !window.Engine || Engine.count(state, e.building) > 0);   // building＝その工場を持っているときだけ起こす
+        const ok = e => (!e.needFactoryTier || !window.Engine || Engine.hasFactoryTier(state, e.needFactoryTier)) && !state.activeEvents.some(a => a.id === e.id || (e.excl && (D().events.list.find(d => d.id === a.id) || {}).excl === e.excl)) && (!e.segment || !window.Engine || !Engine.segmentActive || Engine.segmentActive(state, e.segment)) && (!e.building || !window.Engine || Engine.count(state, e.building) > 0);   // building＝その工場を持っているときだけ起こす
         const groups = {};
         for (const e of E.list) if (ok(e)) (groups[e.segment || '*'] = groups[e.segment || '*'] || []).push(e);
         const keys = Object.keys(groups);
@@ -147,6 +147,7 @@
       if (!def) return null;
       state.activeEvents = state.activeEvents.filter(a => a.id !== id);
       state.activeEvents.push({ id, monthsLeft: def.months, monthsTotal: def.months });
+      if (def.relief && window.Engine && Engine.reliefStart) Engine.reliefStart(state);   // 大不況の始まり：純資産と借金を控えておく
       return def;
     }
   };

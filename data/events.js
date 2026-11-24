@@ -9,9 +9,9 @@ GAME_DATA.events = {
     // ---- 景気全般
     { id: 'recession', segment: null, excl: 'cycle', weight: 2, title: '景気後退', text: '工場の操業が落ち、素材・製品全般の需要が鈍っている。', effects: { crude: 0.9, gasoline: 0.92, diesel: 0.9, naphtha: 0.9, heavy: 0.9, steel: 0.9, cement: 0.92, lumber: 0.92, plastic: 0.92, car: 0.93 }, months: 10 },
     { id: 'boom', segment: null, excl: 'cycle', weight: 2, title: '好景気', text: '設備投資が盛んで、素材と製品の需要が広がっている。', effects: { steel: 1.12, cement: 1.12, plastic: 1.1, lumber: 1.1, car: 1.08, gasoline: 1.08 }, months: 10 },
-    // all＝全品目の価格（需要）の倍率（effects の品目指定があればそちらを優先）。excl＝同じ値のイベントは同時に起こらない。minYears＝開業からこの年数たつまで起こさない（資金の少ない序盤に、融資で一気に楽にならないように）。relief＝赤字になると国の景気対策融資が使える（Engine.reliefCheck）
+    // all＝全品目の価格（需要）の倍率（effects の品目指定があればそちらを優先）。excl＝同じ値のイベントは同時に起こらない。needFactoryTier＝この段階（tier）以上の工場を持つまで起こさない。relief＝赤字になると国の景気対策融資が使える（Engine.reliefCheck）
     { id: 'megaboom', segment: null, excl: 'cycle', weight: 1, title: '空前の好景気', text: '国じゅうで投資と消費が沸き、あらゆる製品の需要が大きく伸びている。', effects: {}, all: 1.25, months: 12 },
-    { id: 'depression', segment: null, excl: 'cycle', weight: 1, minYears: 3, relief: true, title: '大不況', text: '景気が急激に冷え込み、あらゆる製品の需要が4分の1に落ち込んだ。赤字になったら、国の景気対策融資が使える。', effects: {}, all: 0.25, months: 12 },
+    { id: 'depression', segment: null, excl: 'cycle', weight: 1, needFactoryTier: 4, relief: true, title: '大不況', text: '景気が急激に冷え込み、あらゆる製品の需要が4分の1に落ち込んだ。赤字になったら、国の景気対策融資が使える。', effects: {}, all: 0.25, months: 12 },
     // ---- 石油本部
     { id: 'mideast', segment: 'oil', weight: 3, title: '中東で政情不安', text: '産油国で政変。原油の供給不安から相場が急騰している。', effects: { crude: 1.35, gasoline: 1.15, diesel: 1.15, heavy: 1.2 }, months: 8 },
     { id: 'glut', segment: 'oil', weight: 3, title: '新油田の発見で供給過剰', text: '海外で巨大油田が見つかり、原油がだぶついている。', effects: { crude: 0.75, heavy: 0.85 }, months: 10 },

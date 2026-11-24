@@ -1566,21 +1566,25 @@
       }
       return { ok: true };
     },
-    // ---------- 国の景気対策融資（大不況：events の relief）。s.relief={amount,bonus,until} は最初の赤字まで作らない。融資は別枠 s.loans.govRelief ----------
-    // 大不況の月が赤字なら、その赤字＋$1M（物価に合わせる）まで借りられる枠を開く。上乗せの$1Mは不況1回につき1度だけ（その後の赤字は赤字ぶんだけ足す）。不況が終わって6か月で枠は消える
-    reliefCheck(s, profit) {
+    // ---------- 国の景気対策融資（大不況：events の relief）。s.relief={base:{eq,debt},taken,amount,bonus,until,told} は大不況が始まるまで作らない。融資は別枠 s.loans.govRelief ----------
+    // 借りられるのは、不況の前から純資産が減り、かつ借金（当座貸越を含む。この融資は除く）が増えたぶん（小さいほう）＋上乗せ $1M（物価に合わせる。不況1回につき1度）。使った額は引く。不況が終わって6か月で枠は消える
+    hasFactoryTier(s, tier) { const B = D().buildings; for (const k in B) if (B[k].category === 'factory' && B[k].tier >= tier && this.count(s, k) > 0) return true; return false; },
+    reliefDebt(s) { return this.totalDebt(s) - (s.loans.govRelief ? s.loans.govRelief.principal : 0); },
+    reliefStart(s) { s.relief = { base: { eq: this.equity(s), debt: this.reliefDebt(s) }, taken: 0, amount: 0, until: s.day + 400 * DAYS_PER_MONTH, told: false }; },
+    reliefCheck(s) {
       const act = s.activeEvents.find(a => { const d = D().events.list.find(e => e.id === a.id); return d && d.relief; });
-      if (act && profit < 0) {
-        const r = s.relief || (s.relief = { amount: 0, bonus: false, until: 0 }), first = !(r.amount > 0);
-        r.amount += -profit + (r.bonus ? 0 : D().reliefBonus * this.priceIndex(s)); r.bonus = true; r.until = s.day + (act.monthsLeft + 6) * DAYS_PER_MONTH;
-        if (first) s.pendingEvents.push({ title: '🏛 国の景気対策融資が使える', text: `大不況で赤字になった。経営画面から ${this.fmtMoney(r.amount)} まで、格安で借りられる。` });
-      } else if (s.relief) { if (!act) s.relief.bonus = false; if (s.day > s.relief.until) delete s.relief; }   // 不況が終わったら、次の不況でまた上乗せの$1Mが付く
+      const r = s.relief; if (!r) return;
+      if (!act) { if (s.day > r.until) delete s.relief; return; }
+      r.until = s.day + (act.monthsLeft + 6) * DAYS_PER_MONTH;
+      const ent = Math.max(0, Math.min(r.base.eq - this.equity(s), this.reliefDebt(s) - r.base.debt));
+      r.amount = ent > 0 ? Math.max(0, ent + D().reliefBonus * this.priceIndex(s) - r.taken) : 0;
+      if (r.amount >= 1 && !r.told) { r.told = true; s.pendingEvents.push({ title: '🏛 国の景気対策融資が使える', modal: true, text: `大不況で純資産が減り、借金も増えた。<b>${this.fmtMoney(r.amount)}</b> まで、年利0.5%・15年で借りられる（別枠）。<br>経営画面の「国の景気対策融資」から借りてください。不況が終わって6か月で消えます。` }); }
     },
     takeRelief(s) {
       const r = s.relief; if (!r || !(r.amount >= 1)) return { ok: false, msg: '借りられる枠が無い' };
       const L = D().loans.govRelief, amt = Math.round(r.amount), loan = s.loans.govRelief;
       if (loan) { loan.principal += amt; loan.monthly = loan.principal / (L.years * 12); } else s.loans.govRelief = { principal: amt, monthly: amt / (L.years * 12) };
-      s.cash += amt; s.month.borrowed += amt; r.amount = 0;
+      s.cash += amt; s.month.borrowed += amt; r.taken += amt; r.amount = 0;
       this.log(s, `🏛 ${L.name}から ${this.fmtMoney(amt)} を借入（年利${(L.rate * 100).toFixed(1)}%・${L.years}年）`);
       return { ok: true };
     },
@@ -1594,6 +1598,12 @@
       if (s.restructured && s.day < s.restructured.day + R.cooldownMonths * DAYS_PER_MONTH) return { ok: false, distressed, msg: `再編は${R.cooldownMonths}か月に1度（あと${Math.ceil((s.restructured.day + R.cooldownMonths * DAYS_PER_MONTH - s.day) / DAYS_PER_MONTH)}か月）`, debt, svc };
       if (!distressed) return { ok: false, distressed, msg: '返済に余裕がある（苦しくなったら使える）', debt, svc };
       return { ok: true, distressed, debt, svc, fee: Math.round(debt * R.fee), newMonthly: debt / (R.years * 12) + debt * R.rate / 12 };
+    },
+    // 借り換え（債務の再編）ができる状態になったら、時間を止めて知らせる（苦しい間は1度だけ。状態が解けたらまた知らせる）。s.distressTold は最初に苦しくなるまで作らない
+    distressCheck(s) {
+      const st = this.restructureState(s);
+      if (st.ok) { if (!s.distressTold) { s.distressTold = true; s.pendingEvents.push({ title: '🆘 借り換えができます', modal: true, text: `借入が重くなり、債務の再編（借り換え）が使える。借入 ${this.fmtMoney(st.debt)} を、年利${(D().restructure.rate * 100).toFixed(1)}%・${D().restructure.years}年の再建融資にまとめると、月々の返済が ${this.fmtMoney(st.svc)} → ${this.fmtMoney(st.newMonthly)} に軽くなる（手数料${(D().restructure.fee * 100).toFixed(0)}%・${D().restructure.lockMonths}か月は新しく借りられない）。<br>経営画面の「債務の再編」から行えます。` }); } }
+      else if (s.distressTold && !st.distressed) delete s.distressTold;
     },
     restructureDebt(s) {
       const st = this.restructureState(s); if (!st.ok) return st;
@@ -2110,7 +2120,8 @@
       if (s.history.length > 600) s.history.shift();
       { const hb = s.history[s.history.length - 1]; (s.series || (s.series = [])).push(this.seriesRow(s, hb)); }   // 長期の推移（創業から。履歴が削られても残る）
       if (m.lostCrude > 1) this.log(s, `⚠️ 原油タンクが満杯で ${this.fmtNum(m.lostCrude)}bbl を採り損ねた`);
-      this.reliefCheck(s, s.history[s.history.length - 1].profit);   // 大不況の赤字なら、国の景気対策融資の枠を開く（イベントの更新より前）
+      this.reliefCheck(s);   // 大不況中なら、国の景気対策融資の枠を更新する（イベントの更新より前）
+      this.distressCheck(s);
       s.month = emptyMonth();
       const ev = Market.monthly(s);
       if (ev) {

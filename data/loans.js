@@ -15,5 +15,6 @@ GAME_DATA.loans = {
 GAME_DATA.restructure = { name: '再建融資（メインバンク）', rate: 0.005, years: 20, fee: 0.02, lockMonths: 60, cooldownMonths: 60, distressRatio: 0.5 };
 // 資金がマイナスになったときに自動で入る当座貸越（高金利。資金がプラスになれば自動で返す）
 // 国の景気対策融資の上乗せ額（1950年価格。物価に合わせて増える）
+// 国の景気対策融資：不況の前から純資産が減り、かつ借金（当座貸越を含む）が増えたぶんまで（小さいほう）＋上乗せ（reliefBonus）
 GAME_DATA.reliefBonus = 1000000;
 GAME_DATA.overdraftRate = 0.12;
