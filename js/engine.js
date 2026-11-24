@@ -1048,6 +1048,18 @@
       for (const p of s.plants) if (p.modules && B[p.type]) v += B[p.type].cost * this.moduleCfg().costMul * p.modules * idx;
       return v;
     },
+    // 従業員数（data/buildings.js の GAME_DATA.staff。完成した施設・増設モジュール・油井・鉱山・貯鉱場の合計）。{ total, base, modules, field }
+    staffOf(type) { const S = D().staff; return (S && S.building && S.building[type]) || 0; },
+    moduleStaffOf(type) { const S = D().staff, b = this.staffOf(type); return b ? Math.max(1, Math.round(b * ((S && S.moduleRatio) || 0))) : 0; },
+    staffTotal(s) {
+      const S = D().staff; if (!S) return { total: 0, base: 0, modules: 0, field: 0 };
+      let base = 0, modules = 0, field = 0;
+      for (const type in s.buildings) if ((s.buildings[type] || 0) > 0) base += this.staffOf(type) * s.buildings[type];
+      for (const p of s.plants || []) if (p.modules) modules += this.moduleStaffOf(p.type) * p.modules;
+      field += (s.wells ? s.wells.length : 0) * this.staffOf('oilWell') + (s.mines ? s.mines.length : 0) * this.staffOf('mine');
+      if (s.oreYards) for (const k in s.oreYards) field += s.oreYards[k] * (S.oreYard || 0);
+      return { total: base + modules + field, base, modules, field };
+    },
     // ナビ・ランチャーの「経営」の表示条件（設備か12か月分の履歴ができたら）
     dashboardVisible(s) { return s.plants.length > 0 || (s.history && s.history.length >= 12); },
     // 解放条件の進み具合。{ met, parts:[{label, cur, need, ok, money}] }。cond が null なら undefinedCond:true

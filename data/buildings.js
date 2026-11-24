@@ -155,3 +155,19 @@ GAME_DATA.plantStoreDays = 30;
 
 // 移設・撤去：fee＝移設の費用（建設費×この率。増設モジュールもそれぞれ）、refund＝撤去で戻る率、daysMul＝移設の工期（建設の日数×この率。設備は移設中は止まる）
 GAME_DATA.relocate = { fee: 0.2, refund: 0.5, daysMul: 0.3 };
+
+// 従業員数（人）：町の画面の上に、全施設の合計を「従業員」として出す（規模のめやす。ゲームの数値には効かない）。
+// building＝完成した施設1つあたり。増設モジュールは、親の設備の人数 × moduleRatio（四捨五入。最低1人）。鉱山の貯鉱場は oreYard（1つあたり）。
+GAME_DATA.staff = {
+  moduleRatio: 0.6, oreYard: 5,
+  building: {
+    oilWell: 3, mine: 80, crudeTank: 4, refinery: 70, refineryLarge: 320, distillation: 25,
+    tank_gasoline: 3, tank_diesel: 3, tank_naphtha: 3, tank_heavy: 3, warehouse_bulk: 18, warehouse_goods: 24,
+    chemPlant: 120, steelMill: 650, aluminumSmelter: 280, copperSmelter: 160, kiln: 90, sawmill: 60, paperMill: 110,
+    detergentFactory: 110, garmentFactory: 180, batteryFactory: 220, tireFactory: 200, buildmatFactory: 140,
+    carFactory: 480, shipyard: 520, aircraftFactory: 430, semiconductorFactory: 320, pcFactory: 280, powerPlant: 70,
+    researchLab: 160, pharmaFactory: 190, rocketFactory: 380, munitionsFactory: 340, fineChemPlant: 150, explosivesFactory: 130,
+    colonyFactory: 900, offshoreFactory: 700, aiDefenseFactory: 600, cableFactory: 170, fiberFactory: 160,
+    motorFactory: 260, powerEquipFactory: 360, commGearFactory: 230, satelliteFactory: 420, evFactory: 540
+  }
+};

@@ -12,6 +12,7 @@
   #town { display: block; width: 100%; height: 420px; background: #5b8fb0; touch-action: none; }
   #viewbtns { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; }
   #viewbtns button { width: 36px; height: 36px; border-radius: 18px; border: 0; background: rgba(43,38,32,.72); color: #f6efe2; font-size: 18px; line-height: 1; }
+  #staffchip { position: absolute; left: 8px; top: 34px; background: rgba(43,38,32,.72); color: #f6efe2; font-size: 12px; padding: 3px 9px; border-radius: 10px; pointer-events: none; font-variant-numeric: tabular-nums; }
   #townhint { position: absolute; left: 8px; top: 8px; background: rgba(43,38,32,.72); color: #f6efe2; font-size: 11px; padding: 3px 8px; border-radius: 10px; pointer-events: none; }
   /* 下のメニュー：中身が多いときは、メニューの中で縦にスクロールできる。pointer-events を none にすると、スマホでスクロールできず、上が見切れるので、メニュー自体がタッチを受ける（中身の高さぶんだけ。空のときは受けない） */
   #sheet { position: absolute; left: 0; right: 0; bottom: 0; max-height: min(58%, calc(100% - 16px)); overflow-y: auto; padding: 0 8px 8px; touch-action: pan-y; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
@@ -23,7 +24,7 @@
 </head>
 <body>
 <main>
-  <div id="townwrap"><canvas id="town"></canvas><div id="townhint">ドラッグで移動・ピンチで拡大・タップで選択</div><div id="viewbtns"><button type="button" title="マップを回す" onclick="iso.rotate(1)">⟳</button></div><div id="sheet"></div></div>
+  <div id="townwrap"><canvas id="town"></canvas><div id="townhint">ドラッグで移動・ピンチで拡大・タップで選択</div><div id="staffchip"></div><div id="viewbtns"><button type="button" title="マップを回す" onclick="iso.rotate(1)">⟳</button></div><div id="sheet"></div></div>
 </main>
 
 <script src="../data/resources.js"></script>
@@ -320,6 +321,7 @@ function renderSheet(s) {
 function setSheet(html) { const sh = $('sheet'), top = sh.scrollTop; UI.html('sheet', html); if (sh.scrollTop !== top) sh.scrollTop = top; }
 
 function render(s) {
+  { const st = E.staffTotal ? E.staffTotal(s) : null, el = $('staffchip'); if (st && el) { const t = '👷 従業員 ' + st.total.toLocaleString('ja-JP') + '人'; if (el.textContent !== t) el.textContent = t; el.title = `施設 ${st.base.toLocaleString('ja-JP')}／増設モジュール ${st.modules.toLocaleString('ja-JP')}／採掘 ${st.field.toLocaleString('ja-JP')}`; } }
   if (!iso) {
     for (const k in (G.spritesNT || {})) { const m = G.spritesNT[k]; Sprites.H[k] = Math.max(8, Math.round((m.ay - (m.fw + m.fd) * 8) / 1.4)); }   // PNGの絵の当たり判定の高さ：足あとの奥の頂点Aから絵の上端まで（描画の高さ倍率 HS=1.4 を割り戻す）
     for (const k in (G.spritesBL || {})) { const m = G.spritesBL[k]; Sprites.H[k] = Math.max(8, Math.round(Math.max(...m.r.map(r => r.ay - (r.fw + r.fd) * 8)) / 1.4)); }   // Blender の絵：向きのうち一番高いもの
