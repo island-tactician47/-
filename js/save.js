@@ -17,6 +17,11 @@
     if (!isObj(s.settings) || !isObj(s.refinery) || !Array.isArray(s.log) || !Array.isArray(s.pendingEvents)) return 'settings / refinery / log / pendingEvents が無い';
     return null;
   }
+  function thin(state, keep) {
+    const h = state.history || [];
+    for (let i = 0; i < h.length - keep; i++) { const e = h[i]; delete e.prices; delete e.produced; delete e.consumed; delete e.sold; delete e.segPL; }
+    return JSON.stringify(state);
+  }
   const Save = {
     VERSION, problem,
     exists() { try { return !!localStorage.getItem(KEY); } catch (e) { return false; } },
@@ -32,10 +37,22 @@
         return s;
       } catch (e) { console.error('セーブの読み込みに失敗', e); return null; }
     },
+    // 保存。localStorage の容量（約5MB）を超えると setItem が失敗して「前のセーブ」に戻ってしまうので、
+    // 失敗したら古い月次履歴の細目（相場・生産・消費・出荷・本部別損益。直近36か月しか使わない）を捨てて再試行する
     save(state) {
-      try { state.lastReal = Date.now(); localStorage.setItem(KEY, JSON.stringify(state)); return true; }
-      catch (e) { console.error('セーブに失敗', e); return false; }
+      state.lastReal = Date.now();
+      let text = JSON.stringify(state);
+      if (text.length > 2.5e6) text = thin(state, 36);
+      for (let keep = 36; ; keep = keep > 12 ? 12 : 0) {
+        try { localStorage.setItem(KEY, text); Save.failed = false; return true; }
+        catch (e) {
+          console.error('セーブに失敗', e);
+          if (keep === 0) { Save.failed = true; return false; }
+          text = thin(state, keep);
+        }
+      }
     },
+    failed: false,
     clear() { try { localStorage.removeItem(KEY); } catch (e) {} },
     exportText() { try { return localStorage.getItem(KEY) || ''; } catch (e) { return ''; } },
     importText(t) {

@@ -24,7 +24,7 @@
   try { foldState = JSON.parse(localStorage.getItem('factorySim.ui.fold') || '{}') || {}; } catch (e) { foldState = {}; }
   let state = null, renderFn = null, acc = 0, lastT = 0, dirty = true, lastSave = 0, modalOpen = false;
   // 押している最中に再描画するとボタンが作り直されてクリックが消えるため、押下中は描画を止める
-  let noSave = false;
+  let noSave = false, warnedSave = false;
   let pressing = false, releaseTimer = null;
   // スマホ：画面をスクロールし始めると pointercancel が来るが、指はまだ画面に触れている。そのまま再描画すると、メニューが作り直されてスクロールが止まる
   // （地図のメニューなど）。指が1本でも触れている間は、描画を止める（touches で数える）
@@ -85,7 +85,7 @@
     },
     html(el, str) { if (typeof el === 'string') el = document.getElementById(el); if (el && el._h !== str) { el.innerHTML = str; el._h = str; } },
 
-    save() { if (state && !noSave) { Save.save(state); lastSave = performance.now(); } },
+    save() { if (state && !noSave) { const ok = Save.save(state); lastSave = performance.now(); if (!ok && !warnedSave) { warnedSave = true; UI.toast('⚠️ セーブできません（容量不足）。メニューの書き出しで控えを取ってください', 8000); } } },
     // 取り込み（import）直後に reload するとき、メモリ上の古い state で上書きされないようにする
     blockSave() { noSave = true; },
     refresh() { dirty = true; },
