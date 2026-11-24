@@ -17,7 +17,8 @@
     if (!isObj(s.settings) || !isObj(s.refinery) || !Array.isArray(s.log) || !Array.isArray(s.pendingEvents)) return 'settings / refinery / log / pendingEvents が無い';
     return null;
   }
-  function thin(state, keep) {
+  function thin(state, keep, cut) {
+    if (cut && state.history && state.history.length > cut) state.history.splice(0, state.history.length - cut);
     const h = state.history || [];
     for (let i = 0; i < h.length - keep; i++) { const e = h[i]; delete e.prices; delete e.produced; delete e.consumed; delete e.sold; delete e.segPL; }
     return JSON.stringify(state);
@@ -41,14 +42,17 @@
     // 失敗したら古い月次履歴の細目（相場・生産・消費・出荷・本部別損益。直近36か月しか使わない）を捨てて再試行する
     save(state) {
       state.lastReal = Date.now();
-      let text = JSON.stringify(state);
-      if (text.length > 2.5e6) text = thin(state, 36);
-      for (let keep = 36; ; keep = keep > 12 ? 12 : 0) {
-        try { localStorage.setItem(KEY, text); Save.failed = false; return true; }
+      let text;
+      try { text = JSON.stringify(state); } catch (e) { console.error('セーブの文字列化に失敗', e); Save.failed = true; Save.why = String(e && e.message || e); return false; }
+      const stages = [[36, 0], [12, 0], [0, 0], [0, 120]];      // 段階的に軽くする（細目を残す月数, 履歴そのものの切り詰め先）。最後は月次履歴を直近120か月に
+      let st = text.length > 2.5e6 ? 0 : -1;
+      if (st === 0) text = thin(state, stages[0][0], stages[0][1]);
+      for (;;) {
+        try { localStorage.setItem(KEY, text); Save.failed = false; Save.size = text.length; return true; }
         catch (e) {
-          console.error('セーブに失敗', e);
-          if (keep === 0) { Save.failed = true; return false; }
-          text = thin(state, keep);
+          console.error('セーブに失敗（容量 ' + text.length + '）', e); Save.why = String(e && e.message || e);
+          if (++st >= stages.length) { Save.failed = true; return false; }
+          text = thin(state, stages[st][0], stages[st][1]);
         }
       }
     },

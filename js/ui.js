@@ -85,7 +85,7 @@
     },
     html(el, str) { if (typeof el === 'string') el = document.getElementById(el); if (el && el._h !== str) { el.innerHTML = str; el._h = str; } },
 
-    save() { if (state && !noSave) { const ok = Save.save(state); lastSave = performance.now(); if (!ok && !warnedSave) { warnedSave = true; UI.toast('⚠️ セーブできません（容量不足）。メニューの書き出しで控えを取ってください', 8000); } } },
+    save() { if (state && !noSave) { const ok = Save.save(state); lastSave = performance.now(); if (!ok && !warnedSave) { warnedSave = true; UI.toast("⚠️ セーブできません（" + (Save.why || "不明") + "）。メニューの書き出しで控えを取ってください", 9000); } } },
     // 取り込み（import）直後に reload するとき、メモリ上の古い state で上書きされないようにする
     blockSave() { noSave = true; },
     refresh() { dirty = true; },
