@@ -39,7 +39,7 @@ window.GAME_DATA.map = {
     detergentFactory: [4, 4], garmentFactory: [4, 4], buildmatFactory: [6, 6],
     carFactory: [9, 5], shipyard: [5, 8], aircraftFactory: [6, 5], semiconductorFactory: [6, 6], pcFactory: [7, 6], evFactory: [9, 8], pharmaFactory: [6, 5],
     rocketFactory: [6, 6], munitionsFactory: [9, 8], fineChemPlant: [6, 5], tireFactory: [6, 5], batteryFactory: [6, 5], explosivesFactory: [6, 6], colonyFactory: [12, 12], offshoreFactory: [10, 10], cableFactory: [6, 5], fiberFactory: [6, 5], motorFactory: [7, 6], powerEquipFactory: [9, 8], commGearFactory: [6, 6], satelliteFactory: [9, 8], aiDefenseFactory: [12, 12],   // NT に無い型（手続き描画 js/sprites2.js）は小さめ
-    powerPlant: [8, 8], researchLab: [4, 4], warehouse_bulk: [4, 4], warehouse_goods: [4, 4],
+    powerPlant: [8, 8], researchLab: [4, 4], headquarters: [4, 4], warehouse_bulk: [4, 4], warehouse_goods: [4, 4],
     // 船の絵（港の船・海を行き来する船。町の建物ではない。末尾 _w は船首が -gx 側）
     ship_fishing: [4, 2], ship_fishing_w: [4, 2], ship_coaster: [6, 3], ship_coaster_w: [6, 3], ship_freighter: [8, 3], ship_freighter_w: [8, 3], ship_tanker: [10, 4], ship_tanker_w: [10, 4], ship_container: [12, 4], ship_container_w: [12, 4], port_gantry: [3, 7], port_yard: [4, 4], port_jetty: [3, 9], port_fish: [5, 4]
   }

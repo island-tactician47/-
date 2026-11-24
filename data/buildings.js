@@ -104,6 +104,7 @@ GAME_DATA.buildings = {
   // ---- 段階3b：自家発電所（本部に属さない全社の設備。電力は加工設備のレシピの energyShare から出る需要で、発電した分の送電料金を払い戻す。GAME_DATA.power 参照） ----
   powerPlant:        { name: '自家発電所',       icon: '⚡', category: 'power', tier: 3, maxCount: 6, cost: 1500000, months: 18, fixedPerMonth: 6000, desc: '燃料（重油・石炭・天然ガス）を燃やして、日量100MWhまで発電する。加工設備が買う電力の代わりになる（送電料金の払い戻し）' },
   // ---- 研究棟：研究を始めるのに1棟以上が必要。増やすと研究の基礎の進み（+30%/棟）と加速の上限（1+棟数、最大×4）が上がる。同時に進められる研究は1件のまま ----
+  headquarters:      { name: '本社ビル',         icon: '🏢', category: 'hq', tier: 3, maxCount: 1, requiresBuilding: 'chemPlant', cost: 10000, months: 3, fixedPerMonth: 100, desc: '会社の顔。化学プラントができると建てられる（足あと4×4・1棟だけ）。ティアが上がるたびに、小さな事務所→中層ビル→高層ビル→超高層と大きく高くなる。ゲームの数値には効かない（従業員数のめやすが増える）' },
   researchLab:       { name: '研究棟',           icon: '🔬', category: 'lab', tier: 5, retired: true, maxCount: 3, cost: 1500000, months: 18, fixedPerMonth: 6000, desc: '【廃止】研究は技術ツリーに置き換わった。建てた研究棟は撤去すると全額が戻る' },
   // ---- 段階2c：研究（buildings.research）が済むと建てられる専用工場 ----
   pharmaFactory:     { name: '製薬工場',         icon: '💊', category: 'factory', tier: 6, cost: 2000000, months: 24, fixedPerMonth: 8000,  desc: '医薬原料とガラスから医薬品' },
@@ -162,7 +163,7 @@ GAME_DATA.staff = {
   moduleRatio: 0.6, oreYard: 5,
   building: {
     oilWell: 3, mine: 80, crudeTank: 4, refinery: 70, refineryLarge: 320, distillation: 25,
-    tank_gasoline: 3, tank_diesel: 3, tank_naphtha: 3, tank_heavy: 3, warehouse_bulk: 18, warehouse_goods: 24,
+    tank_gasoline: 3, tank_diesel: 3, tank_naphtha: 3, tank_heavy: 3, warehouse_bulk: 18, warehouse_goods: 24, headquarters: 30,   // 本社ビルは、段階（1〜4）×この人数
     chemPlant: 120, steelMill: 650, aluminumSmelter: 280, copperSmelter: 160, kiln: 90, sawmill: 60, paperMill: 110,
     detergentFactory: 110, garmentFactory: 180, batteryFactory: 220, tireFactory: 200, buildmatFactory: 140,
     carFactory: 480, shipyard: 520, aircraftFactory: 430, semiconductorFactory: 320, pcFactory: 280, powerPlant: 70,

@@ -364,6 +364,7 @@
       if (e.sprite) return e.sprite;   // 船など、種類でなく絵の名前で指定するもの
       if (e.type === 'module') return e.parentType ? 'module_' + e.parentType : null;
       if (e.type === 'researchLab') return e.level >= 3 ? 'researchLab_L3' : e.level === 2 ? 'researchLab_L2' : 'researchLab';
+      if (e.type === 'headquarters') return e.level >= 2 ? 'headquarters_L' + Math.min(4, e.level) : 'headquarters';
       return e.type;
     }
     // 絵を貼る：足あと中心（地面）の位置 m.ax,m.ay → 足あとの上の頂点 A の位置（e は回したあとの足あと fw×fd）

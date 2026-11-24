@@ -103,7 +103,7 @@ function bpConfirm() {
 const CATS = [
   { id: 'factory', label: '🏭 工場', match: c => c === 'factory' },
   { id: 'store', label: '🛢️ 貯蔵・製油', match: c => c === 'storage' || c === 'refinery' || c === 'field' },
-  { id: 'corp', label: '🏢 全社', match: c => c === 'power' || c === 'lab' }
+  { id: 'corp', label: '🏢 全社', match: c => c === 'power' || c === 'lab' || c === 'hq' }
 ];
 
 function ghostAt(type, tile) { const rot = E.cleanRot(type, placingRot), [fw, fd] = E.footprintOf(type, rot); return { type, rot, x: tile.x - Math.floor(fw / 2), y: tile.y - Math.floor(fd / 2), moveKey }; }

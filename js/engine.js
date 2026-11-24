@@ -578,7 +578,7 @@
       const out = [];
       for (const key in s.map.placed) {
         const p = s.map.placed[key], c = s.construction.find(q => q.key === key), [fw, fd] = this.placedFootprint(s, p), stack = this.stackCfg(p.type), lv = stack ? Math.min(stack, s.buildings[p.type] || 0) : 0;
-        out.push({ key, type: p.type, level: stack ? lv : undefined, upgrading: !!(stack && c && lv > 0), parent: p.parent || null, parentType: p.parent && s.map.placed[p.parent] ? s.map.placed[p.parent].type : null, x: p.x, y: p.y, rot: p.rot || 0, moving: !!(c && c.type === 'move'), fw, fd, building: stack ? (!!c && lv === 0) : !!c, progress: c ? Math.max(0, Math.min(1, 1 - c.daysLeft / (c.totalDays || c.daysLeft || 1))) : 1, daysLeft: c ? c.daysLeft : 0, plant: s.plants.find(q => q.key === key) || null });
+        out.push({ key, type: p.type, level: stack ? lv : (p.type === 'headquarters' ? this.hqStage(s) : undefined), upgrading: !!(stack && c && lv > 0), parent: p.parent || null, parentType: p.parent && s.map.placed[p.parent] ? s.map.placed[p.parent].type : null, x: p.x, y: p.y, rot: p.rot || 0, moving: !!(c && c.type === 'move'), fw, fd, building: stack ? (!!c && lv === 0) : !!c, progress: c ? Math.max(0, Math.min(1, 1 - c.daysLeft / (c.totalDays || c.daysLeft || 1))) : 1, daysLeft: c ? c.daysLeft : 0, plant: s.plants.find(q => q.key === key) || null });
       }
       return out;
     },
@@ -1073,10 +1073,12 @@
     // 従業員数（data/buildings.js の GAME_DATA.staff。完成した施設・増設モジュール・油井・鉱山・貯鉱場の合計）。{ total, base, modules, field }
     staffOf(type) { const S = D().staff; return (S && S.building && S.building[type]) || 0; },
     moduleStaffOf(type) { const S = D().staff, b = this.staffOf(type); return b ? Math.max(1, Math.round(b * ((S && S.moduleRatio) || 0))) : 0; },
+    // 本社ビルの段階（1〜4）＝解放済みのティアの最高（T3→1、T4→2、T5→3、T6→4）。絵と従業員数が変わる
+    hqStage(s) { let t = 3; for (let k = 4; k <= 6; k++) if (this.tierUnlocked(s, k)) t = k; return t - 2; },
     staffTotal(s) {
       const S = D().staff; if (!S) return { total: 0, base: 0, modules: 0, field: 0 };
       let base = 0, modules = 0, field = 0;
-      for (const type in s.buildings) if ((s.buildings[type] || 0) > 0) base += this.staffOf(type) * s.buildings[type];
+      for (const type in s.buildings) if ((s.buildings[type] || 0) > 0) base += this.staffOf(type) * s.buildings[type] * (type === 'headquarters' ? this.hqStage(s) : 1);
       for (const p of s.plants || []) if (p.modules) modules += this.moduleStaffOf(p.type) * p.modules;
       field += (s.wells ? s.wells.length : 0) * this.staffOf('oilWell') + (s.mines ? s.mines.length : 0) * this.staffOf('mine');
       if (s.oreYards) for (const k in s.oreYards) field += s.oreYards[k] * (S.oreYard || 0);

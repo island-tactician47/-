@@ -4584,5 +4584,173 @@ window.GAME_DATA.spritesBL = {
     "fd": 3
    }
   ]
+ },
+ "headquarters": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/headquarters_r0.png",
+    "w": 267.0,
+    "h": 152.5,
+    "ax": 133.5,
+    "ay": 89.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_r1.png",
+    "w": 267.0,
+    "h": 131.0,
+    "ax": 133.5,
+    "ay": 68.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_r2.png",
+    "w": 267.0,
+    "h": 120.5,
+    "ax": 133.5,
+    "ay": 57.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_r3.png",
+    "w": 267.0,
+    "h": 138.0,
+    "ax": 133.5,
+    "ay": 75.1,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
+ },
+ "headquarters_L2": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/headquarters_L2_r0.png",
+    "w": 267.0,
+    "h": 214.5,
+    "ax": 133.5,
+    "ay": 151.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_L2_r1.png",
+    "w": 267.0,
+    "h": 194.5,
+    "ax": 133.5,
+    "ay": 131.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_L2_r2.png",
+    "w": 267.0,
+    "h": 193.5,
+    "ax": 133.5,
+    "ay": 130.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_L2_r3.png",
+    "w": 267.0,
+    "h": 226.0,
+    "ax": 133.5,
+    "ay": 163.1,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
+ },
+ "headquarters_L3": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/headquarters_L3_r0.png",
+    "w": 267.0,
+    "h": 304.0,
+    "ax": 133.5,
+    "ay": 241.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_L3_r1.png",
+    "w": 267.0,
+    "h": 278.5,
+    "ax": 133.5,
+    "ay": 215.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_L3_r2.png",
+    "w": 267.0,
+    "h": 295.5,
+    "ax": 133.5,
+    "ay": 232.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_L3_r3.png",
+    "w": 267.0,
+    "h": 321.0,
+    "ax": 133.5,
+    "ay": 258.1,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
+ },
+ "headquarters_L4": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/headquarters_L4_r0.png",
+    "w": 267.0,
+    "h": 591.5,
+    "ax": 133.5,
+    "ay": 528.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_L4_r1.png",
+    "w": 267.0,
+    "h": 582.5,
+    "ax": 133.5,
+    "ay": 519.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_L4_r2.png",
+    "w": 267.0,
+    "h": 582.5,
+    "ax": 133.5,
+    "ay": 519.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/headquarters_L4_r3.png",
+    "w": 267.0,
+    "h": 591.5,
+    "ax": 133.5,
+    "ay": 528.6,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
  }
 };
