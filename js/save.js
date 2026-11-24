@@ -45,7 +45,7 @@
       let text;
       try { text = JSON.stringify(state); } catch (e) { console.error('セーブの文字列化に失敗', e); Save.failed = true; Save.why = String(e && e.message || e); return false; }
       const stages = [[36, 0], [12, 0], [0, 0], [0, 120]];      // 段階的に軽くする（細目を残す月数, 履歴そのものの切り詰め先）。最後は月次履歴を直近120か月に
-      let st = text.length > 2.5e6 ? 0 : -1;
+      let st = text.length > 8e5 ? 0 : -1;
       if (st === 0) text = thin(state, stages[0][0], stages[0][1]);
       for (;;) {
         try { localStorage.setItem(KEY, text); Save.failed = false; Save.size = text.length; return true; }
