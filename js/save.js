@@ -42,11 +42,12 @@
     // 失敗したら古い月次履歴の細目（相場・生産・消費・出荷・本部別損益。直近36か月しか使わない）を捨てて再試行する
     save(state) {
       state.lastReal = Date.now();
-      let text;
-      try { text = JSON.stringify(state); } catch (e) { console.error('セーブの文字列化に失敗', e); Save.failed = true; Save.why = String(e && e.message || e); return false; }
+      let text, st = -1;
       const stages = [[36, 0], [12, 0], [0, 0], [0, 120]];      // 段階的に軽くする（細目を残す月数, 履歴そのものの切り詰め先）。最後は月次履歴を直近120か月に
-      let st = text.length > 8e5 ? 0 : -1;
-      if (st === 0) text = thin(state, stages[0][0], stages[0][1]);
+      try {
+        if (Save.size > 8e5) { st = 0; text = thin(state, stages[0][0], stages[0][1]); }   // 前回すでに大きかった：全体の文字列化を1回省く（スマホで3秒ごとのカクつきを減らす）
+        else { text = JSON.stringify(state); if (text.length > 8e5) { st = 0; text = thin(state, stages[0][0], stages[0][1]); } }
+      } catch (e) { console.error('セーブの文字列化に失敗', e); Save.failed = true; Save.why = String(e && e.message || e); return false; }
       for (;;) {
         try { localStorage.setItem(KEY, text); Save.failed = false; Save.size = text.length; return true; }
         catch (e) {

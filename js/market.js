@@ -157,8 +157,8 @@
       const def = D().events.list.find(e => e.id === id);
       if (!def) return null;
       state.activeEvents = state.activeEvents.filter(a => a.id !== id);
+      if (def.relief && window.Engine && Engine.reliefStart) Engine.reliefStart(state);   // 大不況の始まり：純資産と借金を控えておく（価格が崩れる前に。先に push すると、在庫が25%で評価された純資産が基準になって融資枠が小さく出る）
       state.activeEvents.push({ id, monthsLeft: def.months, monthsTotal: def.months });
-      if (def.relief && window.Engine && Engine.reliefStart) Engine.reliefStart(state);   // 大不況の始まり：純資産と借金を控えておく
       return def;
     }
   };

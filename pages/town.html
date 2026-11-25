@@ -219,6 +219,7 @@ function statusOf(s, e) {
 
 // 加工設備の、いまの稼働の月あたりの流れ（消費・産出・収支）。折りたたみ（既定で開く）
 const fq = v => v >= 100 ? E.fmtNum(v) : v >= 1 ? String(parseFloat(v.toFixed(1))) : v > 0 ? String(parseFloat(v.toPrecision(2))) : '0';
+const esc = v => String(v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));   // 利用者が入力した名前（ブループリント）をHTMLに出すとき
 function flowHtml(s, p, key) {
   const f = E.plantFlow(s, p, { cost: !!(UI.costMode && UI.costMode()) }); if (!f) return '';
   const R = G.resources, sgn = v => `<b class="${v >= 0 ? 'good' : 'bad'}">${v >= 0 ? '+' : '-'}${M(Math.abs(v))}</b>`;
@@ -245,7 +246,7 @@ function renderSheet(s) {
       const list = bpLoad();
       out.push(`<div class="card"><div class="row"><h3>📐 ブループリント</h3><button type="button" class="xbtn" onclick="closeSheet()" aria-label="閉じる">×</button></div>
         <div class="sub">建物の配置を、名前をつけて保存し、空いた場所へまとめて建てる。増設モジュールは含まない。向きは保存したまま。この端末のブラウザに残る。</div>
-        ${list.map((b, i) => `<div class="row" style="margin-top:6px"><span><b>${b.name}</b> <span class="sub">${b.items.length}件・約${M(cost(b.items))}</span></span><span><button class="btn small" onclick="bpStartPaste(${i})">貼り付け</button> <button class="btn small" onclick="bpDelete(${i})">🗑️</button></span></div>`).join('') || '<div class="sub" style="margin-top:6px">まだ保存したものはない</div>'}
+        ${list.map((b, i) => `<div class="row" style="margin-top:6px"><span><b>${esc(b.name)}</b> <span class="sub">${b.items.length}件・約${M(cost(b.items))}</span></span><span><button class="btn small" onclick="bpStartPaste(${i})">貼り付け</button> <button class="btn small" onclick="bpDelete(${i})">🗑️</button></span></div>`).join('') || '<div class="sub" style="margin-top:6px">まだ保存したものはない</div>'}
         <div class="btns" style="margin-top:8px"><button class="btn" onclick="bpStartSelect()">＋ 建物を選んで保存</button> <button class="btn small" onclick="closeSheet()">閉じる</button></div></div>`);
     } else if (bpMode === 'select') {
       const bp = bpSelectedBlueprint(), n = bp ? bp.items.length : 0;
@@ -256,7 +257,7 @@ function renderSheet(s) {
     } else if (bpMode === 'paste' && bpCur) {
       bpUpdateGhosts();
       const { ox, oy } = bpOrigin(), chk = E.blueprintCheck(s, bpCur, ox, oy), bad = chk.items.filter(i => !i.ok).length;
-      out.push(`<div class="card"><div class="row"><h3>📐 ${bpCur.name}を貼り付ける</h3><span style="display:flex;align-items:center"><span class="sub">${bpCur.items.length}件・${M(chk.cost)}</span><button type="button" class="xbtn" onclick="closeSheet()" aria-label="閉じる">×</button></span></div>
+      out.push(`<div class="card"><div class="row"><h3>📐 ${esc(bpCur.name)}を貼り付ける</h3><span style="display:flex;align-items:center"><span class="sub">${bpCur.items.length}件・${M(chk.cost)}</span><button type="button" class="xbtn" onclick="closeSheet()" aria-label="閉じる">×</button></span></div>
         <div class="sub">マップをタップして場所を決める（緑なら置ける・赤は置けない）。全部置けて資金が足りるときだけ建てられる。</div>
         <div style="margin-top:6px">場所：${chk.ok ? '<b class="good">全部置ける</b>' : `<b class="bad">${bad ? bad + '件が置けない：' : ''}${chk.msg}</b>`}</div>
         <div class="btns" style="margin-top:8px"><button class="btn" ${chk.ok ? '' : 'disabled'} onclick="bpConfirm()">建設する</button> <button class="btn small" onclick="bpOpen()">一覧へ</button> <button class="btn small" onclick="closeSheet()">やめる</button></div></div>`);

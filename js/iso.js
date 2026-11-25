@@ -554,7 +554,7 @@
     const ptrs = new Map(); let moved = 0, startPinch = null, startCam = null;
     canvas.style.touchAction = 'none';
     const local = ev => { const r = canvas.getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; };
-    canvas.addEventListener('pointerdown', ev => { canvas.setPointerCapture(ev.pointerId); ptrs.set(ev.pointerId, local(ev)); moved = 0; startCam = { ...I.cam }; if (ptrs.size === 2) { const [a, b] = [...ptrs.values()]; startPinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: I.cam.z, mx: (a[0] + b[0]) / 2, my: (a[1] + b[1]) / 2 }; } });
+    canvas.addEventListener('pointerdown', ev => { canvas.setPointerCapture(ev.pointerId); ptrs.set(ev.pointerId, local(ev)); moved = 0; startCam = { ...I.cam }; if (ptrs.size === 2) { moved = 99; const [a, b] = [...ptrs.values()]; startPinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: I.cam.z, mx: (a[0] + b[0]) / 2, my: (a[1] + b[1]) / 2 }; } });
     canvas.addEventListener('pointermove', ev => {
       if (!ptrs.has(ev.pointerId)) return;
       const prev = ptrs.get(ev.pointerId), cur = local(ev); ptrs.set(ev.pointerId, cur);

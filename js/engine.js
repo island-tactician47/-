@@ -1666,7 +1666,9 @@
     },
     restructureDebt(s) {
       const st = this.restructureState(s); if (!st.ok) return st;
-      const R = D().restructure, gov = s.loans.govRelief; let principal = this.totalDebt(s) - (gov ? gov.principal : 0); const fee = Math.round(principal * R.fee);   // 国の景気対策融資は別枠のまま残す
+      const R = D().restructure, gov = s.loans.govRelief; let principal = this.totalDebt(s) - (gov ? gov.principal : 0);   // 国の景気対策融資は別枠のまま残す
+      if (s.cash < 0) { principal += -s.cash; s.cash = 0; }   // 月の途中の現金の赤字（運転資金枠の使いすぎ）は、帳消しにせず元本に足す
+      const fee = Math.round(principal * R.fee);
       s.loans = {}; s.overdraft = 0; if (gov) s.loans.govRelief = gov;
       if (s.cash >= fee) s.cash -= fee; else { principal += fee - Math.max(0, s.cash); s.cash = Math.max(0, s.cash - fee); }   // 手数料を払えなければ元本に足す
       s.month.interest += fee;
