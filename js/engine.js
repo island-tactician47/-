@@ -156,6 +156,8 @@
       return q;
     },
     contractPrice(s, k) { const cfg = this.contractCfg(k); return cfg ? Market.priceNoSat(s, k) * (1 + cfg.premium) : 0; },
+    // 工場の月の収支の見積もり用：この品目の産出のうち契約で納品する割合（いまの期のノルマ÷いまの1期間の産出。納品が始まっていない・契約が無ければ 0）。各工場の産出に、同じ割合で案分する（表示だけ。実際のお金は変わらない）
+    contractFrac(s, k) { const c = s.contracts && s.contracts[k]; if (!c || !(s.day > c.start) || !this.contractCfg(k)) return 0; const cap = this.contractCapacity(s, k); return cap > 0 ? Math.min(1, Math.max(0, c.qty / cap)) : 0; },
     contractLockReason(s, k) {
       const cfg = this.contractCfg(k); if (!cfg) return 'この品目は契約できない';
       { const nd = this.nodeOfResource(k); if (nd && !this.nodeUnlocked(s, nd)) return `「${this.nodeName(nd)}」を開くと契約できる`; }
@@ -1312,8 +1314,9 @@
         ins.push({ k, qty, cost, buy, share, boughtCost: qty * share * bp, premium: qty * share * (bp - sp), stockDays: need > 0 ? (s.inventory[k] || 0) / need : Infinity, canBuy: R[k].canBuy !== false });
       }
       for (const k in rec.outputs) {
-        const qty = rec.outputs[k] * M30, sellable = R[k].canSell !== false, value = sellable ? qty * Market.sellPrice(s, k) : 0;
-        revenue += value; outs.push({ k, qty, value, sellable });
+        const qty = rec.outputs[k] * M30, sellable = R[k].canSell !== false, cf = sellable ? this.contractFrac(s, k) : 0;
+        const value = sellable ? qty * (Market.sellPrice(s, k) * (1 - cf) + (cf > 0 ? this.contractPrice(s, k) * cf : 0)) : 0;   // 契約の品目は、契約で納品する割合ぶんを契約価格（市場より高く・手数料なし）で数える
+        revenue += value; outs.push({ k, qty, value, sellable, contract: cf });
       }
       const opex = (rec.opexPerUnit || 0) * idx * M30, fixed = (b.fixedPerMonth || 0) * idx * (1 + nm * (MC.fixedMul || 0));
       const fee = this.importFee(s, p, rec, M30, ins.reduce((a, i) => a + i.boughtCost, 0), ins.reduce((a, i) => a + i.premium, 0));   // 輸入の罰（Tier 3 以上。買った原料の割合ぶん。割増の分は払い戻す）
