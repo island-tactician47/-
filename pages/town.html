@@ -328,6 +328,7 @@ function setSheet(html) { const sh = $('sheet'), top = sh.scrollTop; UI.html('sh
 
 function render(s) {
   { const st = E.staffTotal ? E.staffTotal(s) : null, el = $('staffchip'); if (st && el) { const t = '👷 従業員 ' + st.total.toLocaleString('ja-JP') + '人'; if (el.textContent !== t) el.textContent = t; el.title = `施設 ${st.base.toLocaleString('ja-JP')}／増設モジュール ${st.modules.toLocaleString('ja-JP')}／採掘 ${st.field.toLocaleString('ja-JP')}`; } }
+  { const el = $('staffchip'); if (el && E.townDev) { const d = Math.round(E.townDev(s) * 100), t = el.textContent.replace(/　🏙.*$/, '') + '　🏙 街 ' + d + '%'; if (el.textContent !== t) el.textContent = t; const tl = el.title.split('\n')[0] + '\n街の発展度：従業員・利益・解放したティアで上がり、不況で縮む。上がると、暮らし・建設・交通・電子などの品目の需要が最大+50%増える'; if (el.title !== tl) el.title = tl; } }
   if (!iso) {
     for (const k in (G.spritesNT || {})) { const m = G.spritesNT[k]; Sprites.H[k] = Math.max(8, Math.round((m.ay - (m.fw + m.fd) * 8) / 1.4)); }   // PNGの絵の当たり判定の高さ：足あとの奥の頂点Aから絵の上端まで（描画の高さ倍率 HS=1.4 を割り戻す）
     for (const k in (G.spritesBL || {})) { const m = G.spritesBL[k]; Sprites.H[k] = Math.max(8, Math.round(Math.max(...m.r.map(r => r.ay - (r.fw + r.fd) * 8)) / 1.4)); }   // Blender の絵：向きのうち一番高いもの

@@ -259,11 +259,34 @@
           const vs = k.fringeV && fringe ? k.fringeV : null, v = vs ? vs[(h >>> 11) % vs.length] : 1 + ((h >>> 11) % k.n), s = k.size;
           for (let i = 0; i < s; i++) for (let j = 0; j < s; j++) occ[(x + i) + ',' + (y + j)] = 1;
           const dW = x - x0, dE = x0 + 14 - (x + s - 1), dN = y - y0, dS = Math.min(y0 + 14, lim - 1) - (y + s - 1), m = Math.min(dN, dS, dW, dE);
-          list.push({ kind: k.pre, cls: k.cls, v, x, y, s, rot: dS === m ? 0 : dW === m ? 1 : dN === m ? 2 : 3 });
+          const RG = { low: [0, 0.7], mid: [0.4, 0.85], high: [0.55, 0.95], tall: [0.75, 1.0] }[k.cls], r = RG[0] + ((hs(x, y, 13) % 1000) / 1000) * (RG[1] - RG[0]);   // r＝建つ順（発展度が r を超えたら建つ。低層→中層→高層→超高層の順に増える）
+          list.push({ kind: k.pre, cls: k.cls, v, x, y, s, r, rot: dS === m ? 0 : dW === m ? 1 : dN === m ? 2 : 3 });
         }
       }
       this._town = { k: ck, list };
       return list;
+    },
+    // ---------- 街の発展度（data/map.js の town.growth）。s.town={dev} は最初の月末まで作らない ----------
+    townGrowth() { const M = this.mapCfg(); return M && M.town && M.town.growth; },
+    townDev(s) { return (s.town && s.town.dev) || 0; },
+    townTarget(s) {
+      const g = this.townGrowth(); if (!g) return 0;
+      const c = x => Math.max(0, Math.min(1, x)), staff = this.staffTotal(s).total, tgt = this.goalTarget(s) || 1;
+      let t = g.w.staff * c(Math.sqrt(staff / g.staffFull)) + g.w.profit * c(this.profit12(s) / tgt) + g.w.tier * c((this.currentTier(s) - 1) / 5);
+      for (const a of s.activeEvents || []) { const d = D().events.list.find(e => e.id === a.id); if (!d) continue; const fade = Math.min(1, (a.monthsLeft / a.monthsTotal) * 1.5); if (d.id === 'depression') t *= 1 - (1 - g.depression) * fade; else if (d.id === 'recession') t *= 1 - (1 - g.recession) * fade; }   // 不況の間は、目標が下がって街が縮む
+      return c(t);
+    },
+    townMonth(s) {
+      const g = this.townGrowth(); if (!g) return;
+      const t = this.townTarget(s);
+      if (!s.town) { s.town = { dev: t }; return; }   // 古いセーブは、いまの目標から始める（いきなり増えも減りもしない）
+      s.town.dev = Math.max(0, Math.min(1, s.town.dev + Math.max(-g.down, Math.min(g.up, t - s.town.dev))));
+    },
+    // 品目の需要の増え（市場の吸収量にかける +倍率）。発展度×depthBoost。from が付く品目は、その発展度を超えてから効き始める
+    townDemand(s, k) {
+      const g = this.townGrowth(); if (!g || !s.town || !s.town.dev || !g.products.includes(k)) return 0;
+      const f = (g.from && g.from[k]) || 0;
+      return g.depthBoost * Math.max(0, (s.town.dev - f) / (1 - f));
     },
     zoneAt(y) { const M = this.mapCfg(), z = M && M.zones; return !z ? 'industrial' : y < z.residentialEnd ? 'residential' : y < z.forestEnd ? 'forest' : 'industrial'; },
     // 海に隣接して建てる設備の条件（data/map.js の seaFront）。なければ null
@@ -1188,7 +1211,7 @@
         // 飽和（値崩れ）込み：月に Q を売ると平均で約1.5Qぶん飽和した価格で売れる（減衰0.977/日で定常のピークは約2Q）。
         // いまの飽和は含めず（二重計上を避ける）、飽和のない相場に定常の値崩れを掛ける。値崩れは主産物の marketDepth で計算し、副産物にも同じ率を掛ける（いまは単一出力）
         const main = Object.keys(rec.outputs)[0], Q = cap * rr * 30;
-        r.satLoss = Math.min(0.5, Market.SAT_IMPACT * Math.max(Market.satAvgFactor(main) * Q, 0.5) / R[main].marketDepth);   // 船のように1単位ずつまとめて売る品目は、1回の売却の平均（0.5単位）が下限
+        r.satLoss = Math.min(0.5, Market.SAT_IMPACT * Math.max(Market.satAvgFactor(main) * Q, 0.5) / Market.depth(s, main));   // 船のように1単位ずつまとめて売る品目は、1回の売却の平均（0.5単位）が下限
         r.monthlyBuySat = (revenueNoSat * (1 - r.satLoss) - inBuy - opex) * cap * rr * 30 - fixed;
         const cost = b.cost * idx * (1 + nm * MC.costMul);
         r.paybackYearsBuy = r.monthlyBuy > 0 ? cost / (r.monthlyBuy * 12) : Infinity;
@@ -2153,6 +2176,7 @@
       if (s.history.length > 600) s.history.shift();
       { const hb = s.history[s.history.length - 1]; (s.series || (s.series = [])).push(this.seriesRow(s, hb)); }   // 長期の推移（創業から。履歴が削られても残る）
       if (m.lostCrude > 1) this.log(s, `⚠️ 原油タンクが満杯で ${this.fmtNum(m.lostCrude)}bbl を採り損ねた`);
+      this.townMonth(s);   // 街の発展度を更新
       this.reliefCheck(s);   // 大不況中なら、国の景気対策融資の枠を更新する（イベントの更新より前）
       this.distressCheck(s);
       s.month = emptyMonth();
@@ -2177,14 +2201,19 @@
     },
 
     // ---------- 表示用 ----------
+    // 単位：K（千）・M（百万）・B（十億）・T（兆）・Qa（千兆）・Qi（百京）。1万未満はそのまま、1万以上はK、百万以上は小数2桁。数が大きくなっても桁があふれない
+    fmtUnit(v) {
+      const U = [[1e18, 'Qi'], [1e15, 'Qa'], [1e12, 'T'], [1e9, 'B'], [1e6, 'M']];
+      for (const [d, u] of U) if (v >= d * 0.99995) return (v / d).toFixed(2) + u;
+      return Math.round(v / 1000).toLocaleString() + 'K';
+    },
     fmtMoney(v) {
       const sign = v < 0 ? '-' : '';
       v = Math.abs(v);
-      if (v >= 1e6) return `${sign}$${(v / 1e6).toFixed(2)}M`;
-      if (v >= 1e4) return `${sign}$${Math.round(v / 1000).toLocaleString()}k`;
+      if (v >= 1e4) return `${sign}$${Engine.fmtUnit(v)}`;
       return `${sign}$${Math.round(v).toLocaleString()}`;
     },
-    fmtNum(v) { return Math.round(v).toLocaleString(); },
+    fmtNum(v) { return Math.abs(v) >= 1e9 ? (v < 0 ? '-' : '') + Engine.fmtUnit(Math.abs(v)) : Math.round(v).toLocaleString(); },
     fmtPrice(v) { return `$${v.toFixed(2)}`; }
   };
   window.Engine = Engine;

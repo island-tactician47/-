@@ -22,6 +22,13 @@ window.GAME_DATA.map = {
   town: {
     nearForestDist: 16,           // 森林地帯からこの距離以内は fringe（低層だけ。中層は8階の1種のみ）
     towerShare: 0.10, highShare: 0.20,   // 開発した面積の目安（超高層／高層＋高層マンション。足あとの面積で数える）。selftest が±を確かめる
+    // 街の発展度（0〜1。セーブには s.town.dev だけ）。目標＝従業員(staff)・直近12か月の利益(profit。ゴールの金額に対する割合)・解放したティア(tier)の重み付き平均。毎月、目標に近づく（上がるのはゆっくり、下がるのは速い＝不況で縮む）
+    // 発展度が上がると、products の需要（市場が吸収できる量 marketDepth）が最大 depthBoost 倍ぶん増える。from＝その発展度から効き始める（大都市の段階の品目）。recession／depression＝その景気イベント中の目標の倍率
+    growth: {
+      w: { staff: 0.5, profit: 0.3, tier: 0.2 }, staffFull: 50000, up: 0.005, down: 0.02, depthBoost: 0.5, recession: 0.92, depression: 0.7,
+      products: ['detergent', 'clothing', 'pharma', 'paper', 'plastic', 'fiber', 'buildmat', 'cement', 'steel', 'glass', 'lumber', 'aluminum', 'cable', 'powerEquip', 'motor', 'car', 'ev', 'tire', 'gasoline', 'diesel', 'pc', 'semiconductor', 'battery', 'commGear', 'opticFiber', 'naturalGas', 'heavy', 'aircraft', 'ship', 'comsat'],
+      from: { aircraft: 0.5, ship: 0.5, comsat: 0.5 }
+    },
     convPct: 20,                  // 1タイルのすき間にコンビニを置く割合（残りは空き地）。コンビニは重みでは選ばない
     kinds: [
       { pre: 'city_sky_', n: 6, size: 4, cls: 'tall', core: 8, fringe: 0 },
