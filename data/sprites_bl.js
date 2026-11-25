@@ -5172,5 +5172,1265 @@ window.GAME_DATA.spritesBL = {
     "fd": 1
    }
   ]
+ },
+ "city_sky_4": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/city_sky_4_r0.png",
+    "w": 267.0,
+    "h": 560.0,
+    "ax": 133.5,
+    "ay": 497.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_4_r1.png",
+    "w": 267.0,
+    "h": 557.5,
+    "ax": 133.5,
+    "ay": 494.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_4_r2.png",
+    "w": 267.0,
+    "h": 557.0,
+    "ax": 133.5,
+    "ay": 494.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_4_r3.png",
+    "w": 267.0,
+    "h": 560.0,
+    "ax": 133.5,
+    "ay": 497.1,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
+ },
+ "city_high_3": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_high_3_r0.png",
+    "w": 203.0,
+    "h": 300.0,
+    "ax": 101.5,
+    "ay": 251.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_3_r1.png",
+    "w": 203.0,
+    "h": 297.0,
+    "ax": 101.5,
+    "ay": 248.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_3_r2.png",
+    "w": 203.0,
+    "h": 297.0,
+    "ax": 101.5,
+    "ay": 248.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_3_r3.png",
+    "w": 203.0,
+    "h": 300.0,
+    "ax": 101.5,
+    "ay": 251.6,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_apt_3": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_apt_3_r0.png",
+    "w": 203.0,
+    "h": 159.5,
+    "ax": 101.5,
+    "ay": 111.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_3_r1.png",
+    "w": 203.0,
+    "h": 156.5,
+    "ax": 101.5,
+    "ay": 108.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_3_r2.png",
+    "w": 203.0,
+    "h": 156.5,
+    "ax": 101.5,
+    "ay": 108.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_3_r3.png",
+    "w": 203.0,
+    "h": 159.5,
+    "ax": 101.5,
+    "ay": 111.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_aptT_3": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_aptT_3_r0.png",
+    "w": 203.0,
+    "h": 334.0,
+    "ax": 101.5,
+    "ay": 285.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_3_r1.png",
+    "w": 203.0,
+    "h": 331.0,
+    "ax": 101.5,
+    "ay": 282.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_3_r2.png",
+    "w": 203.0,
+    "h": 331.0,
+    "ax": 101.5,
+    "ay": 282.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_3_r3.png",
+    "w": 203.0,
+    "h": 334.0,
+    "ax": 101.5,
+    "ay": 285.6,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_sky_1": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/city_sky_1_r0.png",
+    "w": 267.0,
+    "h": 583.0,
+    "ax": 133.5,
+    "ay": 520.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_1_r1.png",
+    "w": 267.0,
+    "h": 574.5,
+    "ax": 133.5,
+    "ay": 511.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_1_r2.png",
+    "w": 267.0,
+    "h": 574.5,
+    "ax": 133.5,
+    "ay": 511.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_1_r3.png",
+    "w": 267.0,
+    "h": 583.0,
+    "ax": 133.5,
+    "ay": 520.1,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
+ },
+ "city_sky_2": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/city_sky_2_r0.png",
+    "w": 267.0,
+    "h": 539.5,
+    "ax": 133.5,
+    "ay": 476.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_2_r1.png",
+    "w": 267.0,
+    "h": 533.5,
+    "ax": 133.5,
+    "ay": 470.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_2_r2.png",
+    "w": 267.0,
+    "h": 533.5,
+    "ax": 133.5,
+    "ay": 470.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_2_r3.png",
+    "w": 267.0,
+    "h": 539.5,
+    "ax": 133.5,
+    "ay": 476.6,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
+ },
+ "city_sky_3": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/city_sky_3_r0.png",
+    "w": 267.0,
+    "h": 565.5,
+    "ax": 133.5,
+    "ay": 502.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_3_r1.png",
+    "w": 267.0,
+    "h": 560.0,
+    "ax": 133.5,
+    "ay": 497.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_3_r2.png",
+    "w": 267.0,
+    "h": 560.0,
+    "ax": 133.5,
+    "ay": 497.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_3_r3.png",
+    "w": 267.0,
+    "h": 565.5,
+    "ax": 133.5,
+    "ay": 502.6,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
+ },
+ "city_sky_5": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/city_sky_5_r0.png",
+    "w": 267.0,
+    "h": 566.5,
+    "ax": 133.5,
+    "ay": 503.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_5_r1.png",
+    "w": 267.0,
+    "h": 552.5,
+    "ax": 133.5,
+    "ay": 489.6,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_5_r2.png",
+    "w": 267.0,
+    "h": 567.0,
+    "ax": 133.5,
+    "ay": 504.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_5_r3.png",
+    "w": 267.0,
+    "h": 581.0,
+    "ax": 133.5,
+    "ay": 518.1,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
+ },
+ "city_sky_6": {
+  "fw": 4,
+  "fd": 4,
+  "r": [
+   {
+    "file": "../assets/bl/city_sky_6_r0.png",
+    "w": 267.0,
+    "h": 501.0,
+    "ax": 133.5,
+    "ay": 438.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_6_r1.png",
+    "w": 267.0,
+    "h": 498.0,
+    "ax": 133.5,
+    "ay": 435.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_6_r2.png",
+    "w": 267.0,
+    "h": 505.0,
+    "ax": 133.5,
+    "ay": 442.1,
+    "fw": 4,
+    "fd": 4
+   },
+   {
+    "file": "../assets/bl/city_sky_6_r3.png",
+    "w": 267.0,
+    "h": 523.0,
+    "ax": 133.5,
+    "ay": 460.1,
+    "fw": 4,
+    "fd": 4
+   }
+  ]
+ },
+ "city_high_1": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_high_1_r0.png",
+    "w": 203.0,
+    "h": 321.5,
+    "ax": 101.5,
+    "ay": 273.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_1_r1.png",
+    "w": 203.0,
+    "h": 315.5,
+    "ax": 101.5,
+    "ay": 267.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_1_r2.png",
+    "w": 203.0,
+    "h": 318.0,
+    "ax": 101.5,
+    "ay": 269.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_1_r3.png",
+    "w": 203.0,
+    "h": 337.5,
+    "ax": 101.5,
+    "ay": 289.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_high_2": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_high_2_r0.png",
+    "w": 203.0,
+    "h": 288.0,
+    "ax": 101.5,
+    "ay": 239.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_2_r1.png",
+    "w": 203.0,
+    "h": 285.5,
+    "ax": 101.5,
+    "ay": 237.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_2_r2.png",
+    "w": 203.0,
+    "h": 285.5,
+    "ax": 101.5,
+    "ay": 237.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_2_r3.png",
+    "w": 203.0,
+    "h": 288.0,
+    "ax": 101.5,
+    "ay": 239.6,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_high_4": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_high_4_r0.png",
+    "w": 203.0,
+    "h": 335.0,
+    "ax": 101.5,
+    "ay": 286.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_4_r1.png",
+    "w": 203.0,
+    "h": 332.0,
+    "ax": 101.5,
+    "ay": 283.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_4_r2.png",
+    "w": 203.0,
+    "h": 332.0,
+    "ax": 101.5,
+    "ay": 283.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_4_r3.png",
+    "w": 203.0,
+    "h": 350.5,
+    "ax": 101.5,
+    "ay": 302.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_high_5": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_high_5_r0.png",
+    "w": 203.0,
+    "h": 292.0,
+    "ax": 101.5,
+    "ay": 243.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_5_r1.png",
+    "w": 203.0,
+    "h": 276.5,
+    "ax": 101.5,
+    "ay": 228.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_5_r2.png",
+    "w": 203.0,
+    "h": 263.5,
+    "ax": 101.5,
+    "ay": 215.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_5_r3.png",
+    "w": 203.0,
+    "h": 279.0,
+    "ax": 101.5,
+    "ay": 230.6,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_high_6": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_high_6_r0.png",
+    "w": 203.0,
+    "h": 315.5,
+    "ax": 101.5,
+    "ay": 267.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_6_r1.png",
+    "w": 203.0,
+    "h": 312.5,
+    "ax": 101.5,
+    "ay": 264.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_6_r2.png",
+    "w": 203.0,
+    "h": 312.5,
+    "ax": 101.5,
+    "ay": 264.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_high_6_r3.png",
+    "w": 203.0,
+    "h": 315.5,
+    "ax": 101.5,
+    "ay": 267.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_apt_1": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_apt_1_r0.png",
+    "w": 203.0,
+    "h": 147.5,
+    "ax": 101.5,
+    "ay": 99.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_1_r1.png",
+    "w": 203.0,
+    "h": 144.5,
+    "ax": 101.5,
+    "ay": 96.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_1_r2.png",
+    "w": 203.0,
+    "h": 144.5,
+    "ax": 101.5,
+    "ay": 96.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_1_r3.png",
+    "w": 203.0,
+    "h": 147.5,
+    "ax": 101.5,
+    "ay": 99.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_apt_2": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_apt_2_r0.png",
+    "w": 203.0,
+    "h": 134.5,
+    "ax": 101.5,
+    "ay": 86.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_2_r1.png",
+    "w": 203.0,
+    "h": 132.0,
+    "ax": 101.5,
+    "ay": 83.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_2_r2.png",
+    "w": 203.0,
+    "h": 132.0,
+    "ax": 101.5,
+    "ay": 83.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_2_r3.png",
+    "w": 203.0,
+    "h": 135.0,
+    "ax": 101.5,
+    "ay": 86.6,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_apt_4": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_apt_4_r0.png",
+    "w": 203.0,
+    "h": 141.0,
+    "ax": 101.5,
+    "ay": 92.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_4_r1.png",
+    "w": 203.0,
+    "h": 133.5,
+    "ax": 101.5,
+    "ay": 85.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_4_r2.png",
+    "w": 203.0,
+    "h": 133.5,
+    "ax": 101.5,
+    "ay": 85.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_4_r3.png",
+    "w": 203.0,
+    "h": 141.0,
+    "ax": 101.5,
+    "ay": 92.6,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_apt_5": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_apt_5_r0.png",
+    "w": 203.0,
+    "h": 146.5,
+    "ax": 101.5,
+    "ay": 98.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_5_r1.png",
+    "w": 203.0,
+    "h": 143.5,
+    "ax": 101.5,
+    "ay": 95.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_5_r2.png",
+    "w": 203.0,
+    "h": 143.5,
+    "ax": 101.5,
+    "ay": 95.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_5_r3.png",
+    "w": 203.0,
+    "h": 146.5,
+    "ax": 101.5,
+    "ay": 98.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_apt_6": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_apt_6_r0.png",
+    "w": 203.0,
+    "h": 144.5,
+    "ax": 101.5,
+    "ay": 96.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_6_r1.png",
+    "w": 203.0,
+    "h": 141.5,
+    "ax": 101.5,
+    "ay": 93.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_6_r2.png",
+    "w": 203.0,
+    "h": 141.5,
+    "ax": 101.5,
+    "ay": 93.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_apt_6_r3.png",
+    "w": 203.0,
+    "h": 144.5,
+    "ax": 101.5,
+    "ay": 96.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_aptT_1": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_aptT_1_r0.png",
+    "w": 203.0,
+    "h": 296.5,
+    "ax": 101.5,
+    "ay": 248.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_1_r1.png",
+    "w": 203.0,
+    "h": 293.5,
+    "ax": 101.5,
+    "ay": 245.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_1_r2.png",
+    "w": 203.0,
+    "h": 295.5,
+    "ax": 101.5,
+    "ay": 247.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_1_r3.png",
+    "w": 203.0,
+    "h": 311.5,
+    "ax": 101.5,
+    "ay": 263.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_aptT_2": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_aptT_2_r0.png",
+    "w": 203.0,
+    "h": 318.5,
+    "ax": 101.5,
+    "ay": 270.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_2_r1.png",
+    "w": 203.0,
+    "h": 315.0,
+    "ax": 101.5,
+    "ay": 266.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_2_r2.png",
+    "w": 203.0,
+    "h": 316.5,
+    "ax": 101.5,
+    "ay": 268.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_2_r3.png",
+    "w": 203.0,
+    "h": 327.5,
+    "ax": 101.5,
+    "ay": 279.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_aptT_4": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_aptT_4_r0.png",
+    "w": 203.0,
+    "h": 337.0,
+    "ax": 101.5,
+    "ay": 288.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_4_r1.png",
+    "w": 203.0,
+    "h": 331.5,
+    "ax": 101.5,
+    "ay": 283.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_4_r2.png",
+    "w": 203.0,
+    "h": 313.0,
+    "ax": 101.5,
+    "ay": 264.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_4_r3.png",
+    "w": 203.0,
+    "h": 318.5,
+    "ax": 101.5,
+    "ay": 270.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_aptT_5": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_aptT_5_r0.png",
+    "w": 203.0,
+    "h": 293.5,
+    "ax": 101.5,
+    "ay": 245.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_5_r1.png",
+    "w": 203.0,
+    "h": 291.0,
+    "ax": 101.5,
+    "ay": 242.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_5_r2.png",
+    "w": 203.0,
+    "h": 291.0,
+    "ax": 101.5,
+    "ay": 242.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_5_r3.png",
+    "w": 203.0,
+    "h": 293.5,
+    "ax": 101.5,
+    "ay": 245.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "city_aptT_6": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/city_aptT_6_r0.png",
+    "w": 203.0,
+    "h": 298.0,
+    "ax": 101.5,
+    "ay": 249.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_6_r1.png",
+    "w": 203.0,
+    "h": 295.5,
+    "ax": 101.5,
+    "ay": 247.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_6_r2.png",
+    "w": 203.0,
+    "h": 295.0,
+    "ax": 101.5,
+    "ay": 246.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/city_aptT_6_r3.png",
+    "w": 203.0,
+    "h": 298.0,
+    "ax": 101.5,
+    "ay": 249.6,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "town_shop_1": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/town_shop_1_r0.png",
+    "w": 118.5,
+    "h": 93.0,
+    "ax": 59.5,
+    "ay": 66.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_shop_1_r1.png",
+    "w": 118.5,
+    "h": 90.0,
+    "ax": 59.5,
+    "ay": 63.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_shop_1_r2.png",
+    "w": 118.5,
+    "h": 90.0,
+    "ax": 59.5,
+    "ay": 63.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_shop_1_r3.png",
+    "w": 118.5,
+    "h": 93.0,
+    "ax": 59.5,
+    "ay": 66.1,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "town_shop_2": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/town_shop_2_r0.png",
+    "w": 118.5,
+    "h": 93.0,
+    "ax": 59.5,
+    "ay": 66.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_shop_2_r1.png",
+    "w": 118.5,
+    "h": 90.0,
+    "ax": 59.5,
+    "ay": 63.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_shop_2_r2.png",
+    "w": 118.5,
+    "h": 90.0,
+    "ax": 59.5,
+    "ay": 63.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_shop_2_r3.png",
+    "w": 118.5,
+    "h": 93.0,
+    "ax": 59.5,
+    "ay": 66.1,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "town_mid_1": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/town_mid_1_r0.png",
+    "w": 182.5,
+    "h": 180.0,
+    "ax": 91.0,
+    "ay": 138.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_1_r1.png",
+    "w": 182.5,
+    "h": 174.5,
+    "ax": 91.0,
+    "ay": 133.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_1_r2.png",
+    "w": 182.5,
+    "h": 178.0,
+    "ax": 91.0,
+    "ay": 136.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_1_r3.png",
+    "w": 182.5,
+    "h": 195.5,
+    "ax": 91.0,
+    "ay": 154.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "town_mid_2": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/town_mid_2_r0.png",
+    "w": 182.5,
+    "h": 174.0,
+    "ax": 91.0,
+    "ay": 132.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_2_r1.png",
+    "w": 182.5,
+    "h": 171.0,
+    "ax": 91.0,
+    "ay": 129.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_2_r2.png",
+    "w": 182.5,
+    "h": 171.0,
+    "ax": 91.0,
+    "ay": 129.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_2_r3.png",
+    "w": 182.5,
+    "h": 187.5,
+    "ax": 91.0,
+    "ay": 146.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "town_mid_3": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/town_mid_3_r0.png",
+    "w": 182.5,
+    "h": 196.0,
+    "ax": 91.0,
+    "ay": 154.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_3_r1.png",
+    "w": 182.5,
+    "h": 193.0,
+    "ax": 91.0,
+    "ay": 151.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_3_r2.png",
+    "w": 182.5,
+    "h": 193.5,
+    "ax": 91.0,
+    "ay": 152.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_3_r3.png",
+    "w": 182.5,
+    "h": 196.0,
+    "ax": 91.0,
+    "ay": 154.6,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
+ },
+ "town_mid_4": {
+  "fw": 3,
+  "fd": 3,
+  "r": [
+   {
+    "file": "../assets/bl/town_mid_4_r0.png",
+    "w": 182.5,
+    "h": 206.0,
+    "ax": 91.0,
+    "ay": 164.6,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_4_r1.png",
+    "w": 182.5,
+    "h": 204.5,
+    "ax": 91.0,
+    "ay": 163.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_4_r2.png",
+    "w": 182.5,
+    "h": 204.5,
+    "ax": 91.0,
+    "ay": 163.1,
+    "fw": 3,
+    "fd": 3
+   },
+   {
+    "file": "../assets/bl/town_mid_4_r3.png",
+    "w": 182.5,
+    "h": 220.5,
+    "ax": 91.0,
+    "ay": 179.1,
+    "fw": 3,
+    "fd": 3
+   }
+  ]
  }
 };

@@ -236,6 +236,35 @@
       if (x % M.block === M.block - 1 || y % M.block === M.block - 1) return 'road';
       return 'land';
     },
+    // 住宅街の街の配置（見た目だけ。座標から毎回同じ結果。セーブに持たない）。住宅街（y<residentialEnd）を16タイルの区画ごとに、左上から順に隙間なく詰める。
+    // 種類は data/map.js の town.kinds の重みで選ぶ（北側＝core／森林地帯から nearForestDist 以内＝fringe）。入らなければ小さい種類に落とす。道路のほうを向く（向き0＝+y が正面、1＝−x、2＝−y、3＝+x）
+    townLayout() {
+      const M = this.mapCfg(), Z = M && M.zones, T = M && M.town; if (!Z || !T) return [];
+      const ck = M.mapVer + ':' + Z.residentialEnd; if (this._town && this._town.k === ck) return this._town.list;
+      const list = [], B = M.block, lim = Z.residentialEnd - 2, hs = (a, b, c) => (Math.imul(a, 73856093) ^ Math.imul(b, 19349663) ^ Math.imul(c, 83492791)) >>> 0;
+      const pick = (kinds, h, fringe, maxSize) => {   // 重みで1つ選ぶ（maxSize 以下だけ）
+        let tot = 0; const c = [];
+        for (const k of kinds) { const w = fringe ? k.fringe : k.core; if (w > 0 && k.size <= maxSize) { c.push([k, w]); tot += w; } }
+        if (!c.length) return null; let x = h % tot; for (const [k, w] of c) { x -= w; if (x < 0) return k; } return c[0][0];
+      };
+      for (let by = 0; by * B < Z.residentialEnd; by++) for (let bx = 0; bx * B < M.w; bx++) {
+        const x0 = bx * B, y0 = by * B, occ = {};   // 道路は x0-1 と x0+15（y も同じ）。中の 15×15 タイルに置く（y は lim まで）
+        const fits = (x, y, s) => { if (x + s > x0 + 15 || y + s > Math.min(y0 + 15, lim)) return false; for (let i = 0; i < s; i++) for (let j = 0; j < s; j++) if (occ[(x + i) + ',' + (y + j)]) return false; return true; };
+        for (let y = y0; y < Math.min(y0 + 15, lim); y++) for (let x = x0; x < x0 + 15; x++) {
+          if (occ[x + ',' + y]) continue;
+          const fringe = y >= Z.residentialEnd - T.nearForestDist, h = hs(x, y, 7);
+          let maxS = 4; while (maxS > 0 && !fits(x, y, maxS)) maxS--;
+          if (!maxS) continue;
+          const k = maxS === 1 ? ((h >>> 5) % 100 < (T.convPct || 20) ? T.kinds.find(q => q.size === 1) : null) : pick(T.kinds, h, fringe, maxS); if (!k) continue;   // 1タイルのすき間には、ときどきコンビニ（残りは空き地＝広場）
+          const vs = k.fringeV && fringe ? k.fringeV : null, v = vs ? vs[(h >>> 11) % vs.length] : 1 + ((h >>> 11) % k.n), s = k.size;
+          for (let i = 0; i < s; i++) for (let j = 0; j < s; j++) occ[(x + i) + ',' + (y + j)] = 1;
+          const dW = x - x0, dE = x0 + 14 - (x + s - 1), dN = y - y0, dS = Math.min(y0 + 14, lim - 1) - (y + s - 1), m = Math.min(dN, dS, dW, dE);
+          list.push({ kind: k.pre, cls: k.cls, v, x, y, s, rot: dS === m ? 0 : dW === m ? 1 : dN === m ? 2 : 3 });
+        }
+      }
+      this._town = { k: ck, list };
+      return list;
+    },
     zoneAt(y) { const M = this.mapCfg(), z = M && M.zones; return !z ? 'industrial' : y < z.residentialEnd ? 'residential' : y < z.forestEnd ? 'forest' : 'industrial'; },
     // 海に隣接して建てる設備の条件（data/map.js の seaFront）。なければ null
     seaFrontCfg(type) {

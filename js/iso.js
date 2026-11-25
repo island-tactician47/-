@@ -446,25 +446,13 @@
       }
     }
 
-    // 住宅街の見た目の街（飾り）：一軒家・アパート（2×2）・コンビニ（1×1）を、座標のハッシュで決めた区画にまばらに置く。セーブには何も持たない。道路のほうを向く（正面は向き0で +y 側）。
-    // 将来の街の育ちの上限は data/map.js の town（densityは maxCoverage まで・超高層は towerShareMax まで・高さは heightCapRatio と nearForestMaxFloors）
+    // 住宅街の見た目の街（Engine.townLayout の配置を、描画用の entity にして持つ。セーブには何も持たない）
     let _town = null;
     function townScene() {
-      const M = GAME_DATA.map, Z = M.zones, T = M.town; if (!Z || !T) return [];
-      if (_town && _town.k === M.mapVer + ':' + Z.residentialEnd) return _town.list;
-      const list = [], B = M.block, hs = (a, b, c) => (Math.imul(a, 73856093) ^ Math.imul(b, 19349663) ^ Math.imul(c, 83492791)) >>> 0;
-      for (let by = 0; by * B < Z.residentialEnd; by++) for (let bx = 0; bx * B < M.w; bx++) {
-        const x0 = bx * B, y0 = by * B;   // 道路は x0-1 と x0+15（y も同じ）。中の 15×15 タイルに置く
-        for (let cx = 0; cx < 14; cx += 2) for (let cy = 0; cy < 14; cy += 2) {
-          const x = x0 + cx, y = y0 + cy; if (y + 2 > Z.residentialEnd - 2) continue;   // 森林地帯との間は空ける
-          const h = hs(x, y, 7); if ((h % 1000) / 1000 >= T.decorCoverage) continue;
-          const dN = cy, dS = 13 - cy, dW = cx, dE = 13 - cx, m = Math.min(dN, dS, dW, dE);
-          const rot = dS === m ? 0 : dW === m ? 1 : dN === m ? 2 : 3;
-          const k = (h >>> 10) % 100, kind = k < 9 ? 'conv' : k < 30 ? 'apt' : 'house', nv = kind === 'house' ? 4 : 3, v = 1 + ((h >>> 17) % nv), fw = kind === 'conv' ? 1 : 2;
-          list.push({ type: '_town', sprite: 'town_' + kind + '_' + v, x, y, fw, fd: fw, rot, building: false, key: '_t' + x + ',' + y });
-        }
-      }
-      _town = { k: M.mapVer + ':' + Z.residentialEnd, list };
+      const L = E.townLayout(); if (!L.length) return [];
+      if (_town && _town.src === L) return _town.list;
+      const list = L.map(b => ({ type: '_town', sprite: b.kind + b.v, x: b.x, y: b.y, fw: b.s, fd: b.s, rot: b.rot, building: false, key: '_t' + b.x + ',' + b.y, hpx: b.cls === 'tall' ? 640 : b.cls === 'high' ? 400 : b.cls === 'mid' ? 280 : 130 }));   // hpx＝絵の高さの目安（画面外の判定に使う。足もとが画面の下にあっても、高い建物は上に伸びて見える）
+      _town = { src: L, list };
       return list;
     }
     function frame(dt) {
@@ -490,7 +478,7 @@
       drawAmbient(s, era);   // 車・船・灯台は建物より先に描く（手前の建物が重なって隠す）
       const items = I.vents.map(e => ({ e, key: e.x + e.fw / 2 + e.y + e.fd / 2 }));
       for (const sh of ambientShips(s)) { const v = viewOf({ type: '_ship', sprite: sh.sprite, x: sh.cx - sh.fw / 2, y: sh.cy - sh.fd / 2, fw: sh.fw, fd: sh.fd, rot: 0, building: false }); items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); }
-      if (I.cam.z >= 0.12 && !I.noTown) { const zc = I.cam.z; for (const t of townScene()) { const v = viewOf(t), a = ptv(v.x + v.fw / 2, v.y + v.fd / 2, 0); if (a[0] < -120 * zc || a[0] > I.w + 120 * zc || a[1] < -60 * zc || a[1] > I.h + 140 * zc) continue; items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); } }   // 住宅街の街（見えるものだけ）
+      if (I.cam.z >= 0.12 && !I.noTown) { const zc = I.cam.z; for (const t of townScene()) { const v = viewOf(t), a = ptv(v.x + v.fw / 2, v.y + v.fd / 2, 0); if (a[0] < -(70 * v.fw + 60) * zc || a[0] > I.w + (70 * v.fw + 60) * zc || a[1] < -60 * zc || a[1] > I.h + (t.hpx + 40 * v.fw) * zc) continue; items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); } }   // 住宅街の街（見えるものだけ）
       { const ps = portScene(s); items.push({ fn: ps.ground, key: -1e9 }); for (const v of ps.ents) items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); }
       items.sort((a, b) => a.key - b.key);
       for (const { e, fn } of items) {

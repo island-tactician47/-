@@ -16,15 +16,25 @@ window.GAME_DATA.map = {
   // 区画（北から順に）：y < residentialEnd＝住宅街（ゲームの建物は置けない。見た目の街だけ）／residentialEnd ≤ y < forestEnd＝森林地帯（半区画＝8タイルの幅のうち道路の行を除く。建物は置けない）／それより南＝工業地帯。
   // 注意：将来 mapShifts でマップを広げるときは、これらの y もずらすこと（海岸線・港・anchor と同じ）。既存の建物は工業地帯の北端（y≥54）より南にあるので、forestEnd は 47 以下にする
   zones: { residentialEnd: 40, forestEnd: 47 },
-  // 住宅街の見た目の街（飾り＝セーブに持たない）と、将来の街の育ちの上限。工業地帯より目立たない・住宅街を埋め尽くさないための決まり（docs/拠点マップ.md「住宅街」）
+  // 住宅街の街（座標から毎回同じ配置を作る見た目だけの街。セーブに持たない）。住宅街は全部開発してよい（空き地を残す上限は無い）。
+  // kinds：種類ごとの絵（pre＋1〜n）・足あと（size×size）・高さの区分（tall＝超高層／high＝高層／mid＝中層（8〜11階）／low＝低層）・重み（core＝森林地帯から離れた北側／fringe＝森林地帯から nearForestDist 以内）。
+  // 超高層は開発面積の10%・高層（高層ビル＋高層マンション）は20%が目安（Engine.townLayout の結果は selftest が確かめる）。森林地帯の近くは8階まで（視点を回して住宅街が手前に来ても工場を隠さない）
   town: {
-    decorCoverage: 0.16,          // いまの飾りの街：2×2の区画のうち建物を置く割合
-    maxCoverage: 0.5,             // 将来の街の育ち：住宅街の面積のうち建物で埋めてよい上限（構想建築で密集しても半分は空ける）
-    towerShareMax: 0.04,          // 超高層（city_sky）の棟数の上限＝建物全体の4%まで
-    heightCapRatio: 0.8,          // 街のどの建物も、工場でいちばん高いものの80%以下（工業地帯より目立たせない）
-    nearForestMaxFloors: 8,       // 森林地帯から16タイル以内は8階まで（視点を回すと住宅街が工場の手前に来るので、工場を隠さない）
-    nearForestDist: 16
-  },   // 港の予約地（x0..x1、海岸線から depth タイル手前まで）
+    nearForestDist: 16,           // 森林地帯からこの距離以内は fringe（低層だけ。中層は8階の1種のみ）
+    towerShare: 0.10, highShare: 0.20,   // 開発した面積の目安（超高層／高層＋高層マンション。足あとの面積で数える）。selftest が±を確かめる
+    convPct: 20,                  // 1タイルのすき間にコンビニを置く割合（残りは空き地）。コンビニは重みでは選ばない
+    kinds: [
+      { pre: 'city_sky_', n: 6, size: 4, cls: 'tall', core: 8, fringe: 0 },
+      { pre: 'city_high_', n: 6, size: 3, cls: 'high', core: 12, fringe: 0 },
+      { pre: 'city_aptT_', n: 6, size: 3, cls: 'high', core: 5, fringe: 0 },
+      { pre: 'town_mid_', n: 4, size: 3, cls: 'mid', core: 10, fringe: 2, fringeV: [2] },
+      { pre: 'city_apt_', n: 6, size: 3, cls: 'low', core: 8, fringe: 14 },
+      { pre: 'town_shop_', n: 2, size: 2, cls: 'low', core: 4, fringe: 10 },
+      { pre: 'town_apt_', n: 3, size: 2, cls: 'low', core: 8, fringe: 24 },
+      { pre: 'town_house_', n: 4, size: 2, cls: 'low', core: 8, fringe: 36 },
+      { pre: 'town_conv_', n: 3, size: 1, cls: 'low', core: 0, fringe: 0 }
+    ]
+  },
   // 海に隣接してしか建てられない設備（造船所）。足あとの +y 側（海側）の端が「ドックの開口部」。奥の部分は陸、海側の mouth 行は陸でも海でもよく（ドックの先端が海に張り出す）、
   // 海側の端の中央 open マスは海であること。埋め立てても、置いた設備の開口部の前（足あとの幅 × 海側の mouth 行より先）は海のまま（港と同じ扱い）
   seaFront: { shipyard: { mouth: 3, open: 3 } },
@@ -43,7 +53,8 @@ window.GAME_DATA.map = {
   // 向きを選べない種類（絵が4方向そろっていないもの。そろったら外す）。造船所（海側が決まっている）と研究棟（敷地に重ねる）は engine.canRotate が別に判定する
   noRotate: {},
   footprint: {
-    town_house_1: [2, 2], town_house_2: [2, 2], town_house_3: [2, 2], town_house_4: [2, 2], town_apt_1: [2, 2], town_apt_2: [2, 2], town_apt_3: [2, 2], town_conv_1: [1, 1], town_conv_2: [1, 1], town_conv_3: [1, 1],   // 住宅街の飾り（絵だけ。建てられない）
+    city_sky_1: [4, 4], city_sky_2: [4, 4], city_sky_3: [4, 4], city_sky_4: [4, 4], city_sky_5: [4, 4], city_sky_6: [4, 4], city_high_1: [3, 3], city_high_2: [3, 3], city_high_3: [3, 3], city_high_4: [3, 3], city_high_5: [3, 3], city_high_6: [3, 3], city_apt_1: [3, 3], city_apt_2: [3, 3], city_apt_3: [3, 3], city_apt_4: [3, 3], city_apt_5: [3, 3], city_apt_6: [3, 3], city_aptT_1: [3, 3], city_aptT_2: [3, 3], city_aptT_3: [3, 3], city_aptT_4: [3, 3], city_aptT_5: [3, 3], city_aptT_6: [3, 3], town_mid_1: [3, 3], town_mid_2: [3, 3], town_mid_3: [3, 3], town_mid_4: [3, 3], town_shop_1: [2, 2], town_shop_2: [2, 2], 
+    town_house_1: [2, 2], town_house_2: [2, 2], town_house_3: [2, 2], town_house_4: [2, 2], town_apt_1: [2, 2], town_apt_2: [2, 2], town_apt_3: [2, 2], town_conv_1: [1, 1], town_conv_2: [1, 1], town_conv_3: [1, 1],   // 住宅街の街（絵だけ。建てられない）
     default: [4, 4], module: [2, 2], oilWell: [2, 2], container: [4, 4], portcrane: [4, 4], yard_coal: [2, 2], yard_iron: [2, 2], yard_copper: [2, 2], yard_silica: [2, 2], mine_coal: [3, 3], mine_iron: [3, 3], mine_copper: [3, 3], mine_silica: [3, 3],   // oilWell は町の地図には出さない（採掘地ページの絵の大きさ）
       // module は親が決まっていないとき（上の moduleFootprint が優先）
     refinery: [4, 4], refineryLarge: [8, 10], chemPlant: [6, 5], distillation: [2, 2],
