@@ -203,7 +203,7 @@ function onTap(info) {
   sel = null; iso.selected = null;
   const t = E.terrainAt(s, info.tile.x, info.tile.y);
   if (t === 'land') { cursor = info.tile; iso.cursor = info.tile; }
-  else { cursor = null; iso.cursor = null; if (t === 'sea') UI.toast('海です。建てる場所を選んだあとの画面で「埋め立てる」ができます'); else if (t === 'road') UI.toast('道路です'); else if (t === 'port') UI.toast('港の用地です'); }
+  else { cursor = null; iso.cursor = null; if (t === 'sea') UI.toast('海です。建てる場所を選んだあとの画面で「埋め立てる」ができます'); else if (t === 'road') UI.toast('道路です'); else if (t === 'port') UI.toast('港の用地です'); else if (t === 'forest') UI.toast('森林地帯です（建物は置けません）'); }
   UI.refresh();
 }
 

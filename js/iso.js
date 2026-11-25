@@ -138,7 +138,7 @@
         }
         return;
       }
-      const dens = zn === 'forest' ? 820 : zn === 'residential' ? 30 : forest ? 420 : 55;
+      const dens = zn === 'forest' ? 600 : zn === 'residential' ? 30 : forest ? 420 : 55;
       if (r < dens) {
         const hh = 9 + (h >>> 4) % 6, ox = ((h >>> 8) % 5) / 10, oy = ((h >>> 11) % 5) / 10, kind = (h >>> 14) % 3;
         if (kind === 0) {   // 針葉樹：細い3段（濃い緑）

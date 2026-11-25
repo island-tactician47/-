@@ -365,7 +365,7 @@
       }
       for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
         const tt = this.terrainAt(s, x, y);
-        G1[y * W + x] = (G2[y * W + x] || tt !== 'land') ? 1 : 0;
+        G1[y * W + x] = (G2[y * W + x] || tt !== 'land' || this.zoneAt(y) === 'residential') ? 1 : 0;   // 住宅街には自動配置もしない
         if (sf) { GB[y * W + x] = (G2[y * W + x] || (tt !== 'land' && tt !== 'sea')) ? 1 : 0; GS[y * W + x] = tt === 'sea' ? 0 : 1; }   // 海に隣接する設備：海側の行は海でもよい／開口部の行は海
       }
       const build = (G, Iv) => { for (let y = 0; y < H; y++) { let row = 0; for (let x = 0; x < W; x++) { row += G[y * W + x]; Iv[(y + 1) * (W + 1) + x + 1] = Iv[y * (W + 1) + x + 1] + row; } } };
