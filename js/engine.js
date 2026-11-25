@@ -2205,7 +2205,7 @@
     fmtUnit(v) {
       const U = [[1e18, 'Qi'], [1e15, 'Qa'], [1e12, 'T'], [1e9, 'B'], [1e6, 'M']];
       for (const [d, u] of U) if (v >= d * 0.99995) return (v / d).toFixed(2) + u;
-      return Math.round(v / 1000).toLocaleString() + 'K';
+      return Math.round(v / 1000).toLocaleString() + 'k';
     },
     fmtMoney(v) {
       const sign = v < 0 ? '-' : '';
