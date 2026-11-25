@@ -113,9 +113,9 @@ GAME_DATA.buildings = {
   // ---- 技術ツリーで開く新設の工場（data/tree.js のノードが解放する。tier は付けない）----
   fineChemPlant:     { name: '精密化学工場',     icon: '🧪', category: 'factory', tier: 6, cost: 1000000, months: 24, fixedPerMonth: 4000, desc: 'ナフサから医薬原料（製薬の入口）。ステンレスの反応釜と精留塔' },
   explosivesFactory: { name: '火薬工場',         icon: '💥', category: 'factory', tier: 6, cost: 900000, months: 18, fixedPerMonth: 3600, desc: '硝石から火薬（兵器・ロケットの入口）。盛り土で囲んだ貯蔵庫と柵' },
-  colonyFactory:     { name: '宇宙コロニー工場', icon: '🛰️', category: 'factory', tier: 6, cost: 10000000, months: 48, fixedPerMonth: 40000, desc: '船と航空機以外のすべての最終製品と合金から、葉巻型の宇宙コロニーを組み立てる（増設モジュールなし。まとめて高く売れるが、年に1基ほど。相場は特に荒い）' },
-  offshoreFactory:   { name: '洋上プラットフォーム工場', icon: '🛢️', category: 'factory', tier: 6, cost: 5000000, months: 36, fixedPerMonth: 20000, desc: 'セメント・ガラス・PC・鋼材・合金から、洋上の資源基地・発電所を組み立てる（増設モジュールなし。まとめて高く売れるが、年に2基ほど。安定した相場）' },
-  aiDefenseFactory:  { name: 'AI防衛システム工場', icon: '🛡️', category: 'factory', tier: 6, cost: 9000000, months: 48, fixedPerMonth: 36000, desc: '半導体・兵器・ロケット・火薬・PC・合金から、AI防衛システムを組み立てる（増設モジュールなし。まとめて高く売れるが、年に1式ほど。戦争のイベントで相場が荒れる）' },
+  colonyFactory:     { name: '宇宙コロニー工場', icon: '🛰️', category: 'factory', tier: 6, cost: 40000000, months: 48, fixedPerMonth: 160000, desc: '船と航空機以外のすべての最終製品と合金から、葉巻型の宇宙コロニーを組み立てる（増設モジュールなし。まとめて高く売れるが、年に1基ほど。相場は特に荒い）' },
+  offshoreFactory:   { name: '洋上プラットフォーム工場', icon: '🛢️', category: 'factory', tier: 6, cost: 20000000, months: 36, fixedPerMonth: 80000, desc: 'セメント・ガラス・PC・鋼材・合金から、洋上の資源基地・発電所を組み立てる（増設モジュールなし。まとめて高く売れるが、年に2基ほど。安定した相場）' },
+  aiDefenseFactory:  { name: 'AI防衛システム工場', icon: '🛡️', category: 'factory', tier: 6, cost: 36000000, months: 48, fixedPerMonth: 144000, desc: '半導体・兵器・ロケット・火薬・PC・合金から、AI防衛システムを組み立てる（増設モジュールなし。まとめて高く売れるが、年に1式ほど。戦争のイベントで相場が荒れる）' },
   cableFactory:      { name: '電線工場', icon: '🔗', category: 'factory', tier: 6, cost: 900000, months: 18, fixedPerMonth: 3600, desc: '銅とアルミを引いて被覆し、電線・ケーブルにする（電機ラインのTier 3）' },
   fiberFactory:      { name: '光ファイバー工場', icon: '💡', category: 'factory', tier: 6, cost: 1200000, months: 18, fixedPerMonth: 4800, desc: 'ガラスと珪砂から母材を作り、塔で細く引いて光ファイバーにする（光・通信ラインのTier 3）' },
   motorFactory:      { name: 'モーター・変圧器工場', icon: '🔌', category: 'factory', tier: 6, cost: 2000000, months: 24, fixedPerMonth: 8000, desc: '電線・鋼材・銅から、モーターと変圧器を作る（電機ラインのTier 4）' },

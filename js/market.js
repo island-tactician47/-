@@ -48,6 +48,8 @@
         if (m.level[k] === undefined) m.level[k] = D().resources[k].basePrice * this.priceIndex(state);   // 物価上昇後のセーブでも相場から大きく外れないよう
         if (m.sat[k] === undefined) m.sat[k] = 0;
       }
+      // 最終プロジェクト3つは「1基＝従来の4基ぶん」に価格を4倍にした（2026-11-25）。古いセーブ（m.t6x4 が無い）は1回だけ、古い水準（基準価格の半分未満）の相場をいまの水準に直す（相場は毎月15%ずつしか戻らないので、放っておくと1年以上安く売れる）。毎回やると、自然な安値（AI防衛で約15%）まで読み込みのたびに消えるので、1回だけ
+      if (!m.t6x4) { m.t6x4 = true; for (const k of ['colony', 'offshore', 'aiDefense']) if (D().resources[k] && m.level[k] < 0.5 * D().resources[k].basePrice * this.priceIndex(state)) m.level[k] = D().resources[k].basePrice * this.priceIndex(state); }
     },
 
     // 市場が吸収できる量
