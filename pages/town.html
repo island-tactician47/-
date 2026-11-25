@@ -336,9 +336,11 @@ function render(s) {
     iso.start();
     const qp = new URLSearchParams(location.search);   // 確認用：?era=2&zoom=0.6&cx=15&cy=15（時代・拡大・中心を固定）
     if (qp.get('era') || qp.get('zoom')) iso.buildAll = true;   // 確認用：構築の枠を使わず、最初のフレームで全部描く
+    if (qp.get('dev') != null) UI.state.town = { dev: Math.max(0, Math.min(1, +qp.get('dev') || 0)) };   // 確認用：?dev=0〜1（街の発展度を固定。保存はされない）
     if (qp.get('portgrade') != null) iso.portOverride = Math.max(0, Math.min(5, Math.round(+qp.get('portgrade')) || 0));   // 確認用：?portgrade=0〜5（港のグレードを固定）
     if (qp.get('era')) iso.eraOverride = Math.max(1, Math.min(6, Math.round(+qp.get('era')) || 1));
     if (qp.get('zoom')) { iso.cam.z = +qp.get('zoom'); iso.center(+(qp.get('cx') || 15), +(qp.get('cy') || 15)); }
+    if (qp.get('bench')) setTimeout(() => { const T = () => { const a = performance.now(); for (let i = 0; i < 10; i++) iso.renderNow(); return ((performance.now() - a) / 10).toFixed(1); }; iso.renderNow(); const withT = T(); iso.noTown = true; iso.renderNow(); const noT = T(); iso.noTown = false; const d = document.createElement('div'); d.style.cssText = 'position:fixed;left:8px;top:300px;z-index:99;background:#fff;color:#000;font:20px monospace;padding:6px'; d.textContent = '街あり ' + withT + 'ms／街なし ' + noT + 'ms'; document.body.appendChild(d); console.log('BENCH ' + d.textContent); }, 3000);   // 確認用：?bench=1（1フレームの描画時間を測って画面に出す）
     if (qp.get('view')) { iso.resize && iso.resize(); iso.setView(+qp.get('view') || 0); }   // 確認用：?view=0〜3（視点の向き）
     const b = qp.get('build');
     if (b && G.buildings[b] && !E.offMap(b)) startPlacing(b);

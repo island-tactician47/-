@@ -478,7 +478,7 @@
       drawAmbient(s, era);   // 車・船・灯台は建物より先に描く（手前の建物が重なって隠す）
       const items = I.vents.map(e => ({ e, key: e.x + e.fw / 2 + e.y + e.fd / 2 }));
       for (const sh of ambientShips(s)) { const v = viewOf({ type: '_ship', sprite: sh.sprite, x: sh.cx - sh.fw / 2, y: sh.cy - sh.fd / 2, fw: sh.fw, fd: sh.fd, rot: 0, building: false }); items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); }
-      if (I.cam.z >= 0.12 && !I.noTown) { const zc = I.cam.z; const dev = E.townDev(s); for (const t of townScene()) { if (t.r >= dev) continue; const v = viewOf(t), a = ptv(v.x + v.fw / 2, v.y + v.fd / 2, 0); if (a[0] < -(70 * v.fw + 60) * zc || a[0] > I.w + (70 * v.fw + 60) * zc || a[1] < -60 * zc || a[1] > I.h + (t.hpx + 40 * v.fw) * zc) continue; items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); } }   // 住宅街の街（見えるものだけ）
+      if (!I.noTown) { const zc = I.cam.z; const dev = E.townDev(s); for (const t of townScene()) { if (t.r >= dev) continue; const v = viewOf(t), a = ptv(v.x + v.fw / 2, v.y + v.fd / 2, 0); if (a[0] < -(70 * v.fw + 60) * zc || a[0] > I.w + (70 * v.fw + 60) * zc || a[1] < -60 * zc || a[1] > I.h + (t.hpx + 40 * v.fw) * zc) continue; items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); } }   // 住宅街の街（見えるものだけ）
       { const ps = portScene(s); items.push({ fn: ps.ground, key: -1e9 }); for (const v of ps.ents) items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); }
       items.sort((a, b) => a.key - b.key);
       for (const { e, fn } of items) {
