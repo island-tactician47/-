@@ -278,9 +278,9 @@
     },
     townMonth(s) {
       const g = this.townGrowth(); if (!g) return;
-      const t = this.townTarget(s);
-      if (!s.town) { s.town = { dev: t }; return; }   // 古いセーブは、いまの目標から始める（いきなり増えも減りもしない）
-      s.town.dev = Math.max(0, Math.min(1, s.town.dev + Math.max(-g.down, Math.min(g.up, t - s.town.dev))));
+      // 発展度は、指標（従業員・ティア・利益）から毎月末に直接計算する。時間でゆっくり上がる・下がる動きはない（指標が上がれば上がり、下がれば下がる）
+      if (!s.town) s.town = {};
+      s.town.dev = this.townTarget(s);
     },
     // 品目の売値の上がり（+倍率）。発展度×priceBoost。from が付く品目は、その発展度を超えてから効き始める（Market.townMul が売るときの値段に掛ける。買値・契約・在庫の評価には掛けない）
     townDemand(s, k) {
