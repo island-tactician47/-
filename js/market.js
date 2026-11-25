@@ -94,6 +94,7 @@
       const rec = (state.market.recent || (state.market.recent = {}))[k] || (state.market.recent[k] = []);
       const from = state.day - (r.demandDays || 300); while (rec.length && rec[0].d <= from) rec.shift();
       let pos = 0; for (const e of rec) pos += e.q;
+      pos = Math.max(0, pos - this.stepShift(state));   // 街の発展で、満額で売れる数が増える（段が後ろにずれる）。記録（rec）は実際に売った数のまま
       let rem = qty, tot = 0;
       while (rem > 1e-9) { const idx = Math.floor(pos + 1e-9), m = steps[Math.min(steps.length - 1, idx)], seg = idx >= steps.length - 1 ? rem : Math.min(rem, idx + 1 - pos); tot += seg * avg * m; pos += seg; rem -= seg; }
       rec.push({ d: state.day, q: qty });
@@ -107,7 +108,9 @@
     // ---- 需要の段（Tier 6 の最終プロジェクト：resources の demandSteps・demandDays）----
     // 直近 demandDays 日に売った数に応じて、次の1基の価格が段で下がる。steps[n]＝直近に n 基売ったあとの次の1基の価格（満額＝1）。無い品目は 1
     demandCount(state, k) { const r = D().resources[k], rec = state.market.recent && state.market.recent[k]; if (!r || !r.demandSteps || !rec) return 0; const from = state.day - (r.demandDays || 300); let n = 0; for (const e of rec) if (e.d > from) n += e.q; return n; },
-    demandMul(state, k) { const r = D().resources[k]; if (!r || !r.demandSteps) return 1; const n = this.demandCount(state, k); return r.demandSteps[Math.min(r.demandSteps.length - 1, Math.floor(n + 1e-9))]; },
+    // 街の発展による段のずれ（基）。発展度×stepShift。0なら従来どおり（s.town が無い世界は不変）。画面には出さない
+    stepShift(state) { const g = window.Engine && Engine.townGrowth && Engine.townGrowth(); return g && g.stepShift && state.town ? g.stepShift * (state.town.dev || 0) : 0; },
+    demandMul(state, k) { const r = D().resources[k]; if (!r || !r.demandSteps) return 1; const n = Math.max(0, this.demandCount(state, k) - this.stepShift(state)); return r.demandSteps[Math.min(r.demandSteps.length - 1, Math.floor(n + 1e-9))]; },
     dailyDecay(state) {
       for (const k in state.market.sat) state.market.sat[k] *= this.satDecayOf(k);
     },
