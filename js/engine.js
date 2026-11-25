@@ -1950,7 +1950,7 @@
         if (s.hold[k] || room <= 0) continue;
         const sellable = s.inventory[k] - (reserve[k] || 0);
         const qty = Math.min(Math.max(0, sellable), room / sv(k));
-        if (qty < 1) continue;
+        if (qty < (R[k].sellFraction ? 1e-9 : 1)) continue;   // 1単位に満たない端数は売らない。ただし sellFraction の品目（コロニー・洋上・AI防衛。1基ができるまで売れず、売上が年に数回のどか入りになって決算が見づらい）は、端数でも毎回売る
         const rev = Market.sellRevenue(s, k, qty);
         s.inventory[k] -= qty; s.cash += rev; room -= qty * sv(k);
         add(s.month.revenue, k, rev); add(s.month.sold, k, qty); this.pl(s, this.segmentOfItem(k), 'rev', rev);
@@ -1959,7 +1959,7 @@
         lines.push({ k, qty, rev });
       }
       // 積み残し（出荷能力が足りなかった分）。1単位に満たない端数は、売らない決まり（qty < 1）なので数えない（出荷枠が無制限の港でも「積み残し」に見えてしまう）
-      const left = order.filter(k => !s.hold[k]).reduce((a, k) => { const rem = s.inventory[k] - (reserve[k] || 0); return a + (rem >= 1 ? rem * sv(k) : 0); }, 0);
+      const left = order.filter(k => !s.hold[k]).reduce((a, k) => { const rem = s.inventory[k] - (reserve[k] || 0); return a + (rem >= (R[k].sellFraction ? 1e-9 : 1) ? rem * sv(k) : 0); }, 0);
       s.shipments.unshift({ day: s.day, lines, total, used: port.capacity - room, cap: port.capacity, left });
       if (s.shipments.length > 24) s.shipments.length = 24;
       if (lines.length) this.log(s, `⚓ 出荷 ${this.fmtNum(port.capacity - room)}bbl → ${this.fmtMoney(total)}${left > 1 ? `（積み残し ${this.fmtNum(left)}bbl）` : ''}`);
