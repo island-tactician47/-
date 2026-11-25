@@ -1958,8 +1958,8 @@
         if (R[k].kind !== 'raw') s.stats.refinedRevenue = (s.stats.refinedRevenue || 0) + rev;
         lines.push({ k, qty, rev });
       }
-      // 積み残し（出荷能力が足りなかった分）
-      const left = order.filter(k => !s.hold[k]).reduce((a, k) => a + Math.max(0, s.inventory[k] - (reserve[k] || 0)) * sv(k), 0);
+      // 積み残し（出荷能力が足りなかった分）。1単位に満たない端数は、売らない決まり（qty < 1）なので数えない（出荷枠が無制限の港でも「積み残し」に見えてしまう）
+      const left = order.filter(k => !s.hold[k]).reduce((a, k) => { const rem = s.inventory[k] - (reserve[k] || 0); return a + (rem >= 1 ? rem * sv(k) : 0); }, 0);
       s.shipments.unshift({ day: s.day, lines, total, used: port.capacity - room, cap: port.capacity, left });
       if (s.shipments.length > 24) s.shipments.length = 24;
       if (lines.length) this.log(s, `⚓ 出荷 ${this.fmtNum(port.capacity - room)}bbl → ${this.fmtMoney(total)}${left > 1 ? `（積み残し ${this.fmtNum(left)}bbl）` : ''}`);
