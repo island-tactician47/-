@@ -50,8 +50,10 @@
       }
     },
 
-    // 市場が吸収できる量：街の発展で、効かせる品目は最大 +50%（Engine.townDemand）
-    depth(state, k) { const r = D().resources[k]; return r.marketDepth * (1 + (window.Engine && Engine.townDemand ? Engine.townDemand(state, k) : 0)); },
+    // 市場が吸収できる量
+    depth(state, k) { return D().resources[k].marketDepth; },
+    // 街の発展による売値の上がり（+倍率。売るときだけ。s.town が無ければ 0。画面には出さない）
+    townMul(state, k) { return 1 + (state.town && window.Engine && Engine.townDemand ? Engine.townDemand(state, k) : 0); },
     priceIndex(state) { return Math.pow(1 + D().inflationPerYear, state.day / 360); },
 
     eventMul(state, k) {
@@ -70,7 +72,7 @@
     priceBase(state, k) {
       const r = D().resources[k];
       const satEff = Math.min(0.5, SAT_IMPACT * state.market.sat[k] / this.depth(state, k));
-      return state.market.level[k] * this.eventMul(state, k) * (1 - satEff);
+      return state.market.level[k] * this.eventMul(state, k) * (1 - satEff) * this.townMul(state, k);
     },
     price(state, k) { return this.priceBase(state, k) * this.demandMul(state, k); },
     sellPrice(state, k) { return this.price(state, k) * (1 - SELL_FEE); },

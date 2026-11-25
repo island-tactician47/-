@@ -282,11 +282,11 @@
       if (!s.town) { s.town = { dev: t }; return; }   // 古いセーブは、いまの目標から始める（いきなり増えも減りもしない）
       s.town.dev = Math.max(0, Math.min(1, s.town.dev + Math.max(-g.down, Math.min(g.up, t - s.town.dev))));
     },
-    // 品目の需要の増え（市場の吸収量にかける +倍率）。発展度×depthBoost。from が付く品目は、その発展度を超えてから効き始める
+    // 品目の売値の上がり（+倍率）。発展度×priceBoost。from が付く品目は、その発展度を超えてから効き始める（Market.townMul が売るときの値段に掛ける。買値・契約・在庫の評価には掛けない）
     townDemand(s, k) {
       const g = this.townGrowth(); if (!g || !s.town || !s.town.dev || !g.products.includes(k)) return 0;
       const f = (g.from && g.from[k]) || 0;
-      return g.depthBoost * Math.max(0, (s.town.dev - f) / (1 - f));
+      return g.priceBoost * Math.max(0, (s.town.dev - f) / (1 - f));
     },
     zoneAt(y) { const M = this.mapCfg(), z = M && M.zones; return !z ? 'industrial' : y < z.residentialEnd ? 'residential' : y < z.forestEnd ? 'forest' : 'industrial'; },
     // 海に隣接して建てる設備の条件（data/map.js の seaFront）。なければ null
@@ -1193,7 +1193,7 @@
       if (!rec) return null;
       let revenue = 0, revenueNoSat = 0, inBuy = 0, inOwn = 0;
       const unbuyable = [];
-      for (const k in rec.outputs) if (R[k].canSell !== false) { revenue += rec.outputs[k] * Market.sellPrice(s, k); revenueNoSat += rec.outputs[k] * Market.priceNoSat(s, k) * (1 - Market.SELL_FEE); }
+      for (const k in rec.outputs) if (R[k].canSell !== false) { revenue += rec.outputs[k] * Market.sellPrice(s, k); revenueNoSat += rec.outputs[k] * Market.priceNoSat(s, k) * Market.townMul(s, k) * (1 - Market.SELL_FEE); }
       for (const k in rec.inputs) {
         inBuy += rec.inputs[k] * Market.buyPrice(s, k); inOwn += rec.inputs[k] * Market.sellPrice(s, k);
         if (!R[k].canBuy) unbuyable.push(k);
