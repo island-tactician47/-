@@ -1199,7 +1199,7 @@
         if (!R[k].canBuy) unbuyable.push(k);
       }
       const opex = (rec.opexPerUnit || 0) * idx;
-      const r = { revenue, inputCostBuy: inBuy, inputCostOwn: inOwn, opex, unbuyable, marginBuy: revenue - inBuy - opex, marginOwn: revenue - inOwn - opex };
+      const r = { revenue, revenueNoSat, inputCostBuy: inBuy, inputCostOwn: inOwn, opex, unbuyable, marginBuy: revenue - inBuy - opex, marginOwn: revenue - inOwn - opex };
       const def = plantType && D().plants && D().plants[plantType], b = plantType && D().buildings[plantType];
       if (def && b) {
         const rr = runRate === undefined ? 1 : runRate, MC = this.moduleCfg(), nm = mods || 0;
