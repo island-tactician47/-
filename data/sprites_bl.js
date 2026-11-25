@@ -4752,5 +4752,425 @@ window.GAME_DATA.spritesBL = {
     "fd": 4
    }
   ]
+ },
+ "town_conv_1": {
+  "fw": 1,
+  "fd": 1,
+  "r": [
+   {
+    "file": "../assets/bl/town_conv_1_r0.png",
+    "w": 59.0,
+    "h": 42.0,
+    "ax": 32.5,
+    "ay": 27.1,
+    "fw": 1,
+    "fd": 1
+   },
+   {
+    "file": "../assets/bl/town_conv_1_r1.png",
+    "w": 59.0,
+    "h": 36.5,
+    "ax": 32.5,
+    "ay": 25.1,
+    "fw": 1,
+    "fd": 1
+   },
+   {
+    "file": "../assets/bl/town_conv_1_r2.png",
+    "w": 59.0,
+    "h": 47.0,
+    "ax": 26.5,
+    "ay": 36.1,
+    "fw": 1,
+    "fd": 1
+   },
+   {
+    "file": "../assets/bl/town_conv_1_r3.png",
+    "w": 59.5,
+    "h": 42.0,
+    "ax": 26.5,
+    "ay": 27.1,
+    "fw": 1,
+    "fd": 1
+   }
+  ]
+ },
+ "town_house_1": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/town_house_1_r0.png",
+    "w": 118.5,
+    "h": 80.5,
+    "ax": 59.5,
+    "ay": 53.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_1_r1.png",
+    "w": 118.5,
+    "h": 75.0,
+    "ax": 59.5,
+    "ay": 48.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_1_r2.png",
+    "w": 118.5,
+    "h": 75.0,
+    "ax": 59.5,
+    "ay": 48.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_1_r3.png",
+    "w": 118.5,
+    "h": 83.0,
+    "ax": 59.5,
+    "ay": 56.1,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "town_house_2": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/town_house_2_r0.png",
+    "w": 118.5,
+    "h": 79.0,
+    "ax": 59.5,
+    "ay": 52.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_2_r1.png",
+    "w": 118.5,
+    "h": 73.0,
+    "ax": 59.5,
+    "ay": 46.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_2_r2.png",
+    "w": 118.5,
+    "h": 70.5,
+    "ax": 59.5,
+    "ay": 43.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_2_r3.png",
+    "w": 118.5,
+    "h": 76.0,
+    "ax": 59.5,
+    "ay": 49.1,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "town_apt_1": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/town_apt_1_r0.png",
+    "w": 118.5,
+    "h": 91.5,
+    "ax": 59.5,
+    "ay": 64.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_apt_1_r1.png",
+    "w": 118.5,
+    "h": 88.5,
+    "ax": 59.5,
+    "ay": 61.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_apt_1_r2.png",
+    "w": 118.5,
+    "h": 88.5,
+    "ax": 59.5,
+    "ay": 61.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_apt_1_r3.png",
+    "w": 118.5,
+    "h": 91.5,
+    "ax": 59.5,
+    "ay": 64.6,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "town_house_3": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/town_house_3_r0.png",
+    "w": 118.5,
+    "h": 75.0,
+    "ax": 59.5,
+    "ay": 48.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_3_r1.png",
+    "w": 118.5,
+    "h": 71.0,
+    "ax": 59.5,
+    "ay": 44.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_3_r2.png",
+    "w": 118.5,
+    "h": 66.5,
+    "ax": 59.5,
+    "ay": 39.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_3_r3.png",
+    "w": 118.5,
+    "h": 71.0,
+    "ax": 59.5,
+    "ay": 44.1,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "town_house_4": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/town_house_4_r0.png",
+    "w": 118.5,
+    "h": 76.5,
+    "ax": 59.5,
+    "ay": 49.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_4_r1.png",
+    "w": 118.5,
+    "h": 72.5,
+    "ax": 59.5,
+    "ay": 45.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_4_r2.png",
+    "w": 118.5,
+    "h": 72.0,
+    "ax": 59.5,
+    "ay": 45.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_house_4_r3.png",
+    "w": 118.5,
+    "h": 76.5,
+    "ax": 59.5,
+    "ay": 49.6,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "town_apt_2": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/town_apt_2_r0.png",
+    "w": 118.5,
+    "h": 104.0,
+    "ax": 59.5,
+    "ay": 77.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_apt_2_r1.png",
+    "w": 118.5,
+    "h": 101.0,
+    "ax": 59.5,
+    "ay": 74.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_apt_2_r2.png",
+    "w": 118.5,
+    "h": 101.0,
+    "ax": 59.5,
+    "ay": 74.1,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_apt_2_r3.png",
+    "w": 118.5,
+    "h": 103.5,
+    "ax": 59.5,
+    "ay": 76.6,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "town_apt_3": {
+  "fw": 2,
+  "fd": 2,
+  "r": [
+   {
+    "file": "../assets/bl/town_apt_3_r0.png",
+    "w": 118.5,
+    "h": 91.5,
+    "ax": 59.5,
+    "ay": 64.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_apt_3_r1.png",
+    "w": 118.5,
+    "h": 88.5,
+    "ax": 59.5,
+    "ay": 61.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_apt_3_r2.png",
+    "w": 118.5,
+    "h": 88.5,
+    "ax": 59.5,
+    "ay": 61.6,
+    "fw": 2,
+    "fd": 2
+   },
+   {
+    "file": "../assets/bl/town_apt_3_r3.png",
+    "w": 118.5,
+    "h": 91.5,
+    "ax": 59.5,
+    "ay": 64.6,
+    "fw": 2,
+    "fd": 2
+   }
+  ]
+ },
+ "town_conv_2": {
+  "fw": 1,
+  "fd": 1,
+  "r": [
+   {
+    "file": "../assets/bl/town_conv_2_r0.png",
+    "w": 59.0,
+    "h": 42.0,
+    "ax": 32.5,
+    "ay": 27.1,
+    "fw": 1,
+    "fd": 1
+   },
+   {
+    "file": "../assets/bl/town_conv_2_r1.png",
+    "w": 59.0,
+    "h": 36.5,
+    "ax": 32.5,
+    "ay": 25.1,
+    "fw": 1,
+    "fd": 1
+   },
+   {
+    "file": "../assets/bl/town_conv_2_r2.png",
+    "w": 59.0,
+    "h": 47.0,
+    "ax": 26.5,
+    "ay": 36.1,
+    "fw": 1,
+    "fd": 1
+   },
+   {
+    "file": "../assets/bl/town_conv_2_r3.png",
+    "w": 59.5,
+    "h": 42.0,
+    "ax": 26.5,
+    "ay": 27.1,
+    "fw": 1,
+    "fd": 1
+   }
+  ]
+ },
+ "town_conv_3": {
+  "fw": 1,
+  "fd": 1,
+  "r": [
+   {
+    "file": "../assets/bl/town_conv_3_r0.png",
+    "w": 59.0,
+    "h": 42.0,
+    "ax": 32.5,
+    "ay": 27.1,
+    "fw": 1,
+    "fd": 1
+   },
+   {
+    "file": "../assets/bl/town_conv_3_r1.png",
+    "w": 59.0,
+    "h": 36.5,
+    "ax": 32.5,
+    "ay": 25.1,
+    "fw": 1,
+    "fd": 1
+   },
+   {
+    "file": "../assets/bl/town_conv_3_r2.png",
+    "w": 59.0,
+    "h": 47.0,
+    "ax": 26.5,
+    "ay": 36.1,
+    "fw": 1,
+    "fd": 1
+   },
+   {
+    "file": "../assets/bl/town_conv_3_r3.png",
+    "w": 59.5,
+    "h": 42.0,
+    "ax": 26.5,
+    "ay": 27.1,
+    "fw": 1,
+    "fd": 1
+   }
+  ]
  }
 };

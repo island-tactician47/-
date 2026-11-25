@@ -12,7 +12,19 @@ window.GAME_DATA.map = {
   block: 16,                       // x%block または y%block が block-1 の格子線が道路
   coast: { base: 130, a1: 3, a2: 2, ox: 80 },   // 海岸線 y = base + a1·sin(0.35(x-ox)) + a2·sin(0.13(x-ox)+1)（旧マップと同じ形のまま、80ずらした）
   anchor: { x: 114, y: 110 },        // 自動配置は、ここに近い空きから詰める
-  port: { x0: 82, x1: 98, depth: 6 },   // 港の予約地（x0..x1、海岸線から depth タイル手前まで）
+  port: { x0: 82, x1: 98, depth: 6 },
+  // 区画（北から順に）：y < residentialEnd＝住宅街（ゲームの建物は置けない。見た目の街だけ）／residentialEnd ≤ y < forestEnd＝森林地帯（半区画＝8タイルの幅のうち道路の行を除く。建物は置けない）／それより南＝工業地帯。
+  // 注意：将来 mapShifts でマップを広げるときは、これらの y もずらすこと（海岸線・港・anchor と同じ）。既存の建物は工業地帯の北端（y≥54）より南にあるので、forestEnd は 47 以下にする
+  zones: { residentialEnd: 40, forestEnd: 47 },
+  // 住宅街の見た目の街（飾り＝セーブに持たない）と、将来の街の育ちの上限。工業地帯より目立たない・住宅街を埋め尽くさないための決まり（docs/拠点マップ.md「住宅街」）
+  town: {
+    decorCoverage: 0.16,          // いまの飾りの街：2×2の区画のうち建物を置く割合
+    maxCoverage: 0.5,             // 将来の街の育ち：住宅街の面積のうち建物で埋めてよい上限（構想建築で密集しても半分は空ける）
+    towerShareMax: 0.04,          // 超高層（city_sky）の棟数の上限＝建物全体の4%まで
+    heightCapRatio: 0.8,          // 街のどの建物も、工場でいちばん高いものの80%以下（工業地帯より目立たせない）
+    nearForestMaxFloors: 8,       // 森林地帯から16タイル以内は8階まで（視点を回すと住宅街が工場の手前に来るので、工場を隠さない）
+    nearForestDist: 16
+  },   // 港の予約地（x0..x1、海岸線から depth タイル手前まで）
   // 海に隣接してしか建てられない設備（造船所）。足あとの +y 側（海側）の端が「ドックの開口部」。奥の部分は陸、海側の mouth 行は陸でも海でもよく（ドックの先端が海に張り出す）、
   // 海側の端の中央 open マスは海であること。埋め立てても、置いた設備の開口部の前（足あとの幅 × 海側の mouth 行より先）は海のまま（港と同じ扱い）
   seaFront: { shipyard: { mouth: 3, open: 3 } },
@@ -31,6 +43,7 @@ window.GAME_DATA.map = {
   // 向きを選べない種類（絵が4方向そろっていないもの。そろったら外す）。造船所（海側が決まっている）と研究棟（敷地に重ねる）は engine.canRotate が別に判定する
   noRotate: {},
   footprint: {
+    town_house_1: [2, 2], town_house_2: [2, 2], town_house_3: [2, 2], town_house_4: [2, 2], town_apt_1: [2, 2], town_apt_2: [2, 2], town_apt_3: [2, 2], town_conv_1: [1, 1], town_conv_2: [1, 1], town_conv_3: [1, 1],   // 住宅街の飾り（絵だけ。建てられない）
     default: [4, 4], module: [2, 2], oilWell: [2, 2], container: [4, 4], portcrane: [4, 4], yard_coal: [2, 2], yard_iron: [2, 2], yard_copper: [2, 2], yard_silica: [2, 2], mine_coal: [3, 3], mine_iron: [3, 3], mine_copper: [3, 3], mine_silica: [3, 3],   // oilWell は町の地図には出さない（採掘地ページの絵の大きさ）
       // module は親が決まっていないとき（上の moduleFootprint が優先）
     refinery: [4, 4], refineryLarge: [8, 10], chemPlant: [6, 5], distillation: [2, 2],

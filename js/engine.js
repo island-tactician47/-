@@ -232,9 +232,11 @@
       if (y >= coast + rec && !(s.map && s.map.fill && s.map.fill[x + ',' + y])) return 'sea';   // 埋め立てたタイル（s.map.fill）は陸
       if (rec && y >= coast && this.inSeaFront(s, x, y)) return 'sea';   // 造船所の開口部の前は、埋め立てても海のまま
       if (inPort && y >= this.portTop()) return 'port';
+      if (M.zones && y >= M.zones.residentialEnd && y < M.zones.forestEnd) return 'forest';   // 森林地帯（道路もここでは途切れる）
       if (x % M.block === M.block - 1 || y % M.block === M.block - 1) return 'road';
       return 'land';
     },
+    zoneAt(y) { const M = this.mapCfg(), z = M && M.zones; return !z ? 'industrial' : y < z.residentialEnd ? 'residential' : y < z.forestEnd ? 'forest' : 'industrial'; },
     // 海に隣接して建てる設備の条件（data/map.js の seaFront）。なければ null
     seaFrontCfg(type) {
       const M = this.mapCfg(), c = M && M.seaFront && M.seaFront[type]; if (!c) return null;
@@ -319,6 +321,8 @@
         const t = this.terrainAt(s, x + i, y + j);
         if (t === null) return { ok: false, msg: 'マップの外' };
         if (t === 'sea' && !(sf && j >= fd - sf.mouth)) { if (this.fillable(s, x + i, y + j)) { fill.push((x + i) + ',' + (y + j)); continue; } return { ok: false, msg: '海の上には建てられない（港の前・沖すぎる・造船所の開口部の前）' }; }
+        if (t === 'forest') return { ok: false, msg: '森林地帯には建てられない' };
+        if (t === 'land' && this.zoneAt(y + j) === 'residential') return { ok: false, msg: '住宅街には建てられない（工業地帯に建てる）' };
         if (t === 'road') return { ok: false, msg: '道路には建てられない' };
         if (t === 'port') return { ok: false, msg: '港の用地' };
         if (occ[(x + i) + ',' + (y + j)]) return { ok: false, msg: 'ほかの建物と重なる' };

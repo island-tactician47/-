@@ -126,8 +126,8 @@
       const h = (Math.imul(tx, 73856093) ^ Math.imul(ty, 19349663)) >>> 0, r = h % 1000;
       for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 1; dy++) if (occ[(tx + dx) + ',' + (ty + dy)]) return;
       const nb = [[1, 0], [-1, 0], [0, 1], [0, -1]].map(([dx, dy]) => E.terrainAt(S(), tx + dx, ty + dy));
-      const nearRoad = nb.some(q => q === 'road'), nearSea = nb.some(q => q === 'sea');
-      const forest = ((tx >> 2) * 31 + (ty >> 2) * 17) % 5 === 0;   // 森になる区画（4×4タイル単位）
+      const zn = E.zoneAt(ty), nearRoad = zn === 'industrial' && nb.some(q => q === 'road'), nearSea = nb.some(q => q === 'sea');   // 住宅街・森林地帯には飾りの小さな家は置かない（住宅街は townScene の建物）
+      const forest = zn === 'forest' || (zn === 'industrial' && ((tx >> 2) * 31 + (ty >> 2) * 17) % 5 === 0);   // 森になる区画（4×4タイル単位）
       if (nearSea) { if (r < 80) g.prism(tx + 0.35, ty + 0.35, 0.3, 0.3, 0, 2.5, '#9a9a94'); return; }   // 海辺は岩
       if (nearRoad) {   // 道沿いに小さな家（時代が進むと屋根が灰色に）
         if (r < 70) {
@@ -138,7 +138,7 @@
         }
         return;
       }
-      const dens = forest ? 420 : 55;
+      const dens = zn === 'forest' ? 820 : zn === 'residential' ? 30 : forest ? 420 : 55;
       if (r < dens) {
         const hh = 9 + (h >>> 4) % 6, ox = ((h >>> 8) % 5) / 10, oy = ((h >>> 11) % 5) / 10, kind = (h >>> 14) % 3;
         if (kind === 0) {   // 針葉樹：細い3段（濃い緑）
@@ -160,14 +160,15 @@
     function drawTerrain(s, era) {
       const occ = E.mapOccupancy(s), zc = I.cam.z, lod = zc < 0.1 ? 4 : zc < 0.16 ? 2 : 1, far = zc < 0.3;
       const M = GAME_DATA.map, eraK = clamp((era - 1) * 0.07, 0, 0.35), landA = mix('#8d9a69', '#8f8d80', eraK + 0.1), landB = mix('#869363', '#8f8d80', eraK + 0.1);
+      const resA = mix('#a8b880', '#9a9a8c', eraK + 0.1), resB = mix('#a0b179', '#9a9a8c', eraK + 0.1), forA = mix('#5f8b56', '#6f7f68', eraK * 0.5), forB = mix('#58824f', '#6f7f68', eraK * 0.5);   // 住宅街（工業地帯より少し明るい芝）・森林地帯
       for (let sum = 0; sum <= M.w + M.h - 2; sum++) for (let vx = Math.max(0, sum - M.h + 1); vx <= Math.min(M.w - 1, sum); vx++) {
         const vy = sum - vx, a = ptv(vx, vy, 0);   // 回したあとの座標のタイルを奥から手前へ
         if (lod > 1 && ((vx % lod) || (vy % lod))) continue;
         if (a[0] < -80 * zc * lod || a[0] > I.w + 80 * zc * lod || a[1] < -40 * zc || a[1] > I.h + 50 * zc * lod) continue;
         if (lod > 1) {   // 遠景：lod×lod タイルを1枚の菱形に。道があれば道、港があれば港、全部海なら海、それ以外は陸
-          let cr = 0, cp = 0, cs = 0, n = 0;
-          for (let i = 0; i < lod; i++) for (let j = 0; j < lod; j++) { const q = tiN(vx + i + 0.5, vy + j + 0.5, I.view), tt = terr(s, Math.floor(q[0]), Math.floor(q[1])); n++; if (tt === 'road') cr++; else if (tt === 'port') cp++; else if (tt === 'sea' || tt === null) cs++; }
-          const colL = cr ? '#6c6a66' : cp ? '#a09a8b' : cs === n ? '#5d91b1' : cs ? '#c9be94' : '#889565';
+          let cr = 0, cp = 0, cs = 0, cf = 0, cz = 0, n = 0;
+          for (let i = 0; i < lod; i++) for (let j = 0; j < lod; j++) { const q = tiN(vx + i + 0.5, vy + j + 0.5, I.view), qy = Math.floor(q[1]), tt = terr(s, Math.floor(q[0]), qy); n++; if (tt === 'road') cr++; else if (tt === 'port') cp++; else if (tt === 'sea' || tt === null) cs++; else if (tt === 'forest') cf++; else if (E.zoneAt(qy) === 'residential') cz++; }
+          const colL = cr ? '#6c6a66' : cp ? '#a09a8b' : cs === n ? '#5d91b1' : cs ? '#c9be94' : cf ? '#5f8b56' : cz ? '#a4b47d' : '#889565';
           poly([ptv(vx, vy, 0), ptv(vx + lod, vy, 0), ptv(vx + lod, vy + lod, 0), ptv(vx, vy + lod, 0)], colL, colL);
           continue;
         }
@@ -177,10 +178,11 @@
         if (t === 'sea') {
           const near = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => { const q = terr(s, tx + dx, ty + dy); return q && q !== 'sea'; });
           col = near ? '#86b8cb' : (chk ? '#5f93b3' : '#5b8fb0');
-        } else if (t === 'road') col = chk ? '#6f6d69' : '#6a6864';
+        } else if (t === 'forest') col = chk ? forA : forB;
+        else if (t === 'road') col = chk ? '#6f6d69' : '#6a6864';
         else if (t === 'port') col = portGradeNow(s) >= 2 ? (chk ? '#a9a79d' : '#a3a197') : (chk ? '#b4a784' : '#ada07e');   // 漁港まで＝砂利の地面、商業港から＝コンクリートの舗装
         else {
-          col = chk ? landA : landB;
+          col = E.zoneAt(ty) === 'residential' ? (chk ? resA : resB) : (chk ? landA : landB);
           if ([[1, 0], [-1, 0], [0, 1], [0, -1]].some(([dx, dy]) => E.terrainAt(s, tx + dx, ty + dy) === 'sea')) col = chk ? '#b2afa4' : '#aba89d';   // 護岸の舗装（コンクリート）
         }
         poly([ptv(vx, vy, 0), ptv(vx + 1, vy, 0), ptv(vx + 1, vy + 1, 0), ptv(vx, vy + 1, 0)], col, col);
@@ -191,7 +193,7 @@
         }
         if (t === 'port' && !far && portGradeNow(s) >= 2) { if (tx % 4 === 0) g.line([[tx, ty, 0.2], [tx, ty + 1, 0.2]], 'rgba(70,68,62,.35)', 1); if (ty % 4 === 0) g.line([[tx, ty, 0.2], [tx + 1, ty, 0.2]], 'rgba(70,68,62,.35)', 1); }
         if (t === 'land' && !far && ((tx * 7 + ty * 13) % 11 === 0)) g.prism(tx + 0.4, ty + 0.4, 0.2, 0.2, 0, 1, '#6f9a5a');   // 草むら
-        if (t === 'land' && !far && !I.noDeco) deco(tx, ty, occ, era);
+        if ((t === 'land' || t === 'forest') && !far && !I.noDeco) deco(tx, ty, occ, era);
       }
       // 護岸（コンクリートの岸壁）：海に面した陸のタイルの縁ごとに、壁・天端（てんば）・目地・係船柱・防舷材・水際の白波。建物の下のタイル・港は除く
       {
@@ -444,6 +446,27 @@
       }
     }
 
+    // 住宅街の見た目の街（飾り）：一軒家・アパート（2×2）・コンビニ（1×1）を、座標のハッシュで決めた区画にまばらに置く。セーブには何も持たない。道路のほうを向く（正面は向き0で +y 側）。
+    // 将来の街の育ちの上限は data/map.js の town（densityは maxCoverage まで・超高層は towerShareMax まで・高さは heightCapRatio と nearForestMaxFloors）
+    let _town = null;
+    function townScene() {
+      const M = GAME_DATA.map, Z = M.zones, T = M.town; if (!Z || !T) return [];
+      if (_town && _town.k === M.mapVer + ':' + Z.residentialEnd) return _town.list;
+      const list = [], B = M.block, hs = (a, b, c) => (Math.imul(a, 73856093) ^ Math.imul(b, 19349663) ^ Math.imul(c, 83492791)) >>> 0;
+      for (let by = 0; by * B < Z.residentialEnd; by++) for (let bx = 0; bx * B < M.w; bx++) {
+        const x0 = bx * B, y0 = by * B;   // 道路は x0-1 と x0+15（y も同じ）。中の 15×15 タイルに置く
+        for (let cx = 0; cx < 14; cx += 2) for (let cy = 0; cy < 14; cy += 2) {
+          const x = x0 + cx, y = y0 + cy; if (y + 2 > Z.residentialEnd - 2) continue;   // 森林地帯との間は空ける
+          const h = hs(x, y, 7); if ((h % 1000) / 1000 >= T.decorCoverage) continue;
+          const dN = cy, dS = 13 - cy, dW = cx, dE = 13 - cx, m = Math.min(dN, dS, dW, dE);
+          const rot = dS === m ? 0 : dW === m ? 1 : dN === m ? 2 : 3;
+          const k = (h >>> 10) % 100, kind = k < 9 ? 'conv' : k < 30 ? 'apt' : 'house', nv = kind === 'house' ? 4 : 3, v = 1 + ((h >>> 17) % nv), fw = kind === 'conv' ? 1 : 2;
+          list.push({ type: '_town', sprite: 'town_' + kind + '_' + v, x, y, fw, fd: fw, rot, building: false, key: '_t' + x + ',' + y });
+        }
+      }
+      _town = { k: M.mapVer + ':' + Z.residentialEnd, list };
+      return list;
+    }
     function frame(dt) {
       const s = S(); if (!s || !GAME_DATA.map) return;
       I.t += dt; I.sources = []; builds = 0;
@@ -467,11 +490,12 @@
       drawAmbient(s, era);   // 車・船・灯台は建物より先に描く（手前の建物が重なって隠す）
       const items = I.vents.map(e => ({ e, key: e.x + e.fw / 2 + e.y + e.fd / 2 }));
       for (const sh of ambientShips(s)) { const v = viewOf({ type: '_ship', sprite: sh.sprite, x: sh.cx - sh.fw / 2, y: sh.cy - sh.fd / 2, fw: sh.fw, fd: sh.fd, rot: 0, building: false }); items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); }
+      if (I.cam.z >= 0.12 && !I.noTown) { const zc = I.cam.z; for (const t of townScene()) { const v = viewOf(t), a = ptv(v.x + v.fw / 2, v.y + v.fd / 2, 0); if (a[0] < -120 * zc || a[0] > I.w + 120 * zc || a[1] < -60 * zc || a[1] > I.h + 140 * zc) continue; items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); } }   // 住宅街の街（見えるものだけ）
       { const ps = portScene(s); items.push({ fn: ps.ground, key: -1e9 }); for (const v of ps.ents) items.push({ e: v, key: v.x + v.fw / 2 + v.y + v.fd / 2 }); }
       items.sort((a, b) => a.key - b.key);
       for (const { e, fn } of items) {
         if (fn) { fn(); continue; }
-        if (e.type === '_ship') { drawEntity(e, { era, t: I.t, running: false }); continue; }
+        if (e.type === '_ship' || e.type === '_town') { drawEntity(e, { era, t: I.t, running: false }); continue; }
         const o = { era, t: I.t, running: running(s, e) };
         if (I.selected === e.key) outline(e, '#ffe08a', 2.2);
         else if (I.multi && I.multi.has(e.key)) outline(e, '#7fd0ff', 2.2);   // ブループリントで選んでいる建物
