@@ -1129,8 +1129,8 @@
     // 従業員数（data/buildings.js の GAME_DATA.staff。完成した施設・増設モジュール・油井・鉱山・貯鉱場の合計）。{ total, base, modules, field }
     staffOf(type) { const S = D().staff; return (S && S.building && S.building[type]) || 0; },
     moduleStaffOf(type) { const S = D().staff, b = this.staffOf(type); return b ? Math.max(1, Math.round(b * ((S && S.moduleRatio) || 0))) : 0; },
-    // 本社ビルの段階（1〜4）＝解放済みのティアの最高（T3→1、T4→2、T5→3、T6→4）。絵と従業員数が変わる
-    hqStage(s) { let t = 3; for (let k = 4; k <= 6; k++) if (this.tierUnlocked(s, k)) t = k; return t - 2; },
+    // 本社ビルの段階（1〜4）＝いまのティア（currentTier。技術ツリーで開いたノードのティアも数える。T5・T6 は自動では開かず s.tiers に入らないので、s.tiers だけ見ると T4 で止まっていた）の T3→1、T4→2、T5→3、T6→4。絵と従業員数が変わる
+    hqStage(s) { return Math.max(1, Math.min(4, this.currentTier(s) - 2)); },
     staffTotal(s) {
       const S = D().staff; if (!S) return { total: 0, base: 0, modules: 0, field: 0 };
       let base = 0, modules = 0, field = 0;

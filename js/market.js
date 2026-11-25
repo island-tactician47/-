@@ -52,8 +52,10 @@
       if (!m.t6x4) { m.t6x4 = true; for (const k of ['colony', 'offshore', 'aiDefense']) if (D().resources[k] && m.level[k] < 0.5 * D().resources[k].basePrice * this.priceIndex(state)) m.level[k] = D().resources[k].basePrice * this.priceIndex(state); }
     },
 
-    // 市場が吸収できる量
-    depth(state, k) { return D().resources[k].marketDepth; },
+    // 市場全体の成長（1＋年率）^年。画面には出さない。無ければ 1
+    growth(state) { const g = D().marketGrowth; return g && g.perYear ? Math.pow(1 + g.perYear, state.day / 360) : 1; },
+    // 市場が吸収できる量（時間とともにゆっくり増える）
+    depth(state, k) { return D().resources[k].marketDepth * this.growth(state); },
     // 街の発展による売値の上がり（+倍率。売るときだけ。s.town が無ければ 0。画面には出さない）
     townMul(state, k) { return 1 + (state.town && window.Engine && Engine.townDemand ? Engine.townDemand(state, k) : 0); },
     priceIndex(state) { return Math.pow(1 + D().inflationPerYear, state.day / 360); },
@@ -109,7 +111,7 @@
     // 直近 demandDays 日に売った数に応じて、次の1基の価格が段で下がる。steps[n]＝直近に n 基売ったあとの次の1基の価格（満額＝1）。無い品目は 1
     demandCount(state, k) { const r = D().resources[k], rec = state.market.recent && state.market.recent[k]; if (!r || !r.demandSteps || !rec) return 0; const from = state.day - (r.demandDays || 300); let n = 0; for (const e of rec) if (e.d > from) n += e.q; return n; },
     // 街の発展による段のずれ（基）。発展度×stepShift。0なら従来どおり（s.town が無い世界は不変）。画面には出さない
-    stepShift(state) { const g = window.Engine && Engine.townGrowth && Engine.townGrowth(); return g && g.stepShift && state.town ? g.stepShift * (state.town.dev || 0) : 0; },
+    stepShift(state) { const g = window.Engine && Engine.townGrowth && Engine.townGrowth(); return g && g.stepShift && state.town ? g.stepShift * (state.town.dev || 0) * this.growth(state) : 0; },
     demandMul(state, k) { const r = D().resources[k]; if (!r || !r.demandSteps) return 1; const n = Math.max(0, this.demandCount(state, k) - this.stepShift(state)); return r.demandSteps[Math.min(r.demandSteps.length - 1, Math.floor(n + 1e-9))]; },
     dailyDecay(state) {
       for (const k in state.market.sat) state.market.sat[k] *= this.satDecayOf(k);
