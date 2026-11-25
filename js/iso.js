@@ -342,6 +342,7 @@
     // ---- 建物の絵のキャッシュ ----
     // 静的な絵（建物の本体）は種類・時代・足あと・拡大の段階ごとにオフスクリーンへ1回だけ描く。煙・炎・赤熱は毎フレーム別に描く。
     const LEVELS = [0.35, 0.5, 0.7, 0.9, 1.2, 1.5, 1.8], cache = new Map(), CACHE_PX = 24e6; let cachePx = 0;   // 上限 約2400万ピクセル（約96MB）
+    const DIRECT_Z = 1.0;   // この拡大以上では、絵のキャッシュを使わず元の絵を直接描く
     const pickLevel = z => LEVELS.find(l => l >= z - 1e-6) || LEVELS[LEVELS.length - 1];
     // 絵（PNG）。読み込みが終わるまでは手続き描画。終わったらその種類のキャッシュを捨てる
     //  ① Blender の4方向（assets/bl/、spritesBL）：向き番号 vrot＝建物の向き−視点（視点が回ると、絵の番号は逆に進む）
@@ -408,6 +409,14 @@
       const level = pickLevel(I.cam.z), bn = blName(e), bm = bn && BLM[bn] && BLM[bn].r[e.vrot], bim = bm && blImage(bn, e.vrot), ntm = !bm && !e.vrot && NTM[e.type], nim = ntm && ntImage(e.type);
       const img = bim ? { im: bim, m: bm } : nim ? { im: nim, m: ntm } : null;
       const pre = img ? (bim ? 'bl:' + bn + ':' + e.vrot : 'nt:' + e.type) + '|' + e.fw + '|' + e.fd : 'p:' + [e.type, e.parentType || '', o.era, e.fw, e.fd].join('|'), key = pre + '|' + level + '|' + I.dpr;
+      if (img && I.cam.z >= DIRECT_Z) {   // 拡大が大きいときは、キャッシュ（大きな絵を作って溜める）を使わず、元の絵を直接拡大して描く（最大ズームで絵のキャッシュが上限を超え、毎フレーム作り直しになって、灰色の箱がちらつくのを防ぐ）
+        const im = img.im, m = img.m, q = m.w && im.width ? m.w / im.width : 1, z = I.cam.z, a = ptv(e.x, e.y, 0);
+        ctx.globalAlpha = alpha === undefined ? 1 : alpha;
+        ctx.drawImage(im, a[0] - (m.ax - (e.fw - e.fd) / 2 * TW) * z, a[1] - (m.ay - (e.fw + e.fd) / 2 * TH) * z, im.width * q * z, im.height * q * z);
+        ctx.globalAlpha = 1;
+        if (o.running && !alpha) for (const d of fxOf(e, m)) { const w = tiN(e.x + d.x, e.y + d.y, I.view); if (d.k === 'smoke') g.smoke(w[0], w[1], d.z, d.s); else if (d.k === 'flame') g.flame(w[0], w[1], d.z, o.t); else g.glow(w[0], w[1], d.z, 1); }
+        return;
+      }
       let c = cache.get(key);
       if (c) { cache.delete(key); cache.set(key, c); }
       else if (builds >= BUILD_PER_FRAME && !I.buildAll) {   // 今フレームの構築枠を使い切った：別の段階の絵を拡大縮小して代用。無ければ簡単な箱
